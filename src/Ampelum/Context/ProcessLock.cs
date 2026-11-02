@@ -37,6 +37,14 @@ public sealed class ProcessLock : IAsyncDisposable
     public static async ValueTask<ProcessLock> AcquireAsync(string sessionDir, CancellationToken ct, string? hint = null)
     {
         var path = Path.Combine(sessionDir, ".lock");
+        // File sharing is advisory on Unix, so opening a held lock succeeds there.
+        if (File.Exists(path))
+        {
+            var (holder, heldSince) = await ReadLockAsync(path, ct);
+            if (holder > 0 && IsProcessAlive(holder))
+                throw new ProcessLockHeldException(holder, heldSince, hint);
+        }
+
         // Attempt 1: try to open/create exclusively
         try
         {

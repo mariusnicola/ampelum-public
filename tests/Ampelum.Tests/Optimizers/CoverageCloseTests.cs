@@ -266,6 +266,8 @@ public sealed class CoverageCloseTests
     [Fact]
     public void JsonPersistence_TryDelete_LockedFile_ReturnsFalse()
     {
+        // Unix lets a file be deleted while another handle holds it open.
+        Assert.SkipUnless(OperatingSystem.IsWindows(), "Needs Windows file locking.");
         // Hold an exclusive handle so File.Delete fails â€” exercises the catch.
         var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".lock");
         using (var fs = new FileStream(path, FileMode.Create, FileAccess.Write,
