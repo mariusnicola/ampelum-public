@@ -6,7 +6,7 @@ This page is the single index for everything under `docs/`.
 
 - [Architecture](architecture.md): concepts, layers and how the packages relate
 - [Configuration](configuration.md): keys, model selection, the identity signing key and Host settings. [.sample.env](../.sample.env) lists the model, provider and live-test variables; the other variables are under Other variables in that page
-- [Use cases](../README.md#use-cases): the three runnable samples, each with a `--fake` command
+- [Use cases](../README.md#use-cases): the runnable samples, each with a `--fake` command
 - [Known limits](../README.md#known-limits): what is partial or unfinished
 
 ## Learn by example

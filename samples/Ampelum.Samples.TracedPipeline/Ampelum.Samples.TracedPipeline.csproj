@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Ampelum.Samples.TracedPipeline</RootNamespace>
+    <!-- The three exporters are marked experimental in the library. -->
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Samples.Shared\Ampelum.Samples.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Observability.LangFuse\Ampelum.Observability.LangFuse.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Observability.LangSmith\Ampelum.Observability.LangSmith.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Observability.Phoenix\Ampelum.Observability.Phoenix.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="data\feedback.jsonl" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

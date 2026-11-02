@@ -61,7 +61,7 @@ The library ships no keys and no model ids. `ModelConfig` and `ampelum repl` rea
 
 ## Use cases
 
-Three samples show complete flows. Each runs with `--fake`, which uses a scripted model and needs no key and no network. Without `--fake` they read `OPENROUTER_API_KEY` and `OPENROUTER_MODEL_1` (see `.sample.env`).
+These samples show complete flows. Each runs with `--fake`, which uses a scripted model and needs no key and no network. Without `--fake` they read `OPENROUTER_API_KEY` and `OPENROUTER_MODEL_1` (see `.sample.env`).
 
 **Support desk** (`samples/Ampelum.Samples.SupportDesk`). A customer ticket goes through triage, knowledge lookup, order lookup and a checked reply. Budget, audit, prompt-injection and content-policy hooks run on every model call, and the audit chain is verified at the end.
 
@@ -82,6 +82,13 @@ dotnet test tests/Ampelum.Samples.ExpenseApproval.Tests
 ```bash
 dotnet run --project samples/Ampelum.Samples.PromptTuning -c Release -- --fake
 dotnet test tests/Ampelum.Samples.PromptTuning.Tests
+```
+
+**Traced pipeline** (`samples/Ampelum.Samples.TracedPipeline`). Compare five optimizers on the same labeled rows and export every evaluation trace to LangFuse, LangSmith and Phoenix. Without `--fake` it also needs the tracing settings in `.sample.env`. With `--fake` the scores are scripted and the exporters talk to a recording handler.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.TracedPipeline -c Release -- --fake
+dotnet test tests/Ampelum.Samples.TracedPipeline.Tests
 ```
 
 ## What is in the repository
