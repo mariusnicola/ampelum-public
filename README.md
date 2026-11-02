@@ -98,6 +98,13 @@ dotnet run --project samples/Ampelum.Samples.BulkDocuments -c Release -- --fake
 dotnet test tests/Ampelum.Samples.BulkDocuments.Tests
 ```
 
+**Research assistant** (`samples/Ampelum.Samples.ResearchAssistant`). A planner, researcher, analyst and writer work through `GroupChat` to answer a question with citations, using hybrid retrieval, reranking and the calculator, Wikipedia, web search and code tools. An answer that cites an unknown source is not grounded. The reranker scorer and the embeddings are stand-ins, and the code tool runs without a sandbox, so its guard allows plain arithmetic only. Without `--fake` it also needs `BRAVE_API_KEY`.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.ResearchAssistant -c Release -- --fake
+dotnet test tests/Ampelum.Samples.ResearchAssistant.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
