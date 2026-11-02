@@ -80,7 +80,7 @@ public sealed class GEPAOptimizerTests
         fake.EnqueueText("c"); fake.EnqueueText("d");
 
         var progressEvents = new List<OptimizerProgress>();
-        IProgress<OptimizerProgress> progress = new Progress<OptimizerProgress>(p => progressEvents.Add(p));
+        IProgress<OptimizerProgress> progress = new SyncProgress<OptimizerProgress>(p => progressEvents.Add(p));
 
         var sut = new GEPAOptimizer<Predict<QASig>>(fake, fake,
             new GepaOptions { BootstrapCount = 2, CandidateCount = 2, MaxIterations = 2 });
@@ -290,4 +290,10 @@ public sealed class GEPAOptimizerTests
     {
         public double Score(object actual, object expected, SignatureMetadata signature) => score;
     }
+}
+
+// Progress<T> posts to the thread pool, so assertions could run before the callback.
+file sealed class SyncProgress<T>(Action<T> cb) : IProgress<T>
+{
+    public void Report(T value) => cb(value);
 }

@@ -104,7 +104,7 @@ public sealed class EvaluateTests
     public async Task Run_Progress_InvokedOncePerExample()
     {
         int calls = 0;
-        var progress = new Progress<EvaluationProgress>(_ => Interlocked.Increment(ref calls));
+        var progress = new SyncProgress<EvaluationProgress>(_ => Interlocked.Increment(ref calls));
         Func<QA, CancellationToken, Task<Prediction<QA>>> program = (_, _) => Task.FromResult(Pred("x"));
         await new Evaluate<QA>(program, new ExactMatch<QA>("Answer"), progress: progress).RunAsync(new[]
         {
@@ -166,4 +166,10 @@ public sealed class EvaluateTests
             .RunAsync(new[] { labeled }, TestContext.Current.CancellationToken);
         r.Scores[0].Example.ShouldBe(labeled);
     }
+}
+
+// Progress<T> posts to the thread pool, so assertions could run before the callback.
+file sealed class SyncProgress<T>(Action<T> cb) : IProgress<T>
+{
+    public void Report(T value) => cb(value);
 }

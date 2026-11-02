@@ -98,7 +98,7 @@ public class LabeledFewShotTests
         var trainset = MakeTrainset(2);
         IMetric metric = new LambdaMetric((_, _, _) => 1.0);
         var captured = new List<OptimizerProgress>();
-        var progress = new Progress<OptimizerProgress>(captured.Add);
+        var progress = new SyncProgress<OptimizerProgress>(captured.Add);
 
         var opt = new LabeledFewShot<Predict<MinimalSig>>(maxDemos: 1);
         await opt.CompileAsync(predict, trainset, metric, ctx, progress, ct: TestContext.Current.CancellationToken);
@@ -205,4 +205,10 @@ public class LabeledFewShotTests
                 (Predict<MinimalSig>)newSubmodules["retriever"],
                 (Predict<MinimalSig>)newSubmodules["answer"]);
     }
+}
+
+// Progress<T> posts to the thread pool, so assertions could run before the callback.
+file sealed class SyncProgress<T>(Action<T> cb) : IProgress<T>
+{
+    public void Report(T value) => cb(value);
 }
