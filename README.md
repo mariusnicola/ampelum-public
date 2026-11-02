@@ -105,6 +105,13 @@ dotnet run --project samples/Ampelum.Samples.ResearchAssistant -c Release -- --f
 dotnet test tests/Ampelum.Samples.ResearchAssistant.Tests
 ```
 
+**Vector store swap** (`samples/Ampelum.Samples.VectorStoreSwap`). The same retrieval code runs over pgvector, Pinecone or Qdrant, and one setting picks the store. With `--fake` all three adapters sit on one in-memory fake, so agreement shows the adapters and the code above them, not the databases. The live path has never been run.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.VectorStoreSwap -c Release -- --fake
+dotnet test tests/Ampelum.Samples.VectorStoreSwap.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
