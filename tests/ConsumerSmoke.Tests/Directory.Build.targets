@@ -1,0 +1,5 @@
+<Project>
+  <!-- Sentinel — stop MSBuild from picking up the repo-root Directory.Build.targets,
+       which sets shared NuGet metadata + PublicApiAnalyzer flags that don't apply
+       to a downstream consumer test project. -->
+</Project>

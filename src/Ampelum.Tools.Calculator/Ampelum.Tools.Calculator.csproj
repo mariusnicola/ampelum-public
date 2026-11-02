@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Tools.Calculator</PackageId>
+    <Description>Ampelum pre-built ITypedTool: pure-compute arithmetic calculator.</Description>
+    <PackageTags>ampelum;tools;calculator;llm</PackageTags>
+    <RootNamespace>SignalGrid.Ampelum.Tools.Calculator</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Tools.Calculator</AssemblyName>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

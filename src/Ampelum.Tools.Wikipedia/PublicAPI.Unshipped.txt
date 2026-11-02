@@ -1,0 +1,23 @@
+#nullable enable
+Ampelum.Tools.Wikipedia.WikiSummary
+Ampelum.Tools.Wikipedia.WikiSummary.WikiSummary(string! Title, string! Extract, string! Url) -> void
+Ampelum.Tools.Wikipedia.WikiSummary.Title.init -> void
+Ampelum.Tools.Wikipedia.WikiSummary.Title.get -> string!
+Ampelum.Tools.Wikipedia.WikiSummary.Extract.init -> void
+Ampelum.Tools.Wikipedia.WikiSummary.Extract.get -> string!
+Ampelum.Tools.Wikipedia.WikiSummary.Url.init -> void
+Ampelum.Tools.Wikipedia.WikiSummary.Url.get -> string!
+override Ampelum.Tools.Wikipedia.WikiSummary.ToString() -> string!
+override Ampelum.Tools.Wikipedia.WikiSummary.GetHashCode() -> int
+override Ampelum.Tools.Wikipedia.WikiSummary.Equals(object? obj) -> bool
+Ampelum.Tools.Wikipedia.WikiSummary.Equals(Ampelum.Tools.Wikipedia.WikiSummary? other) -> bool
+Ampelum.Tools.Wikipedia.WikiSummary.Deconstruct(out string! Title, out string! Extract, out string! Url) -> void
+static Ampelum.Tools.Wikipedia.WikiSummary.operator !=(Ampelum.Tools.Wikipedia.WikiSummary? left, Ampelum.Tools.Wikipedia.WikiSummary? right) -> bool
+static Ampelum.Tools.Wikipedia.WikiSummary.operator ==(Ampelum.Tools.Wikipedia.WikiSummary? left, Ampelum.Tools.Wikipedia.WikiSummary? right) -> bool
+Ampelum.Tools.Wikipedia.WikiSummary.<Clone>$() -> Ampelum.Tools.Wikipedia.WikiSummary!
+Ampelum.Tools.Wikipedia.WikipediaTool
+Ampelum.Tools.Wikipedia.WikipediaTool.WikipediaTool(System.Net.Http.HttpClient! http, string! title) -> void
+Ampelum.Tools.Wikipedia.WikipediaTool.Name.get -> string!
+Ampelum.Tools.Wikipedia.WikipediaTool.Description.get -> string!
+Ampelum.Tools.Wikipedia.WikipediaTool.Title.get -> string!
+Ampelum.Tools.Wikipedia.WikipediaTool.InvokeAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Tools.Wikipedia.WikiSummary!>

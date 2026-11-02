@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+    <!-- Smoke tests are NOT coverage-gated. -->
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Observability.LangSmith\Ampelum.Observability.LangSmith.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Observability.LangFuse\Ampelum.Observability.LangFuse.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Observability.Phoenix\Ampelum.Observability.Phoenix.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="docker-compose.yml" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="prometheus.yml" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

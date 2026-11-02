@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Tools.Wikipedia</PackageId>
+    <Description>Ampelum pre-built ITypedTool: Wikipedia REST summary lookup.</Description>
+    <PackageTags>ampelum;tools;wikipedia;llm</PackageTags>
+    <RootNamespace>SignalGrid.Ampelum.Tools.Wikipedia</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Tools.Wikipedia</AssemblyName>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+#nullable enable
+Ampelum.Tools.Calculator.CalcResult
+Ampelum.Tools.Calculator.CalcResult.CalcResult(double Value, string! Expression) -> void
+Ampelum.Tools.Calculator.CalcResult.Value.init -> void
+Ampelum.Tools.Calculator.CalcResult.Value.get -> double
+Ampelum.Tools.Calculator.CalcResult.Expression.init -> void
+Ampelum.Tools.Calculator.CalcResult.Expression.get -> string!
+override Ampelum.Tools.Calculator.CalcResult.ToString() -> string!
+override Ampelum.Tools.Calculator.CalcResult.GetHashCode() -> int
+override Ampelum.Tools.Calculator.CalcResult.Equals(object? obj) -> bool
+Ampelum.Tools.Calculator.CalcResult.Equals(Ampelum.Tools.Calculator.CalcResult? other) -> bool
+Ampelum.Tools.Calculator.CalcResult.Deconstruct(out double Value, out string! Expression) -> void
+static Ampelum.Tools.Calculator.CalcResult.operator !=(Ampelum.Tools.Calculator.CalcResult? left, Ampelum.Tools.Calculator.CalcResult? right) -> bool
+static Ampelum.Tools.Calculator.CalcResult.operator ==(Ampelum.Tools.Calculator.CalcResult? left, Ampelum.Tools.Calculator.CalcResult? right) -> bool
+Ampelum.Tools.Calculator.CalcResult.<Clone>$() -> Ampelum.Tools.Calculator.CalcResult!
+Ampelum.Tools.Calculator.CalculatorTool
+Ampelum.Tools.Calculator.CalculatorTool.CalculatorTool(string! expression) -> void
+Ampelum.Tools.Calculator.CalculatorTool.Name.get -> string!
+Ampelum.Tools.Calculator.CalculatorTool.Description.get -> string!
+Ampelum.Tools.Calculator.CalculatorTool.Expression.get -> string!
+Ampelum.Tools.Calculator.CalculatorTool.InvokeAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Tools.Calculator.CalcResult!>

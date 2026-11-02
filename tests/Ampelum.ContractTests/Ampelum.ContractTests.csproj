@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+    <PackageReference Include="OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.VectorStores.Qdrant\Ampelum.VectorStores.Qdrant.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.VectorStores.Pinecone\Ampelum.VectorStores.Pinecone.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.VectorStores.PgVector\Ampelum.VectorStores.PgVector.csproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+</Project>

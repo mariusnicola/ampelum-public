@@ -1,0 +1,32 @@
+# v0.9e CI smoke matrix. Boots:
+#   - Jaeger all-in-one (trace receive @ 4318 OTLP/HTTP, query @ 16686)
+#   - Prometheus (scrape config in prometheus.yml)
+#   - Application Insights local emulator (offline endpoint @ 8888)
+# Runs locally via `docker compose up -d`; CI invokes via Testcontainers
+# fixture or the GHA `docker/setup-buildx-action` + a compose step.
+#
+# Skipped on hosts without Docker: tests that depend on these are gated
+# `[Trait("Category", "Docker")]` and must be included via
+# `--filter Category=Docker` for the CI Linux job to execute them.
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  appinsights:
+    image: mcr.microsoft.com/azure-monitor/applicationinsights/local:0.7.0
+    ports:
+      - "8888:80"

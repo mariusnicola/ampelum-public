@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <AssemblyName>SignalGrid.Ampelum.Observability.Phoenix</AssemblyName>
+    <PackageId>SignalGrid.Ampelum.Observability.Phoenix</PackageId>
+    <Description>Phoenix / Arize exporter for Ampelum traces. Mirrors each TraceRecord to a private ActivitySource with openinference.* / llm.* / gen_ai.* span attribute aliases. The host OpenTelemetry SDK is responsible for forwarding to the Phoenix collector via OTLP.</Description>
+    <PackageTags>ampelum;llm;ai;observability;phoenix;arize;openinference;tracing</PackageTags>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Observability.Phoenix.Tests" />
+  </ItemGroup>
+</Project>

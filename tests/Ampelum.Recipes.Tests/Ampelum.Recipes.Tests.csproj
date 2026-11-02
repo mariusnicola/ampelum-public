@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <RecipesDir>$(MSBuildThisFileDirectory)..\..\docs\recipes</RecipesDir>
+    <RecipesGeneratedDir>$(MSBuildThisFileDirectory)Generated</RecipesGeneratedDir>
+    <RecipeExtractProj>$(MSBuildThisFileDirectory)..\..\tools\Ampelum.RecipeExtract\Ampelum.RecipeExtract.csproj</RecipeExtractProj>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Generated\**\*</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+  </ItemGroup>
+  <Target Name="BuildRecipeExtractor" BeforeTargets="ExtractRecipes">
+    <MSBuild Projects="$(RecipeExtractProj)" Properties="Configuration=$(Configuration)" Targets="Build" />
+  </Target>
+  <Target Name="ExtractRecipes" BeforeTargets="BeforeCompile" Inputs="@(None);@(Compile);$(RecipesDir)\*.md" Outputs="$(RecipesGeneratedDir)\.stamp">
+    <MakeDir Directories="$(RecipesGeneratedDir)" />
+    <!-- Use `dotnet exec` against the built dll instead of `dotnet run`. `dotnet run`
+         spawns the publish .exe, which on Windows hosts with Application Control / WDAC
+         policies enforced gets blocked. `dotnet exec` runs the dll inside the host
+         dotnet.exe process and is allowed by default policy. -->
+    <PropertyGroup>
+      <RecipeExtractDll>$(MSBuildThisFileDirectory)..\..\tools\Ampelum.RecipeExtract\bin\$(Configuration)\net10.0\Ampelum.RecipeExtract.dll</RecipeExtractDll>
+    </PropertyGroup>
+    <Exec Command="dotnet exec &quot;$(RecipeExtractDll)&quot; &quot;$(RecipesDir)&quot; &quot;$(RecipesGeneratedDir)&quot;" ConsoleToMSBuild="true" />
+    <Touch Files="$(RecipesGeneratedDir)\.stamp" AlwaysCreate="true" />
+    <ItemGroup>
+      <Compile Include="$(RecipesGeneratedDir)\*.g.cs" />
+    </ItemGroup>
+  </Target>
+</Project>

@@ -1,0 +1,250 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.AmpelumHostOptions.SectionName = "Host" -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.AdminEndpointsEnabled.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.AmpelumHostOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.Audit.get -> SignalGrid.Ampelum.Host.AmpelumHostOptions.AuditOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.AuditOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.AuditOptions.AuditOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.AuditOptions.ChainSchemaVersion.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.Modules.get -> SignalGrid.Ampelum.Host.AmpelumHostOptions.ModulesOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.ModulesOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.ModulesOptions.ModulesOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.ModulesOptions.RegistryFile.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.OpenRouter.get -> SignalGrid.Ampelum.Host.AmpelumHostOptions.OpenRouterOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.OpenRouterOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.OpenRouterOptions.ApiKey.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.OpenRouterOptions.DefaultModel.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.OpenRouterOptions.OpenRouterOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.Port.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.Sse.get -> SignalGrid.Ampelum.Host.AmpelumHostOptions.SseOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.SseOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.SseOptions.FirstTokenDeadlineMs.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.SseOptions.KeepAliveSeconds.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.SseOptions.SseOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.Storage.get -> SignalGrid.Ampelum.Host.AmpelumHostOptions.StorageOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.StorageOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.StorageOptions.AuditFile.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.StorageOptions.PromptDir.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.StorageOptions.SqlitePath.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.StorageOptions.StorageOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostOptions.Url.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostBuilderExtensions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostBuilderExtensions.AddAmpelumHost(Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<SignalGrid.Ampelum.Host.AmpelumHostOptions>? configure = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostBuilderExtensions.MapAmpelumHostEndpoints(WebApplication! app) -> WebApplication!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.AmpelumHostBuilderExtensions.MapAmpelumModule<TSig>(WebApplication! app, string! moduleName, System.Func<System.IServiceProvider!, Ampelum.Predict<TSig>!>! factory, bool supportsStreaming = false) -> WebApplication! where TSig : Ampelum.ISignature
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.Count.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.Freeze() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.Get(string! moduleName) -> SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.IsFrozen.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.Names.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.Register(SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot! slot) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry.TryGet(string! moduleName, out SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot! slot) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleDescriptorFactory
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleDescriptorFactory.Create<TSig>(string! moduleName, bool supportsStreaming) -> SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor! where TSig : Ampelum.ISignature
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.Count.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.Freeze() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.Get(string! moduleName) -> SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.IsFrozen.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.ModuleRegistry() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.Names.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.Register(SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot! slot) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry.TryGet(string! moduleName, out SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot! slot) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot.Current.get -> Ampelum.Optimizers.IComposedModule!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot.Descriptor.get -> SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot.ModuleSlot(string! moduleName, Ampelum.Optimizers.IComposedModule! initial, SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor! descriptor) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot.SupportsStreaming.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.ModuleSlot.SwapTo(Ampelum.Optimizers.IComposedModule! next) -> Ampelum.Optimizers.IComposedModule!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.PredictComposedAdapter<TSig>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.PredictComposedAdapter<TSig>.Inner.get -> Ampelum.Predict<TSig>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.PredictComposedAdapter<TSig>.PredictComposedAdapter(Ampelum.Predict<TSig>! inner) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.PredictComposedAdapter<TSig>.Rebind(System.Collections.Generic.IReadOnlyDictionary<string!, object!>! newSubmodules) -> object! where TSig : Ampelum.ISignature
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.ModuleRegistry.PredictComposedAdapter<TSig>.Submodules.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>! where TSig : Ampelum.ISignature
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndex
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndex.AuditIndex(SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory! factory) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndex.CountAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<long>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndex.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndex.TryGetByTraceIdAsync(string! traceId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.AuditIndexRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndex.UpsertAsync(SignalGrid.Ampelum.Host.Persistence.AuditIndexRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow.AuditIndexRow(string! traceId, long sequence, System.DateTimeOffset timestamp, string! module, string! eventType) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow.EventType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow.Module.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow.Sequence.get -> long
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow.Timestamp.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.AuditIndexRow.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.HostSqliteConnectionFactory
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.HostSqliteConnectionFactory.HostSqliteConnectionFactory(Microsoft.Extensions.Options.IOptions<SignalGrid.Ampelum.Host.AmpelumHostOptions>! options) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.HostSqliteConnectionFactory.Open() -> Microsoft.Data.Sqlite.SqliteConnection!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.HostSqliteConnectionFactory.OpenWithLatencyBudget(System.TimeSpan budget) -> Microsoft.Data.Sqlite.SqliteConnection!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory.Open() -> Microsoft.Data.Sqlite.SqliteConnection!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory.OpenWithLatencyBudget(System.TimeSpan budget) -> Microsoft.Data.Sqlite.SqliteConnection!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IIndexRebuilder
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IIndexRebuilder.RebuildAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.RebuildSummary!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IAuditIndex
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IAuditIndex.CountAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<long>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IAuditIndex.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IAuditIndex.TryGetByTraceIdAsync(string! traceId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.AuditIndexRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IAuditIndex.UpsertAsync(SignalGrid.Ampelum.Host.Persistence.AuditIndexRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IModuleRegistrySnapshotStore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IModuleRegistrySnapshotStore.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IModuleRegistrySnapshotStore.ListAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow!>!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IModuleRegistrySnapshotStore.UpsertAsync(SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore.CompleteAsync(string! runId, string! finalState, string? resultVersionId, string? errorMessage, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore.InsertAsync(SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore.TryGetAsync(string! runId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore.UpdateProgressAsync(string! runId, int trialsCompleted, int? trialsTotal, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.GetActiveAsync(string! moduleName, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.InsertChallengerAsync(SignalGrid.Ampelum.Host.Persistence.PromptVersionRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.ListByModuleAsync(string! moduleName, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow!>!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.ListModulesAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.PromoteAtomicallyAsync(string! moduleName, string! targetVersionId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.PromoteResult!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.TryGetByIdAsync(string! versionId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IndexRebuilder
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IndexRebuilder.IndexRebuilder(SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory! connectionFactory, SignalGrid.Ampelum.Host.Persistence.IAuditIndex! auditIndex, SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore! promptStore, SignalGrid.Ampelum.Host.Persistence.IOptimizerRunStore! optimizerStore, SignalGrid.Ampelum.Host.Persistence.IModuleRegistrySnapshotStore! moduleSnapshot, SignalGrid.Ampelum.Host.ModuleRegistry.IModuleRegistry! moduleRegistry, Microsoft.Extensions.Options.IOptions<SignalGrid.Ampelum.Host.AmpelumHostOptions>! options) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IndexRebuilder.RebuildAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.RebuildSummary!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleRegistrySnapshotStore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleRegistrySnapshotStore.ModuleRegistrySnapshotStore(SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory! factory) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleRegistrySnapshotStore.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleRegistrySnapshotStore.ListAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow!>!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleRegistrySnapshotStore.UpsertAsync(SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow.ModuleSnapshotRow(string! moduleName, string! signatureType, bool supportsStream, System.DateTimeOffset registeredAt) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow.RegisteredAt.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow.SignatureType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.ModuleSnapshotRow.SupportsStream.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.CompletedAt.get -> System.DateTimeOffset?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.ErrorMessage.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.OptimizerRunRow(string! runId, string! moduleName, string! optimizerType, string! state, System.DateTimeOffset startedAt, System.DateTimeOffset? completedAt, int trialsCompleted, int? trialsTotal, string? resultVersionId, string? errorMessage) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.OptimizerType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.ResultVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.RunId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.StartedAt.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.State.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.TrialsCompleted.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow.TrialsTotal.get -> int?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore.OptimizerRunStore(SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory! factory) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore.CompleteAsync(string! runId, string! finalState, string? resultVersionId, string? errorMessage, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore.InsertAsync(SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore.TryGetAsync(string! runId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.OptimizerRunRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.OptimizerRunStore.UpdateProgressAsync(string! runId, int trialsCompleted, int? trialsTotal, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromoteConflictException
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromoteConflictException.PromoteConflictException(string! message) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromoteResult
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromoteResult.NewActiveVersionId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromoteResult.PreviousActiveVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromoteResult.PromoteResult(string! newActiveVersionId, string? previousActiveVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.CreatedAt.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.FilePath.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.Note.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.ParentVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.PromptVersionRow(string! versionId, string! moduleName, string! status, System.DateTimeOffset createdAt, string? parentVersionId, string! filePath, string? note) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.Status.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionRow.VersionId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.DeleteAllAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.GetActiveAsync(string! moduleName, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.InsertChallengerAsync(SignalGrid.Ampelum.Host.Persistence.PromptVersionRow! row, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.ListByModuleAsync(string! moduleName, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow!>!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.ListModulesAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.PromoteAtomicallyAsync(string! moduleName, string! targetVersionId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.PromoteResult!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.PromptVersionStore(SignalGrid.Ampelum.Host.Persistence.IHostSqliteConnectionFactory! factory) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.TryGetByIdAsync(string! versionId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.AuditEntriesIndexed.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.Duration.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.ModulesSnapshot.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.OptimizerRunsCleared.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.PromptVersionsIndexed.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.RebuildSummary(int auditEntriesIndexed, int promptVersionsIndexed, int optimizerRunsCleared, int modulesSnapshot, System.TimeSpan duration) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.SqliteOpenError
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.SqliteOpenError.SqliteOpenError(string! message) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.SqliteOpenError.SqliteOpenError(string! message, System.Exception! inner) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Tracing.HostActivitySource
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.Name -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.Source -> System.Diagnostics.ActivitySource!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.Version -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.AdminRebuild -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.All -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.AuditGet -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.AuditRead -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.AuditReplay -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.AuditVerify -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.Forward -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.Health -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.ModuleGet -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.ModulesList -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.OpenApi -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.OptimizeStart -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.OptimizeStatus -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.OptimizeStream -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.PromptsList -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.PromptsActive -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.PromptsCreate -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.PromptsModule -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.PromptsPromote -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.Ready -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostActivitySource.EndpointNames.Stream -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Tracing.HostMetrics
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostMetrics.Meter -> System.Diagnostics.Metrics.Meter!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostMetrics.Name -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostMetrics.RequestCount -> System.Diagnostics.Metrics.Counter<long>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostMetrics.RequestDurationMs -> System.Diagnostics.Metrics.Histogram<double>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.HostMetrics.SseEventsEmitted -> System.Diagnostics.Metrics.Counter<long>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Tracing.TraceIdResolver
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Tracing.TraceIdResolver.Resolve(string? requestParentTraceId = null) -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.IAuditEntryLookup
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.IAuditEntryLookup.TryGetBySequenceAsync(long sequence, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Audit.AuditEntry?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.IAuditEntryLookup.TryGetByTraceIdAsync(string! traceId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Audit.AuditEntry?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditEntryLookup
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditEntryLookup.AuditEntryLookup(Ampelum.Audit.IAuditSink! sink, SignalGrid.Ampelum.Host.Persistence.IAuditIndex! index) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditEntryLookup.TryGetBySequenceAsync(long sequence, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Audit.AuditEntry?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditEntryLookup.TryGetByTraceIdAsync(string! traceId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Audit.AuditEntry?>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.ReplayLmCalledException
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.ReplayLmCalledException.ReplayLmCalledException(string! message) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.ReplayLmCalledException.ReplayLmCalledException(string! message, System.Exception! inner) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditReplayHook
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditReplayHook.AuditReplayHook(Ampelum.Audit.AuditEntry! entry, string! expectedReplayHash) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditReplayHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditReplayHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditReplayHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.AuditReplayHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.IAuditReplayService
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Replay.IAuditReplayService.ReplayAsync(string! traceId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<SignalGrid.Ampelum.Host.Contracts.ForwardResponse!>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.<Clone>$() -> SignalGrid.Ampelum.Host.SseEnvelope!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.Deconstruct(out string! EventName, out string! JsonPayload, out long? Id) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.Equals(SignalGrid.Ampelum.Host.SseEnvelope? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.EventName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.EventName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.Id.get -> long?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.Id.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.JsonPayload.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.JsonPayload.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.SseEnvelope.SseEnvelope(string! EventName, string! JsonPayload, long? Id) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IOptimizerProgressBus
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IOptimizerProgressBus.Complete(string! runId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IOptimizerProgressBus.Publish(string! runId, SignalGrid.Ampelum.Host.SseEnvelope! envelope) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IOptimizerProgressBus.Subscribe(string! runId, System.Threading.CancellationToken ct) -> System.Collections.Generic.IAsyncEnumerable<SignalGrid.Ampelum.Host.SseEnvelope!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IOptimizerRunner
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IOptimizerRunner.EnqueueAsync(string! runId, SignalGrid.Ampelum.Host.Contracts.OptimizeRequest! request, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IReadinessState
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IReadinessState.IsReady.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IReadinessState.SetReady(bool value) -> void

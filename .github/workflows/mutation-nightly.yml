@@ -1,0 +1,47 @@
+name: Mutation Nightly (Stryker)
+
+# v1.0-rc1 readiness gate G2 — kill-score ≥85% across [Ampelum]* + [Ampelum.Testing]*.
+# Promoted from `stryker-nightly.yml`'s informational run; this workflow FAILS the
+# build when the kill-score drops below the `break: 85` threshold pinned in
+# `stryker-config.json`.
+
+on:
+  schedule:
+    # 03:30 UTC nightly — keeps the run off the PR critical path while still
+    # catching regressions overnight.
+    - cron: '30 3 * * *'
+  workflow_dispatch: {}
+  pull_request:
+    paths:
+      - 'stryker-config.json'
+      - '.github/workflows/mutation-nightly.yml'
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore tool manifest
+        run: dotnet tool restore
+
+      - name: Restore + build (Release)
+        run: |
+          dotnet restore
+          dotnet build -c Release --no-restore
+
+      - name: Run Stryker (Ampelum + Ampelum.Testing, break-on-<85%)
+        run: dotnet stryker --config-file stryker-config.json
+
+      - name: Upload mutation report (HTML + JSON)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: StrykerOutput/
+          retention-days: 30

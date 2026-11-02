@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Ampelum contributors",
+  "classifications": [ "Console", "Ampelum", "Research" ],
+  "name": "Ampelum Researcher (console + BootstrapFewShot)",
+  "identity": "Ampelum.Templates.Researcher",
+  "shortName": "ampelum-researcher",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "Company.Research",
+  "preferNameDirectory": true
+}

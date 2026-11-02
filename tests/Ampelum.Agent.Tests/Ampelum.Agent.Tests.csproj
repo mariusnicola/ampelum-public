@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SignalGrid.Ampelum.Agent.Tests</RootNamespace>
+    <AssemblyName>Ampelum.Agent.Tests</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>xUnit1051</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" />
+    <!-- Direct pin, not just transitive via Ampelum.Agent: NuGetAudit (NU1903) flags the version
+         Microsoft.Data.Sqlite resolves to when this package is reached only transitively. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent\Ampelum.Agent.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Postgres\Ampelum.Agent.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Contracts\Ampelum.Agent.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Tools\Ampelum.Agent.Tools.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Synthesis\Ampelum.Agent.Synthesis.csproj" />
+  </ItemGroup>
+</Project>

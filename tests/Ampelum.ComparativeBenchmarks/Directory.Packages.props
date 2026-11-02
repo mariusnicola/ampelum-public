@@ -1,0 +1,39 @@
+<Project>
+  <!--
+    Isolated Central Package Management for ComparativeBenchmarks.
+
+    This file shadows the root Directory.Packages.props because MSBuild walks UP
+    from the .csproj and stops at the FIRST Directory.Packages.props it finds.
+    All competitor packages and any version drift live here so the SUT
+    (Ampelum.csproj at the repo root) and the unit-test suite stay on their
+    pinned versions and can never collide with SK / AutoGen / LangChain
+    transitive closures.
+
+    Keep these pins in lock-step with the root Directory.Packages.props for
+    the Ampelum-shared deps (MEAI 10.5.x, OpenAI 2.10.x, BenchmarkDotNet,
+    xunit, etc.) so the SUT references resolve to the exact same DLLs as
+    the production library.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Shared (must match root Directory.Packages.props for SUT consistency) -->
+    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.5.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.5.0" />
+    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.5.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="OpenAI" Version="2.10.0" />
+    <PackageVersion Include="BenchmarkDotNet" Version="0.14.0" />
+
+    <!-- Competitor pins -->
+    <!-- Microsoft Semantic Kernel — latest stable as of 2026-04-26 -->
+    <PackageVersion Include="Microsoft.SemanticKernel" Version="1.74.0" />
+    <!-- Microsoft AutoGen.NET — meta-package + Core (real IAgent surface) -->
+    <PackageVersion Include="AutoGen" Version="0.2.3" />
+    <PackageVersion Include="AutoGen.Core" Version="0.2.3" />
+    <!-- tryAGI LangChain.NET port -->
+    <PackageVersion Include="LangChain" Version="0.17.0" />
+    <PackageVersion Include="LangChain.Core" Version="0.17.0" />
+  </ItemGroup>
+</Project>

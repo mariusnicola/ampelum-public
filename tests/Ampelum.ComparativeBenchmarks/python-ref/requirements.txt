@@ -1,0 +1,16 @@
+# Python reference implementation pins.
+#
+# This file feeds the comparative-benchmarks subprocess harness only. The
+# reference framework is the upstream Python project that Ampelum learns
+# from; it lives entirely under tests/Ampelum.ComparativeBenchmarks/python-ref/
+# and never crosses into the main C# source (the v0.9h plan requires no
+# `dspy` strings outside this folder, enforced by the alpha.6 grep gate).
+#
+# Pinned to last verified-compatible release for v0.9.1-alpha.5 (2026-04-26).
+dspy-ai==2.5.43
+# Cap pydantic to a 2.x line we know dspy-ai 2.5.x resolves cleanly against.
+pydantic>=2.7,<3.0
+# Tokenizer / LM client deps used by S8 (BootstrapFewShot wall-clock).
+tiktoken>=0.7.0,<1.0
+# psutil powers RunResult.peak_working_set_bytes.
+psutil>=5.9,<7.0

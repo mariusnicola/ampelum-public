@@ -1,0 +1,19 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.PgVectorOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.ConnectionString.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.ConnectionString.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.VectorDimension.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.VectorDimension.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.TableName.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorOptions.TableName.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.IPgVectorBackend
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.IPgVectorBackend.EnsureSchemaAsync(string! table, int dim, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.IPgVectorBackend.UpsertAsync(string! table, System.Collections.Generic.IReadOnlyList<(string! Id, string! Text, string! MetadataJson, System.ReadOnlyMemory<float> Embedding)>! rows, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.IPgVectorBackend.QueryAsync(string! table, System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? filterEquals, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(string! Id, string! Text, string! MetadataJson, double Score)>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorStore
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorStore.PgVectorStore(Ampelum.VectorStores.PgVector.PgVectorOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorStore.PgVectorStore(Ampelum.VectorStores.PgVector.PgVectorOptions! options, Ampelum.VectorStores.PgVector.IPgVectorBackend! backend) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorStore.UpsertAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! documents, System.ReadOnlyMemory<float>[]! vectors, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorStore.QueryAsync(System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(Ampelum.Retrieval.RetrievedDocument! Document, double Score)>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.PgVector.PgVectorStore.DisposeAsync() -> System.Threading.Tasks.ValueTask

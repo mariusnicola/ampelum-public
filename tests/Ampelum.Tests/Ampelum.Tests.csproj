@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Retrieval\Ampelum.Retrieval.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Persistence.Sqlite\Ampelum.Persistence.Sqlite.csproj" />
+  </ItemGroup>
+  <!--
+    XPlat Code Coverage flake mitigation (v0.7 Task 3, fix branch 3.3b).
+    When invoked with `-p:RunCoverageAware=true`, copy the serialized runner
+    config alongside the assembly so xunit.v3 picks it up and disables
+    parallelization for the assembly. CI uses msbuild Coverlet (which does
+    not flake) so this property stays unset there. Local devs running
+    XPlat Code Coverage should set the property.
+  -->
+  <ItemGroup Condition=" '$(RunCoverageAware)' == 'true' ">
+    <None Include="xunit.runner.coverage.json"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="xunit.runner.json"
+          Visible="false" />
+  </ItemGroup>
+</Project>

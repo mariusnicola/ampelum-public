@@ -1,0 +1,19 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.CrossEncoderOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.ModelPath.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.ModelPath.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.ExpectedSha256.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.ExpectedSha256.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.MaxSequenceLength.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderOptions.MaxSequenceLength.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.IRelevanceScorer
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.IRelevanceScorer.Score(string! query, string! document) -> float
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderReranker
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderReranker.CrossEncoderReranker(Ampelum.Retrieval.Reranking.CrossEncoderOptions! options, Ampelum.Retrieval.Reranking.ModelDownloader! downloader) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderReranker.CrossEncoderReranker(Ampelum.Retrieval.Reranking.IRelevanceScorer! scorer) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderReranker.RerankAsync(string! query, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! candidates, int topK, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.CrossEncoderReranker.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.ModelDownloader
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.ModelDownloader.ModelDownloader(System.Func<string!, System.Threading.Tasks.Task<byte[]!>!>? downloader = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Reranking.ModelDownloader.ResolveAsync(string! targetPath, string! expectedSha256Hex, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<string!>!

@@ -1,0 +1,12 @@
+<Project>
+  <!-- Stop walking up — we deliberately do NOT inherit the repo's
+       Directory.Build.props/targets, Directory.Packages.props, or Ampelum.sln.
+       This project must behave like a standalone downstream consumer that
+       only sees the local _packs/ feed via nuget.config. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+</Project>

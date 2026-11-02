@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SignalGrid.Ampelum.Agent.Yaml</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Agent.Yaml</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Agent.Yaml</PackageId>
+    <Version>0.1.0-rc1</Version>
+    <Description>Official YAML compiler for SignalGrid.Ampelum workflow definitions: parses, statically validates, and compiles workflow.yml into a content-addressed WorkflowArtifact.</Description>
+    <PackageTags>signalgrid;ampelum;agents;workflows;yaml;compiler</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Agent.Contracts\Ampelum.Agent.Contracts.csproj" Version="[0.8.0-rc3, 0.9.0)" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <AssemblyName>SignalGrid.Ampelum.Retrieval</AssemblyName>
+    <PackageId>SignalGrid.Ampelum.Retrieval</PackageId>
+    <Description>Document loaders, text splitters, and BM25 hybrid retrieval for Ampelum.</Description>
+    <PackageTags>ampelum;llm;ai;rag;retrieval;bm25</PackageTags>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <PackageReference Include="Lucene.Net" />
+    <PackageReference Include="Lucene.Net.Analysis.Common" />
+    <PackageReference Include="Lucene.Net.QueryParser" />
+    <PackageReference Include="PdfPig" />
+    <PackageReference Include="AngleSharp" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="SharpToken" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Tests" />
+  </ItemGroup>
+</Project>

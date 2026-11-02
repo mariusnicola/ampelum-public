@@ -1,0 +1,10 @@
+{
+  "gates": [
+    { "benchmark": "PredictBaselineGate.Forward",            "metric": "MeanNs",        "max": 15000 },
+    { "benchmark": "PredictFullPipelineGate.Forward",        "metric": "MeanOverheadNs","max": 25000, "baseline": "PredictBaselineGate.Forward" },
+    { "benchmark": "AuditEntryHashGate.Compute",             "metric": "MeanNs",        "max": 5000 },
+    { "benchmark": "BudgetConsumeGate.Consume",              "metric": "MeanNs",        "max": 50 },
+    { "benchmark": "ChatAdapterAllocGate.Parse",             "metric": "AllocBytes",    "max": 256 },
+    { "benchmark": "JsonAdapterAllocGate.Parse",             "metric": "AllocBytes",    "max": 256 }
+  ]
+}

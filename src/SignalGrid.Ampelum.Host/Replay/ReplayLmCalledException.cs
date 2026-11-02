@@ -1,0 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
+
+namespace SignalGrid.Ampelum.Host.Replay;
+
+/// <summary>Thrown when AuditReplayHook detects the LM was called during a replay (spec §11).</summary>
+[Experimental("AMPELUM_V09_PREVIEW")]
+public sealed class ReplayLmCalledException : Exception
+{
+    /// <summary>Initializes a new instance of the <see cref="ReplayLmCalledException"/> class.</summary>
+    /// <param name="message">The error message that explains the reason for the exception.</param>
+    public ReplayLmCalledException(string message) : base(message) { }
+
+    /// <summary>Initializes a new instance of the <see cref="ReplayLmCalledException"/> class with a specified error message and a reference to the inner exception that is the cause of this exception.</summary>
+    /// <param name="message">The error message that explains the reason for the exception.</param>
+    /// <param name="inner">The exception that is the cause of the current exception.</param>
+    public ReplayLmCalledException(string message, Exception inner) : base(message, inner) { }
+}

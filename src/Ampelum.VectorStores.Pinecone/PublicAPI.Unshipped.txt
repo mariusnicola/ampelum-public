@@ -1,0 +1,20 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.PineconeOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.ApiKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.ApiKey.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.Environment.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.Environment.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.IndexName.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.IndexName.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.Namespace.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeOptions.Namespace.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.IPineconeIndex
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.IPineconeIndex.UpsertAsync(string! namespace, System.Collections.Generic.IReadOnlyList<(string! Id, System.ReadOnlyMemory<float> Vector, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Metadata)>! points, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.IPineconeIndex.QueryAsync(string! namespace, System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? filterEquals, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(string! Id, double Score, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Metadata)>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeVectorStore
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeVectorStore.PineconeVectorStore(Ampelum.VectorStores.Pinecone.PineconeOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeVectorStore.PineconeVectorStore(Ampelum.VectorStores.Pinecone.PineconeOptions! options, Ampelum.VectorStores.Pinecone.IPineconeIndex! index) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeVectorStore.UpsertAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! documents, System.ReadOnlyMemory<float>[]! vectors, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeVectorStore.QueryAsync(System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(Ampelum.Retrieval.RetrievedDocument! Document, double Score)>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Pinecone.PineconeVectorStore.DisposeAsync() -> System.Threading.Tasks.ValueTask

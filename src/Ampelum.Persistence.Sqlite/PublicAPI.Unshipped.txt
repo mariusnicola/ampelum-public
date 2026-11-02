@@ -1,0 +1,12 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.MaxEventBytes -> int
+[AMPELUM_V09_PREVIEW]static Ampelum.Context.SqliteEventStore.OpenAsync(string! dbPath, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Context.SqliteEventStore!>
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.AcquireWriterLockAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.IAsyncDisposable!>
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.AppendAsync(Ampelum.Context.EventEntry! entry, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.ReadAsync(Ampelum.Context.EventQuery! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Context.EventEntry!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.CurrentTurnAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.NextSeqAsync(int turn, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.SupersedeAsync(string! key, string! supersededBy, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.CheckpointAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Context.SqliteEventStore.DisposeAsync() -> System.Threading.Tasks.ValueTask

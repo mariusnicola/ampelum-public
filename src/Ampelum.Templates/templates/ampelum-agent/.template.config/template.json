@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Ampelum contributors",
+  "classifications": [ "Console", "Ampelum", "Agents" ],
+  "name": "Ampelum Agent (GroupChat + ITypedTool)",
+  "identity": "Ampelum.Templates.Agent",
+  "shortName": "ampelum-agent",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "Company.Agent",
+  "preferNameDirectory": true
+}

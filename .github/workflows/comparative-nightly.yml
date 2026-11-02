@@ -1,0 +1,81 @@
+name: comparative-nightly
+
+# Runs the v0.9.1-alpha.6 comparative benchmark suite on linux-x64 — the
+# authoritative platform for the must-be-#1 gate. Triggered
+# nightly + on the 'comparative-required' PR label.
+#
+# Job:
+#   1. Restore + build Release.
+#   2. Run all 11 BDN scenarios with full warm-up + 5 iterations.
+#   3. Run the AOT cold-start outer driver (tools/measure-cold-start.sh)
+#      → emits tools/cold-start-result.json that the ranker reads.
+#   4. Run tools/comparative-rank.csx — fails the build if any must-be-#1
+#      verdict is FAIL (M1-M6 from docs/performance/comparative-results.md).
+#   5. Archive BDN artifacts as a workflow artifact.
+
+on:
+  schedule:
+    - cron: '0 4 * * *'   # 04:00 UTC nightly
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+
+jobs:
+  comparative:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'comparative-required')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with: { dotnet-version: '10.0.x' }
+
+      - name: Install dotnet-script
+        run: dotnet tool install -g dotnet-script
+
+      - name: Restore + build (Release)
+        run: |
+          dotnet restore tests/Ampelum.ComparativeBenchmarks/Ampelum.ComparativeBenchmarks.csproj
+          dotnet build  tests/Ampelum.ComparativeBenchmarks/Ampelum.ComparativeBenchmarks.csproj -c Release --no-restore
+
+      - name: Publish AotSmoke (linux-x64) for cold-start driver
+        run: |
+          dotnet publish tests/Ampelum.AotSmoke -c Release -r linux-x64 --self-contained true \
+            -o artifacts/aot-smoke
+
+      - name: Run AOT cold-start driver (10 iterations)
+        run: |
+          mkdir -p tools
+          # The driver shell script lives in tools/; if it's missing for some
+          # reason, emit a sentinel JSON so the ranker reports "missing" rather
+          # than crashing.
+          if [ -x tools/measure-cold-start.sh ]; then
+            AMPELUM_AOT_PROBE_PATH=$(pwd)/artifacts/aot-smoke/Ampelum.AotSmoke \
+              bash tools/measure-cold-start.sh 10 > tools/cold-start-result.json
+          else
+            echo '{"iterations":0,"min_ms":0,"p50_ms":0,"p95_ms":0,"max_ms":0,"note":"driver missing"}' \
+              > tools/cold-start-result.json
+          fi
+          cat tools/cold-start-result.json
+
+      - name: Run comparative benchmarks (full warm-up + 5 iterations)
+        working-directory: tests/Ampelum.ComparativeBenchmarks
+        run: |
+          dotnet run -c Release --no-build -- \
+            --filter '*' \
+            --warmupCount 3 \
+            --iterationCount 5 \
+            --launchCount 1
+
+      - name: Run ranker (enforce must-be-#1 gate)
+        run: dotnet script tools/comparative-rank.csx
+
+      - name: Archive BDN artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparative-bdn-artifacts
+          path: |
+            tests/Ampelum.ComparativeBenchmarks/BenchmarkDotNet.Artifacts/
+            tools/cold-start-result.json
+          retention-days: 30

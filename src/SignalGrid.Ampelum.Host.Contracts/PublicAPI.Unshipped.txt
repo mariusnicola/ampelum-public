@@ -1,0 +1,657 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]abstract SignalGrid.Ampelum.Host.Contracts.ExampleSource.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.ExampleSource!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.BadRequest = "bad_request" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.BudgetExceeded = "budget_exceeded" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.InternalError = "internal_error" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.ModuleNotFound = "module_not_found" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.NotFound = "not_found" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.PromoteConflict = "promote_conflict" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.ReplayLmCalled = "replay_lm_called" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.RunNotFound = "run_not_found" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.SignatureValidationFailed = "signature_validation_failed" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.SplitBrain = "split_brain" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.TraceNotFound = "trace_not_found" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.ErrorCodes.VersionNotFound = "version_not_found" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizerTypes.BootstrapFewShot = "BootstrapFewShot" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizerTypes.COPRO = "COPRO" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizerTypes.MIPROv2 = "MIPROv2" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizerTypes.SIMBA = "SIMBA" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizeRunState.Cancelled = "cancelled" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizeRunState.Failed = "failed" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizeRunState.Queued = "queued" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizeRunState.Running = "running" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.OptimizeRunState.Succeeded = "succeeded" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.PromptStatus.Active = "active" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.PromptStatus.Challenger = "challenger" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.PromptStatus.Retired = "retired" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Done = "done" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Error = "error" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Final = "final" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Partial = "partial" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Progress = "progress" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Token = "token" -> string!
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Host.Contracts.SseEventNames.Trial = "trial" -> string!
+[AMPELUM_V09_PREVIEW]override sealed SignalGrid.Ampelum.Host.Contracts.FileExamples.Equals(SignalGrid.Ampelum.Host.Contracts.ExampleSource? other) -> bool
+[AMPELUM_V09_PREVIEW]override sealed SignalGrid.Ampelum.Host.Contracts.InlineExamples.Equals(SignalGrid.Ampelum.Host.Contracts.ExampleSource? other) -> bool
+[AMPELUM_V09_PREVIEW]override sealed SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Equals(SignalGrid.Ampelum.Host.Contracts.ExampleSource? other) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditPage.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditPage.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditPage.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.BudgetHint.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.BudgetHint.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.BudgetHint.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.DemoExample.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.DemoExample.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.DemoExample.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ErrorResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ErrorResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ExampleSource.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ExampleSource.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ExampleSource.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FileExamples.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.FileExamples!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FileExamples.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FileExamples.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.FileExamples.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ForwardRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ForwardRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ForwardResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ForwardResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.InlineExamples.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.InlineExamples!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.InlineExamples.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.InlineExamples.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.InlineExamples.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromoteRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromoteRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromoteRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromoteResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromoteResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromoteResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptVersion.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptVersion.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptVersion.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptVersionList.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptVersionList.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.PromptVersionList.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.RemoteExamples.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.RemoteExamples!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.RemoteExamples.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.RemoteExamples.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseDonePayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseDonePayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseDonePayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.UsageInfo.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.UsageInfo.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.UsageInfo.ToString() -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.AuditEntryDto!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.AuditEntryDto(long Sequence, System.DateTimeOffset Timestamp, string! TraceId, string! ModuleName, string! EventType, string! ModelId, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Inputs, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs, long PromptTokens, long CompletionTokens, string! EntryHashHex, string! PrevHashHex, int SchemaVersion) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.CompletionTokens.get -> long
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.CompletionTokens.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Deconstruct(out long Sequence, out System.DateTimeOffset Timestamp, out string! TraceId, out string! ModuleName, out string! EventType, out string! ModelId, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Inputs, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs, out long PromptTokens, out long CompletionTokens, out string! EntryHashHex, out string! PrevHashHex, out int SchemaVersion) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.EntryHashHex.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.EntryHashHex.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Equals(SignalGrid.Ampelum.Host.Contracts.AuditEntryDto? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.EventType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.EventType.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Inputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.ModelId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.ModelId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.PrevHashHex.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.PrevHashHex.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.PromptTokens.get -> long
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.PromptTokens.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.SchemaVersion.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.SchemaVersion.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Sequence.get -> long
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Sequence.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Timestamp.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.Timestamp.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.AuditPage!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.AuditPage(System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.AuditEntryDto!>! Entries, long? NextSinceSequence) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.Deconstruct(out System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.AuditEntryDto!>! Entries, out long? NextSinceSequence) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.Entries.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.AuditEntryDto!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.Entries.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.Equals(SignalGrid.Ampelum.Host.Contracts.AuditPage? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.NextSinceSequence.get -> long?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditPage.NextSinceSequence.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.AuditVerifyResponse(bool Ok, long? BrokenAt, string! Reason) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.BrokenAt.get -> long?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.BrokenAt.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Deconstruct(out bool Ok, out long? BrokenAt, out string! Reason) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Equals(SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Ok.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Ok.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Reason.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.Reason.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.BudgetHint!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.BudgetHint(long? TokenLimit = null, decimal? CostCentsLimit = null, int? CallLimit = null, int? DeadlineSeconds = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.CallLimit.get -> int?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.CallLimit.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.CostCentsLimit.get -> decimal?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.CostCentsLimit.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.DeadlineSeconds.get -> int?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.DeadlineSeconds.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.Deconstruct(out long? TokenLimit, out decimal? CostCentsLimit, out int? CallLimit, out int? DeadlineSeconds) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.Equals(SignalGrid.Ampelum.Host.Contracts.BudgetHint? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.TokenLimit.get -> long?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.BudgetHint.TokenLimit.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.CreatePromptVersionRequest(System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!>! DemoAssignments, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! InstructionOverrides, string? ParentVersionId = null, string? Note = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!>! DemoAssignments, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! InstructionOverrides, out string? ParentVersionId, out string? Note) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.DemoAssignments.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.DemoAssignments.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.Equals(SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.InstructionOverrides.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.InstructionOverrides.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.Note.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.Note.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.ParentVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.ParentVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.DemoExample!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Inputs, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.DemoExample(System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Inputs, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.Equals(SignalGrid.Ampelum.Host.Contracts.DemoExample? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.Inputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.DemoExample.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorCodes
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.ErrorResponse!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Code.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Code.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Deconstruct(out string! TraceId, out string! Code, out string! Message, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>? Details) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Details.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Details.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Equals(SignalGrid.Ampelum.Host.Contracts.ErrorResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.ErrorResponse(string! TraceId, string! Code, string! Message, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>? Details = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Message.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.Message.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ErrorResponse.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ExampleSource
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ExampleSource.ExampleSource() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ExampleSource.ExampleSource(SignalGrid.Ampelum.Host.Contracts.ExampleSource! original) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.ClrType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.ClrType.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Deconstruct(out string! Name, out string! ClrType, out string? Description, out bool Required) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Description.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Description.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Equals(SignalGrid.Ampelum.Host.Contracts.FieldDescriptor? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.FieldDescriptor(string! Name, string! ClrType, string? Description, bool Required) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Name.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Name.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Required.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.Required.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FileExamples
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FileExamples.Deconstruct(out string! Path) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FileExamples.Equals(SignalGrid.Ampelum.Host.Contracts.FileExamples? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FileExamples.FileExamples(string! Path) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FileExamples.Path.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.FileExamples.Path.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.ForwardRequest!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Budget.get -> SignalGrid.Ampelum.Host.Contracts.BudgetHint?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Budget.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Inputs, out string? PromptVersionId, out string? ParentTraceId, out SignalGrid.Ampelum.Host.Contracts.BudgetHint? Budget) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Equals(SignalGrid.Ampelum.Host.Contracts.ForwardRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.ForwardRequest(System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Inputs, string? PromptVersionId = null, string? ParentTraceId = null, SignalGrid.Ampelum.Host.Contracts.BudgetHint? Budget = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.Inputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.ParentTraceId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.ParentTraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.PromptVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardRequest.PromptVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.ForwardResponse!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Deconstruct(out string! TraceId, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs, out SignalGrid.Ampelum.Host.Contracts.UsageInfo! Usage, out string! ModelId, out string! ModuleName, out string? PromptVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Equals(SignalGrid.Ampelum.Host.Contracts.ForwardResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.ForwardResponse(string! TraceId, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs, SignalGrid.Ampelum.Host.Contracts.UsageInfo! Usage, string! ModelId, string! ModuleName, string? PromptVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.ModelId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.ModelId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.PromptVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.PromptVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Usage.get -> SignalGrid.Ampelum.Host.Contracts.UsageInfo!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ForwardResponse.Usage.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.InlineExamples
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.InlineExamples.Deconstruct(out System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>! Examples) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.InlineExamples.Equals(SignalGrid.Ampelum.Host.Contracts.InlineExamples? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.InlineExamples.Examples.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.InlineExamples.Examples.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.InlineExamples.InlineExamples(System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>! Examples) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Deconstruct(out string! Name, out string! SignatureType, out string! Description, out System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!>! Inputs, out System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!>! Outputs, out bool SupportsStreaming) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Description.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Description.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Equals(SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Inputs.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Inputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.ModuleDescriptor(string! Name, string! SignatureType, string! Description, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!>! Inputs, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!>! Outputs, bool SupportsStreaming) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Name.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Name.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Outputs.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.SignatureType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.SignatureType.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.SupportsStreaming.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.SupportsStreaming.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.ModuleListResponse!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor!>! Modules) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.Equals(SignalGrid.Ampelum.Host.Contracts.ModuleListResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.ModuleListResponse(System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor!>! Modules) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.Modules.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.Modules.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.OptimizeRequest!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.Budget.get -> SignalGrid.Ampelum.Host.Contracts.BudgetHint?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.Budget.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.Deconstruct(out string! OptimizerType, out SignalGrid.Ampelum.Host.Contracts.ExampleSource! TrainingSet, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! OptimizerOptions, out SignalGrid.Ampelum.Host.Contracts.BudgetHint? Budget) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.Equals(SignalGrid.Ampelum.Host.Contracts.OptimizeRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.OptimizeRequest(string! OptimizerType, SignalGrid.Ampelum.Host.Contracts.ExampleSource! TrainingSet, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! OptimizerOptions, SignalGrid.Ampelum.Host.Contracts.BudgetHint? Budget = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.OptimizerOptions.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.OptimizerOptions.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.OptimizerType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.OptimizerType.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.TrainingSet.get -> SignalGrid.Ampelum.Host.Contracts.ExampleSource!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.TrainingSet.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizerTypes
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.Deconstruct(out string! RunId, out string! ModuleName) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.Equals(SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.OptimizeRunHandle(string! RunId, string! ModuleName) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.RunId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.RunId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunState
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.CompletedAt.get -> System.DateTimeOffset?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.CompletedAt.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.Deconstruct(out string! RunId, out string! ModuleName, out string! OptimizerType, out string! State, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? CompletedAt, out int TrialsCompleted, out int? TrialsTotal, out string? ResultPromptVersionId, out string? Error) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.Equals(SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.Error.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.Error.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.OptimizerType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.OptimizerType.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.OptimizeRunStatus(string! RunId, string! ModuleName, string! OptimizerType, string! State, System.DateTimeOffset StartedAt, System.DateTimeOffset? CompletedAt, int TrialsCompleted, int? TrialsTotal, string? ResultPromptVersionId, string? Error) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.ResultPromptVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.ResultPromptVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.RunId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.RunId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.StartedAt.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.StartedAt.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.State.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.State.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.TrialsCompleted.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.TrialsCompleted.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.TrialsTotal.get -> int?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.TrialsTotal.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.PromoteRequest!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest.Deconstruct(out string! VersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest.Equals(SignalGrid.Ampelum.Host.Contracts.PromoteRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest.PromoteRequest(string! VersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest.VersionId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteRequest.VersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.PromoteResponse!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.ActiveVersionId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.ActiveVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.Deconstruct(out string! ModuleName, out string! ActiveVersionId, out string? PreviousActiveVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.Equals(SignalGrid.Ampelum.Host.Contracts.PromoteResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.PreviousActiveVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.PreviousActiveVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromoteResponse.PromoteResponse(string! ModuleName, string! ActiveVersionId, string? PreviousActiveVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! ModuleNames) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.Equals(SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.ModuleNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.ModuleNames.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.PromptIndexResponse(System.Collections.Generic.IReadOnlyList<string!>! ModuleNames) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptStatus
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.PromptVersion!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.CreatedAt.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.CreatedAt.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.Deconstruct(out string! VersionId, out string! ModuleName, out System.DateTimeOffset CreatedAt, out string! Status, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!>! DemoAssignments, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! InstructionOverrides, out string? ParentVersionId, out string? Note) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.DemoAssignments.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.DemoAssignments.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.Equals(SignalGrid.Ampelum.Host.Contracts.PromptVersion? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.InstructionOverrides.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.InstructionOverrides.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.Note.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.Note.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.ParentVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.ParentVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.PromptVersion(string! VersionId, string! ModuleName, System.DateTimeOffset CreatedAt, string! Status, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample!>!>! DemoAssignments, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! InstructionOverrides, string? ParentVersionId, string? Note) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.Status.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.Status.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.VersionId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersion.VersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.PromptVersionList!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.Deconstruct(out string! ModuleName, out System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.PromptVersion!>! Versions) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.Equals(SignalGrid.Ampelum.Host.Contracts.PromptVersionList? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.ModuleName.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.ModuleName.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.PromptVersionList(string! ModuleName, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.PromptVersion!>! Versions) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.Versions.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.PromptVersion!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.PromptVersionList.Versions.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Deconstruct(out string! Uri, out string? Sha256) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Equals(SignalGrid.Ampelum.Host.Contracts.RemoteExamples? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.RemoteExamples(string! Uri, string? Sha256 = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Sha256.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Sha256.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Uri.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.RemoteExamples.Uri.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SseDonePayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload.Deconstruct(out string! TraceId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload.Equals(SignalGrid.Ampelum.Host.Contracts.SseDonePayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload.SseDonePayload(string! TraceId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseDonePayload.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SseErrorPayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Code.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Code.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Deconstruct(out string! TraceId, out string! Code, out string! Message) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Equals(SignalGrid.Ampelum.Host.Contracts.SseErrorPayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Message.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.Message.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.SseErrorPayload(string! TraceId, string! Code, string! Message) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseEventNames
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseEventNames.Forward
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseEventNames.Optimize
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SseFinalPayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Deconstruct(out string! TraceId, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs, out SignalGrid.Ampelum.Host.Contracts.UsageInfo! Usage, out string! ModelId, out string? PromptVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Equals(SignalGrid.Ampelum.Host.Contracts.SseFinalPayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.ModelId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.ModelId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.PromptVersionId.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.PromptVersionId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.SseFinalPayload(string! TraceId, System.Collections.Generic.IReadOnlyDictionary<string!, System.Text.Json.JsonElement>! Outputs, SignalGrid.Ampelum.Host.Contracts.UsageInfo! Usage, string! ModelId, string? PromptVersionId) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Usage.get -> SignalGrid.Ampelum.Host.Contracts.UsageInfo!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.Usage.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SsePartialPayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Deconstruct(out string! TraceId, out string! Field, out string! Value) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Equals(SignalGrid.Ampelum.Host.Contracts.SsePartialPayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Field.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Field.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.SsePartialPayload(string! TraceId, string! Field, string! Value) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Value.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.Value.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SseProgressPayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.Deconstruct(out string! RunId, out int TrialsCompleted, out int? TrialsTotal) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.Equals(SignalGrid.Ampelum.Host.Contracts.SseProgressPayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.RunId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.RunId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.SseProgressPayload(string! RunId, int TrialsCompleted, int? TrialsTotal) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.TrialsCompleted.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.TrialsCompleted.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.TrialsTotal.get -> int?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.TrialsTotal.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SseTokenPayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Deconstruct(out string! TraceId, out string! Field, out string! Delta) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Delta.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Delta.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Equals(SignalGrid.Ampelum.Host.Contracts.SseTokenPayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Field.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.Field.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.SseTokenPayload(string! TraceId, string! Field, string! Delta) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.SseTrialPayload!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Deconstruct(out string! RunId, out int TrialIndex, out double Score, out string! Status) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Equals(SignalGrid.Ampelum.Host.Contracts.SseTrialPayload? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.RunId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.RunId.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Score.get -> double
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Score.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.SseTrialPayload(string! RunId, int TrialIndex, double Score, string! Status) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Status.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.Status.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.TrialIndex.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.TrialIndex.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.<Clone>$() -> SignalGrid.Ampelum.Host.Contracts.UsageInfo!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.CompletionTokens.get -> long
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.CompletionTokens.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.CostCents.get -> decimal
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.CostCents.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.Deconstruct(out long PromptTokens, out long CompletionTokens, out decimal CostCents, out double DurationMs) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.DurationMs.get -> double
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.DurationMs.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.Equals(SignalGrid.Ampelum.Host.Contracts.UsageInfo? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.PromptTokens.get -> long
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.PromptTokens.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.UsageInfo.UsageInfo(long PromptTokens, long CompletionTokens, decimal CostCents, double DurationMs) -> void
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.operator !=(SignalGrid.Ampelum.Host.Contracts.AuditEntryDto? left, SignalGrid.Ampelum.Host.Contracts.AuditEntryDto? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AuditEntryDto.operator ==(SignalGrid.Ampelum.Host.Contracts.AuditEntryDto? left, SignalGrid.Ampelum.Host.Contracts.AuditEntryDto? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AuditPage.operator !=(SignalGrid.Ampelum.Host.Contracts.AuditPage? left, SignalGrid.Ampelum.Host.Contracts.AuditPage? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AuditPage.operator ==(SignalGrid.Ampelum.Host.Contracts.AuditPage? left, SignalGrid.Ampelum.Host.Contracts.AuditPage? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.operator !=(SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse? left, SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse.operator ==(SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse? left, SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.BudgetHint.operator !=(SignalGrid.Ampelum.Host.Contracts.BudgetHint? left, SignalGrid.Ampelum.Host.Contracts.BudgetHint? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.BudgetHint.operator ==(SignalGrid.Ampelum.Host.Contracts.BudgetHint? left, SignalGrid.Ampelum.Host.Contracts.BudgetHint? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.operator !=(SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest? left, SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest.operator ==(SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest? left, SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.DemoExample.operator !=(SignalGrid.Ampelum.Host.Contracts.DemoExample? left, SignalGrid.Ampelum.Host.Contracts.DemoExample? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.DemoExample.operator ==(SignalGrid.Ampelum.Host.Contracts.DemoExample? left, SignalGrid.Ampelum.Host.Contracts.DemoExample? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ErrorCodes.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ErrorResponse.operator !=(SignalGrid.Ampelum.Host.Contracts.ErrorResponse? left, SignalGrid.Ampelum.Host.Contracts.ErrorResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ErrorResponse.operator ==(SignalGrid.Ampelum.Host.Contracts.ErrorResponse? left, SignalGrid.Ampelum.Host.Contracts.ErrorResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ExampleSource.operator !=(SignalGrid.Ampelum.Host.Contracts.ExampleSource? left, SignalGrid.Ampelum.Host.Contracts.ExampleSource? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ExampleSource.operator ==(SignalGrid.Ampelum.Host.Contracts.ExampleSource? left, SignalGrid.Ampelum.Host.Contracts.ExampleSource? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.operator !=(SignalGrid.Ampelum.Host.Contracts.FieldDescriptor? left, SignalGrid.Ampelum.Host.Contracts.FieldDescriptor? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.FieldDescriptor.operator ==(SignalGrid.Ampelum.Host.Contracts.FieldDescriptor? left, SignalGrid.Ampelum.Host.Contracts.FieldDescriptor? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.FileExamples.operator !=(SignalGrid.Ampelum.Host.Contracts.FileExamples? left, SignalGrid.Ampelum.Host.Contracts.FileExamples? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.FileExamples.operator ==(SignalGrid.Ampelum.Host.Contracts.FileExamples? left, SignalGrid.Ampelum.Host.Contracts.FileExamples? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ForwardRequest.operator !=(SignalGrid.Ampelum.Host.Contracts.ForwardRequest? left, SignalGrid.Ampelum.Host.Contracts.ForwardRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ForwardRequest.operator ==(SignalGrid.Ampelum.Host.Contracts.ForwardRequest? left, SignalGrid.Ampelum.Host.Contracts.ForwardRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ForwardResponse.operator !=(SignalGrid.Ampelum.Host.Contracts.ForwardResponse? left, SignalGrid.Ampelum.Host.Contracts.ForwardResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ForwardResponse.operator ==(SignalGrid.Ampelum.Host.Contracts.ForwardResponse? left, SignalGrid.Ampelum.Host.Contracts.ForwardResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.InlineExamples.operator !=(SignalGrid.Ampelum.Host.Contracts.InlineExamples? left, SignalGrid.Ampelum.Host.Contracts.InlineExamples? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.InlineExamples.operator ==(SignalGrid.Ampelum.Host.Contracts.InlineExamples? left, SignalGrid.Ampelum.Host.Contracts.InlineExamples? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.operator !=(SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor? left, SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor.operator ==(SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor? left, SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.operator !=(SignalGrid.Ampelum.Host.Contracts.ModuleListResponse? left, SignalGrid.Ampelum.Host.Contracts.ModuleListResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.ModuleListResponse.operator ==(SignalGrid.Ampelum.Host.Contracts.ModuleListResponse? left, SignalGrid.Ampelum.Host.Contracts.ModuleListResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.operator !=(SignalGrid.Ampelum.Host.Contracts.OptimizeRequest? left, SignalGrid.Ampelum.Host.Contracts.OptimizeRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRequest.operator ==(SignalGrid.Ampelum.Host.Contracts.OptimizeRequest? left, SignalGrid.Ampelum.Host.Contracts.OptimizeRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizerTypes.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.operator !=(SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle? left, SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle.operator ==(SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle? left, SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRunState.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.operator !=(SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus? left, SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus.operator ==(SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus? left, SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromoteRequest.operator !=(SignalGrid.Ampelum.Host.Contracts.PromoteRequest? left, SignalGrid.Ampelum.Host.Contracts.PromoteRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromoteRequest.operator ==(SignalGrid.Ampelum.Host.Contracts.PromoteRequest? left, SignalGrid.Ampelum.Host.Contracts.PromoteRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromoteResponse.operator !=(SignalGrid.Ampelum.Host.Contracts.PromoteResponse? left, SignalGrid.Ampelum.Host.Contracts.PromoteResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromoteResponse.operator ==(SignalGrid.Ampelum.Host.Contracts.PromoteResponse? left, SignalGrid.Ampelum.Host.Contracts.PromoteResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.operator !=(SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse? left, SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse.operator ==(SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse? left, SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptStatus.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptVersion.operator !=(SignalGrid.Ampelum.Host.Contracts.PromptVersion? left, SignalGrid.Ampelum.Host.Contracts.PromptVersion? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptVersion.operator ==(SignalGrid.Ampelum.Host.Contracts.PromptVersion? left, SignalGrid.Ampelum.Host.Contracts.PromptVersion? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptVersionList.operator !=(SignalGrid.Ampelum.Host.Contracts.PromptVersionList? left, SignalGrid.Ampelum.Host.Contracts.PromptVersionList? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.PromptVersionList.operator ==(SignalGrid.Ampelum.Host.Contracts.PromptVersionList? left, SignalGrid.Ampelum.Host.Contracts.PromptVersionList? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.RemoteExamples.operator !=(SignalGrid.Ampelum.Host.Contracts.RemoteExamples? left, SignalGrid.Ampelum.Host.Contracts.RemoteExamples? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.RemoteExamples.operator ==(SignalGrid.Ampelum.Host.Contracts.RemoteExamples? left, SignalGrid.Ampelum.Host.Contracts.RemoteExamples? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseDonePayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SseDonePayload? left, SignalGrid.Ampelum.Host.Contracts.SseDonePayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseDonePayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SseDonePayload? left, SignalGrid.Ampelum.Host.Contracts.SseDonePayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SseErrorPayload? left, SignalGrid.Ampelum.Host.Contracts.SseErrorPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseErrorPayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SseErrorPayload? left, SignalGrid.Ampelum.Host.Contracts.SseErrorPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseEventNames.Forward.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseEventNames.Optimize.All.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SseFinalPayload? left, SignalGrid.Ampelum.Host.Contracts.SseFinalPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseFinalPayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SseFinalPayload? left, SignalGrid.Ampelum.Host.Contracts.SseFinalPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SsePartialPayload? left, SignalGrid.Ampelum.Host.Contracts.SsePartialPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SsePartialPayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SsePartialPayload? left, SignalGrid.Ampelum.Host.Contracts.SsePartialPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SseProgressPayload? left, SignalGrid.Ampelum.Host.Contracts.SseProgressPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseProgressPayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SseProgressPayload? left, SignalGrid.Ampelum.Host.Contracts.SseProgressPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SseTokenPayload? left, SignalGrid.Ampelum.Host.Contracts.SseTokenPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseTokenPayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SseTokenPayload? left, SignalGrid.Ampelum.Host.Contracts.SseTokenPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.operator !=(SignalGrid.Ampelum.Host.Contracts.SseTrialPayload? left, SignalGrid.Ampelum.Host.Contracts.SseTrialPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.SseTrialPayload.operator ==(SignalGrid.Ampelum.Host.Contracts.SseTrialPayload? left, SignalGrid.Ampelum.Host.Contracts.SseTrialPayload? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.UsageInfo.operator !=(SignalGrid.Ampelum.Host.Contracts.UsageInfo? left, SignalGrid.Ampelum.Host.Contracts.UsageInfo? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.UsageInfo.operator ==(SignalGrid.Ampelum.Host.Contracts.UsageInfo? left, SignalGrid.Ampelum.Host.Contracts.UsageInfo? right) -> bool
+[AMPELUM_V09_PREVIEW]virtual SignalGrid.Ampelum.Host.Contracts.ExampleSource.EqualityContract.get -> System.Type!
+[AMPELUM_V09_PREVIEW]virtual SignalGrid.Ampelum.Host.Contracts.ExampleSource.Equals(SignalGrid.Ampelum.Host.Contracts.ExampleSource? other) -> bool
+[AMPELUM_V09_PREVIEW]virtual SignalGrid.Ampelum.Host.Contracts.ExampleSource.PrintMembers(System.Text.StringBuilder! builder) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.GeneratedSerializerOptions.get -> System.Text.Json.JsonSerializerOptions?
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.GetTypeInfo(System.Type! type) -> System.Text.Json.Serialization.Metadata.JsonTypeInfo?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.AmpelumHostContractsJsonContext() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.AmpelumHostContractsJsonContext(System.Text.Json.JsonSerializerOptions! options) -> void
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.Default.get -> SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext!
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.AuditEntryDto.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.AuditEntryDto>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.AuditPage.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.AuditPage>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.AuditVerifyResponse.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.AuditVerifyResponse>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.Boolean.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<bool>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.BudgetHint.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.BudgetHint>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.CreatePromptVersionRequest.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.CreatePromptVersionRequest>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.DateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.Decimal.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<decimal>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.DemoExample.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.DemoExample>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.Double.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<double>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.ErrorResponse.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.ErrorResponse>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.ExampleSource.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.ExampleSource>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.FieldDescriptor.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.FileExamples.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.FileExamples>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.ForwardRequest.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.ForwardRequest>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.ForwardResponse.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.ForwardResponse>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.InlineExamples.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.InlineExamples>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.Int32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.Int64.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<long>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyDictionaryStringIReadOnlyListDemoExample.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample>>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyDictionaryStringJsonElement.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, System.Text.Json.JsonElement>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyDictionaryStringString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyDictionary<string, string>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyListAuditEntryDto.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.AuditEntryDto>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyListDemoExample.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.DemoExample>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyListFieldDescriptor.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.FieldDescriptor>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyListModuleDescriptor.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyListPromptVersion.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Contracts.PromptVersion>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.IReadOnlyListString.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Collections.Generic.IReadOnlyList<string>>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.JsonElement.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.Text.Json.JsonElement>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.ModuleDescriptor.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.ModuleDescriptor>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.ModuleListResponse.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.ModuleListResponse>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.NullableDateTimeOffset.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<System.DateTimeOffset?>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.NullableDecimal.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<decimal?>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.NullableInt32.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<int?>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.NullableInt64.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<long?>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.OptimizeRequest.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.OptimizeRequest>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.OptimizeRunHandle.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.OptimizeRunHandle>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.OptimizeRunStatus.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.OptimizeRunStatus>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.PromoteRequest.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.PromoteRequest>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.PromoteResponse.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.PromoteResponse>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.PromptIndexResponse.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.PromptIndexResponse>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.PromptVersion.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.PromptVersion>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.PromptVersionList.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.PromptVersionList>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.RemoteExamples.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.RemoteExamples>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SseDonePayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SseDonePayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SseErrorPayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SseErrorPayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SseFinalPayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SseFinalPayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SsePartialPayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SsePartialPayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SseProgressPayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SseProgressPayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SseTokenPayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SseTokenPayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.SseTrialPayload.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.SseTrialPayload>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.String.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<string>
+~[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Contracts.AmpelumHostContractsJsonContext.UsageInfo.get -> System.Text.Json.Serialization.Metadata.JsonTypeInfo<SignalGrid.Ampelum.Host.Contracts.UsageInfo>

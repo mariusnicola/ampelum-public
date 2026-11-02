@@ -1,0 +1,19 @@
+{
+  "stryker-config": {
+    "project": "src/Ampelum/Ampelum.csproj",
+    "test-projects": [
+      "tests/Ampelum.Tests/Ampelum.Tests.csproj",
+      "tests/Ampelum.Testing.Tests/Ampelum.Testing.Tests.csproj"
+    ],
+    "mutate": [
+      "src/Ampelum/**/*.cs",
+      "src/Ampelum.Testing/**/*.cs",
+      "!**/*.g.cs",
+      "!**/Generated/**/*.cs"
+    ],
+    "ignore-mutations": ["string", "regex"],
+    "thresholds": { "high": 95, "low": 85, "break": 85 },
+    "reporters": ["progress", "html", "json"],
+    "concurrency": 4
+  }
+}

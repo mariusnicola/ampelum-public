@@ -1,0 +1,29 @@
+#nullable enable
+Ampelum.Tools.WebSearch.IWebSearchProvider
+Ampelum.Tools.WebSearch.IWebSearchProvider.SearchAsync(string! query, int topK, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Tools.WebSearch.SearchResult!>!>
+Ampelum.Tools.WebSearch.SearchResult
+Ampelum.Tools.WebSearch.SearchResult.SearchResult(string! Title, string! Url, string! Snippet) -> void
+Ampelum.Tools.WebSearch.SearchResult.Title.init -> void
+Ampelum.Tools.WebSearch.SearchResult.Title.get -> string!
+Ampelum.Tools.WebSearch.SearchResult.Url.init -> void
+Ampelum.Tools.WebSearch.SearchResult.Url.get -> string!
+Ampelum.Tools.WebSearch.SearchResult.Snippet.init -> void
+Ampelum.Tools.WebSearch.SearchResult.Snippet.get -> string!
+override Ampelum.Tools.WebSearch.SearchResult.ToString() -> string!
+override Ampelum.Tools.WebSearch.SearchResult.GetHashCode() -> int
+override Ampelum.Tools.WebSearch.SearchResult.Equals(object? obj) -> bool
+Ampelum.Tools.WebSearch.SearchResult.Equals(Ampelum.Tools.WebSearch.SearchResult? other) -> bool
+Ampelum.Tools.WebSearch.SearchResult.Deconstruct(out string! Title, out string! Url, out string! Snippet) -> void
+static Ampelum.Tools.WebSearch.SearchResult.operator !=(Ampelum.Tools.WebSearch.SearchResult? left, Ampelum.Tools.WebSearch.SearchResult? right) -> bool
+static Ampelum.Tools.WebSearch.SearchResult.operator ==(Ampelum.Tools.WebSearch.SearchResult? left, Ampelum.Tools.WebSearch.SearchResult? right) -> bool
+Ampelum.Tools.WebSearch.SearchResult.<Clone>$() -> Ampelum.Tools.WebSearch.SearchResult!
+Ampelum.Tools.WebSearch.WebSearchTool
+Ampelum.Tools.WebSearch.WebSearchTool.WebSearchTool(Ampelum.Tools.WebSearch.IWebSearchProvider! provider, string! query, int topK = 3) -> void
+Ampelum.Tools.WebSearch.WebSearchTool.Name.get -> string!
+Ampelum.Tools.WebSearch.WebSearchTool.Description.get -> string!
+Ampelum.Tools.WebSearch.WebSearchTool.Query.get -> string!
+Ampelum.Tools.WebSearch.WebSearchTool.TopK.get -> int
+Ampelum.Tools.WebSearch.WebSearchTool.InvokeAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Tools.WebSearch.SearchResult!>!>
+Ampelum.Tools.WebSearch.BraveSearchProvider
+Ampelum.Tools.WebSearch.BraveSearchProvider.BraveSearchProvider(System.Net.Http.HttpClient! http, string! apiKey) -> void
+Ampelum.Tools.WebSearch.BraveSearchProvider.SearchAsync(string! query, int topK, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Tools.WebSearch.SearchResult!>!>

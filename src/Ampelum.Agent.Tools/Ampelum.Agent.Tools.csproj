@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SignalGrid.Ampelum.Agent.Tools</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Agent.Tools</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Agent.Tools</PackageId>
+    <Version>0.8.0-rc2</Version>
+    <Description>Generic tool implementations and sandbox contracts for SignalGrid.Ampelum agents.</Description>
+    <PackageTags>signalgrid;ampelum;agents;tools;sandbox</PackageTags>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Agent\Ampelum.Agent.csproj" Version="[0.8.0-rc2, 0.9.0)" />
+    <!-- Direct pin, not just transitive via Ampelum.Agent: NuGetAudit (NU1903) flags the version
+         Microsoft.Data.Sqlite resolves to when this package is reached only transitively. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+  </ItemGroup>
+  <!-- Tools → Ampelum.Agent only. No Ampelum core, no Synthesis. -->
+</Project>

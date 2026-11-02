@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Wire contracts (DTOs + JSON source-gen context) for SignalGrid.Ampelum.Host.</Description>
+    <PackageId>SignalGrid.Ampelum.Host.Contracts</PackageId>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+    <RootNamespace>SignalGrid.Ampelum.Host.Contracts</RootNamespace>
+    <!-- RS0041 fires on STJ source-gen *.g.cs properties that emit oblivious reference types;
+         the generated code is not under our control so suppress at project level. -->
+    <NoWarn>$(NoWarn);RS0041</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

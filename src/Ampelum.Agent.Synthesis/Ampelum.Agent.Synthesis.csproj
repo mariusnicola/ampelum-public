@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SignalGrid.Ampelum.Agent.Synthesis</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Agent.Synthesis</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Agent.Synthesis</PackageId>
+    <Version>0.8.0-rc2</Version>
+    <Description>Generic LLM-backed workflow and skill synthesis APIs for SignalGrid.Ampelum agents.</Description>
+    <PackageTags>signalgrid;ampelum;agents;synthesis;workflows</PackageTags>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" Version="[0.8.0-rc1, 0.9.0)" />
+    <ProjectReference Include="..\Ampelum.Agent\Ampelum.Agent.csproj" Version="[0.8.0-rc2, 0.9.0)" />
+    <ProjectReference Include="..\Ampelum.Agent.Yaml\Ampelum.Agent.Yaml.csproj" Version="[0.1.0-rc1, 0.2.0)" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Direct pin, not just transitive via Ampelum.Agent: NuGetAudit (NU1903) flags the version
+         Microsoft.Data.Sqlite resolves to when this package is reached only transitively. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+  </ItemGroup>
+  <!-- Synthesis to Ampelum + Ampelum.Agent + Ampelum.Agent.Yaml (the official workflow YAML compiler, so
+       synthesized workflow YAML is validated the same way any other workflow YAML is: no separate,
+       string search based validation path). It is the only bridge between LLM and orchestration. -->
+</Project>

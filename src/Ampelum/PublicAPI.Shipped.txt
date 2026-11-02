@@ -1,0 +1,895 @@
+#nullable enable
+const Ampelum.Audit.AuditMetadataKeys.CompletionTokens = "ampelum.audit.completion_tokens" -> string!
+const Ampelum.Audit.AuditMetadataKeys.ModelId = "ampelum.audit.model_id" -> string!
+const Ampelum.Audit.AuditMetadataKeys.PromptTokens = "ampelum.audit.prompt_tokens" -> string!
+const Ampelum.HookMetadataKeys.BudgetCostCents = "budget.cost_cents" -> string!
+const Ampelum.HookMetadataKeys.BudgetScope = "budget.scope" -> string!
+const Ampelum.HookMetadataKeys.CompletionTokens = "lm.tokens.completion" -> string!
+const Ampelum.HookMetadataKeys.LmCallDurationMs = "lm.call.duration_ms" -> string!
+const Ampelum.HookMetadataKeys.ModelId = "lm.model_id" -> string!
+const Ampelum.HookMetadataKeys.PromptTokens = "lm.tokens.prompt" -> string!
+const Ampelum.StreamingParseState.MaxPartialMarkerLength = 64 -> int
+const Ampelum.TraceKeys.CacheHit = "lm.cache_hit" -> string!
+const Ampelum.TraceKeys.Citations = "citations" -> string!
+const Ampelum.TraceKeys.DemosUsed = "demos_used" -> string!
+const Ampelum.TraceKeys.HookShortCircuited = "hook_short_circuited" -> string!
+const Ampelum.TraceKeys.Reasoning = "reasoning" -> string!
+const Ampelum.TraceKeys.RetryAttempt = "retry.attempt" -> string!
+const Ampelum.TraceKeys.StreamingParseFailure = "streaming_parse_failure" -> string!
+const Ampelum.TraceKeys.ToolCalls = "tool_calls" -> string!
+Ampelum.Adapters.TwoStepAdapter
+Ampelum.Adapters.TwoStepAdapter.Format(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! demos) -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.Adapters.TwoStepAdapter.Parse(Ampelum.SignatureMetadata! signature, Microsoft.Extensions.AI.ChatResponse! response) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Adapters.TwoStepAdapter.TwoStepAdapter(Microsoft.Extensions.AI.IChatClient! extractionClient) -> void
+Ampelum.Adapters.XMLAdapter
+Ampelum.Adapters.XMLAdapter.Format(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! demos) -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.Adapters.XMLAdapter.Parse(Ampelum.SignatureMetadata! signature, Microsoft.Extensions.AI.ChatResponse! response) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Adapters.XMLAdapter.ParseMode
+Ampelum.Adapters.XMLAdapter.ParseMode.Lenient = 1 -> Ampelum.Adapters.XMLAdapter.ParseMode
+Ampelum.Adapters.XMLAdapter.ParseMode.Strict = 0 -> Ampelum.Adapters.XMLAdapter.ParseMode
+Ampelum.Adapters.XMLAdapter.XMLAdapter(Ampelum.Adapters.XMLAdapter.ParseMode parseMode = Ampelum.Adapters.XMLAdapter.ParseMode.Lenient) -> void
+Ampelum.Audit.AuditChainVerificationResult
+Ampelum.Audit.AuditChainVerificationResult.<Clone>$() -> Ampelum.Audit.AuditChainVerificationResult!
+Ampelum.Audit.AuditChainVerificationResult.AuditChainVerificationResult(bool IsValid, long? BreakAtSequence, string! Reason) -> void
+Ampelum.Audit.AuditChainVerificationResult.BreakAtSequence.get -> long?
+Ampelum.Audit.AuditChainVerificationResult.BreakAtSequence.init -> void
+Ampelum.Audit.AuditChainVerificationResult.Deconstruct(out bool IsValid, out long? BreakAtSequence, out string! Reason) -> void
+Ampelum.Audit.AuditChainVerificationResult.Equals(Ampelum.Audit.AuditChainVerificationResult? other) -> bool
+Ampelum.Audit.AuditChainVerificationResult.IsValid.get -> bool
+Ampelum.Audit.AuditChainVerificationResult.IsValid.init -> void
+Ampelum.Audit.AuditChainVerificationResult.Reason.get -> string!
+Ampelum.Audit.AuditChainVerificationResult.Reason.init -> void
+Ampelum.Audit.AuditChainVerifier
+Ampelum.Audit.AuditEntry
+Ampelum.Audit.AuditEntry.<Clone>$() -> Ampelum.Audit.AuditEntry!
+Ampelum.Audit.AuditEntry.AuditEntry() -> void
+Ampelum.Audit.AuditEntry.CompletionTokens.get -> long
+Ampelum.Audit.AuditEntry.CompletionTokens.init -> void
+Ampelum.Audit.AuditEntry.EntryHash.get -> byte[]!
+Ampelum.Audit.AuditEntry.EntryHash.init -> void
+Ampelum.Audit.AuditEntry.Equals(Ampelum.Audit.AuditEntry? other) -> bool
+Ampelum.Audit.AuditEntry.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Audit.AuditEntry.Inputs.init -> void
+Ampelum.Audit.AuditEntry.ModelId.get -> string!
+Ampelum.Audit.AuditEntry.ModelId.init -> void
+Ampelum.Audit.AuditEntry.ModuleName.get -> string!
+Ampelum.Audit.AuditEntry.ModuleName.init -> void
+Ampelum.Audit.AuditEntry.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Audit.AuditEntry.Outputs.init -> void
+Ampelum.Audit.AuditEntry.PrevHash.get -> byte[]!
+Ampelum.Audit.AuditEntry.PrevHash.init -> void
+Ampelum.Audit.AuditEntry.PromptTokens.get -> long
+Ampelum.Audit.AuditEntry.PromptTokens.init -> void
+Ampelum.Audit.AuditEntry.Sequence.get -> long
+Ampelum.Audit.AuditEntry.Sequence.init -> void
+Ampelum.Audit.AuditEntry.Timestamp.get -> System.DateTimeOffset
+Ampelum.Audit.AuditEntry.Timestamp.init -> void
+Ampelum.Audit.AuditHook
+Ampelum.Audit.AuditHook.AuditHook(Ampelum.Audit.IAuditSink! sink, bool replayMode = false) -> void
+Ampelum.Audit.AuditHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.AuditHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.AuditHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.AuditHook.Order.get -> int
+Ampelum.Audit.AuditMetadataKeys
+Ampelum.Audit.AuditReplayMissingException
+Ampelum.Audit.AuditReplayMissingException.AuditReplayMissingException(string! moduleName) -> void
+Ampelum.Audit.AuditReplayMissingException.ModuleName.get -> string!
+Ampelum.Audit.AuditSerializationException
+Ampelum.Audit.AuditSerializationException.AuditSerializationException(string! message) -> void
+Ampelum.Audit.BatchedAuditSink
+Ampelum.Audit.BatchedAuditSink.AppendAsync(Ampelum.Audit.AuditEntry! entry, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.BatchedAuditSink.BatchedAuditSink(Ampelum.Audit.IAuditSink! inner, int capacity = 1000) -> void
+Ampelum.Audit.BatchedAuditSink.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.BatchedAuditSink.EnumerateAsync(System.Threading.CancellationToken ct) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Audit.AuditEntry!>!
+Ampelum.Audit.BatchedAuditSink.NextSequence.get -> long
+Ampelum.Audit.IAuditSink
+Ampelum.Audit.IAuditSink.AppendAsync(Ampelum.Audit.AuditEntry! entry, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.IAuditSink.EnumerateAsync(System.Threading.CancellationToken ct) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Audit.AuditEntry!>!
+Ampelum.Audit.IAuditSink.NextSequence.get -> long
+Ampelum.Audit.InMemoryAuditSink
+Ampelum.Audit.InMemoryAuditSink.AppendAsync(Ampelum.Audit.AuditEntry! entry, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.InMemoryAuditSink.EnumerateAsync(System.Threading.CancellationToken ct) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Audit.AuditEntry!>!
+Ampelum.Audit.InMemoryAuditSink.InMemoryAuditSink() -> void
+Ampelum.Audit.InMemoryAuditSink.NextSequence.get -> long
+Ampelum.Audit.JsonFileAuditSink
+Ampelum.Audit.JsonFileAuditSink.AppendAsync(Ampelum.Audit.AuditEntry! entry, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.JsonFileAuditSink.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Ampelum.Audit.JsonFileAuditSink.EnumerateAsync(System.Threading.CancellationToken ct) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Audit.AuditEntry!>!
+Ampelum.Audit.JsonFileAuditSink.JsonFileAuditSink(string! path) -> void
+Ampelum.Audit.JsonFileAuditSink.NextSequence.get -> long
+Ampelum.BatchedTraceSink
+Ampelum.BatchedTraceSink.BatchedTraceSink(Ampelum.ITraceSink! inner, int capacity = 1000) -> void
+Ampelum.BatchedTraceSink.Dispose() -> void
+Ampelum.BatchedTraceSink.DisposeAsync() -> System.Threading.Tasks.ValueTask
+Ampelum.BatchedTraceSink.Write(Ampelum.TraceRecord! record) -> void
+Ampelum.Budget.Budget
+Ampelum.Budget.BudgetBuilder
+Ampelum.Budget.BudgetBuilder.BudgetBuilder() -> void
+Ampelum.Budget.BudgetBuilder.Build() -> Ampelum.Budget.IBudget!
+Ampelum.Budget.BudgetBuilder.WithCallLimit(int calls) -> Ampelum.Budget.BudgetBuilder!
+Ampelum.Budget.BudgetBuilder.WithCostLimit(decimal cents) -> Ampelum.Budget.BudgetBuilder!
+Ampelum.Budget.BudgetBuilder.WithDeadline(System.TimeSpan timeFromNow) -> Ampelum.Budget.BudgetBuilder!
+Ampelum.Budget.BudgetBuilder.WithTokenLimit(long tokens) -> Ampelum.Budget.BudgetBuilder!
+Ampelum.Budget.BudgetExceededException
+Ampelum.Budget.BudgetExceededException.BudgetExceededException(Ampelum.Budget.BudgetSnapshot! snapshot) -> void
+Ampelum.Budget.BudgetExceededException.Snapshot.get -> Ampelum.Budget.BudgetSnapshot!
+Ampelum.Budget.BudgetSnapshot
+Ampelum.Budget.BudgetSnapshot.<Clone>$() -> Ampelum.Budget.BudgetSnapshot!
+Ampelum.Budget.BudgetSnapshot.BudgetSnapshot(long TokensUsed, long? TokenLimit, decimal CostCentsUsed, decimal? CostCentsLimit, int CallsUsed, int? CallLimit, System.DateTimeOffset? Deadline) -> void
+Ampelum.Budget.BudgetSnapshot.CallLimit.get -> int?
+Ampelum.Budget.BudgetSnapshot.CallLimit.init -> void
+Ampelum.Budget.BudgetSnapshot.CallsUsed.get -> int
+Ampelum.Budget.BudgetSnapshot.CallsUsed.init -> void
+Ampelum.Budget.BudgetSnapshot.CostCentsLimit.get -> decimal?
+Ampelum.Budget.BudgetSnapshot.CostCentsLimit.init -> void
+Ampelum.Budget.BudgetSnapshot.CostCentsUsed.get -> decimal
+Ampelum.Budget.BudgetSnapshot.CostCentsUsed.init -> void
+Ampelum.Budget.BudgetSnapshot.Deadline.get -> System.DateTimeOffset?
+Ampelum.Budget.BudgetSnapshot.Deadline.init -> void
+Ampelum.Budget.BudgetSnapshot.Deconstruct(out long TokensUsed, out long? TokenLimit, out decimal CostCentsUsed, out decimal? CostCentsLimit, out int CallsUsed, out int? CallLimit, out System.DateTimeOffset? Deadline) -> void
+Ampelum.Budget.BudgetSnapshot.Equals(Ampelum.Budget.BudgetSnapshot? other) -> bool
+Ampelum.Budget.BudgetSnapshot.TokenLimit.get -> long?
+Ampelum.Budget.BudgetSnapshot.TokenLimit.init -> void
+Ampelum.Budget.BudgetSnapshot.TokensUsed.get -> long
+Ampelum.Budget.BudgetSnapshot.TokensUsed.init -> void
+Ampelum.Budget.IBudget
+Ampelum.Budget.IBudget.CallLimit.get -> int?
+Ampelum.Budget.IBudget.Consume(long tokens, decimal costCents, int calls = 1) -> void
+Ampelum.Budget.IBudget.CostCentsLimit.get -> decimal?
+Ampelum.Budget.IBudget.Deadline.get -> System.DateTimeOffset?
+Ampelum.Budget.IBudget.Snapshot() -> Ampelum.Budget.BudgetSnapshot!
+Ampelum.Budget.IBudget.TokenLimit.get -> long?
+Ampelum.Caching.AmpelumCachingChatClient
+Ampelum.Caching.AmpelumCachingChatClient.AmpelumCachingChatClient(Microsoft.Extensions.AI.IChatClient! innerClient, Microsoft.Extensions.Caching.Distributed.IDistributedCache! storage) -> void
+Ampelum.ChainOfThought<TSig>
+Ampelum.ChainOfThought<TSig>.ChainOfThought(Ampelum.AmpelumContext! context) -> void
+Ampelum.ChainOfThought<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.ChainOfThought<TSig>.WithContext(Ampelum.AmpelumContext! context) -> Ampelum.ChainOfThought<TSig>!
+Ampelum.ChatAdapter
+Ampelum.ChatAdapter.ChatAdapter() -> void
+Ampelum.ChatAdapter.Finalize(Ampelum.SignatureMetadata! signature, Ampelum.StreamingParseState! state) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.ChatAdapter.Format(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! demos) -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.ChatAdapter.FormatResponse(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! outputs) -> Microsoft.Extensions.AI.ChatResponse!
+Ampelum.ChatAdapter.OnChunk(Ampelum.SignatureMetadata! signature, Ampelum.StreamingParseState! state, Microsoft.Extensions.AI.ChatResponseUpdate! chunk) -> Ampelum.StreamingParseState!
+Ampelum.ChatAdapter.Parse(Ampelum.SignatureMetadata! signature, Microsoft.Extensions.AI.ChatResponse! response) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Composition.AggregatorStrategy
+Ampelum.Composition.AggregatorStrategy.MajorityVote = 0 -> Ampelum.Composition.AggregatorStrategy
+Ampelum.Composition.AggregatorStrategy.ModelSelect = 1 -> Ampelum.Composition.AggregatorStrategy
+Ampelum.Composition.AggregatorStrategy.ModelSynthesize = 2 -> Ampelum.Composition.AggregatorStrategy
+Ampelum.Composition.BestOfN<TSig>
+Ampelum.Composition.BestOfN<TSig>.BestOfN(Ampelum.AmpelumContext! context, Ampelum.Metrics.IMetric<TSig>! metric, int n = 3) -> void
+Ampelum.Composition.BestOfN<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.Composition.MultiChainComparison<TSig>
+Ampelum.Composition.MultiChainComparison<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.Composition.MultiChainComparison<TSig>.MultiChainComparison(Ampelum.AmpelumContext! context, int n = 3, Ampelum.Composition.AggregatorStrategy aggregator = Ampelum.Composition.AggregatorStrategy.ModelSynthesize) -> void
+Ampelum.Composition.Parallel<TSig>
+Ampelum.Composition.Parallel<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.Composition.Parallel<TSig>.Parallel(Ampelum.AmpelumContext! context, System.Collections.Generic.IReadOnlyList<Ampelum.Predict<TSig>!>! modules) -> void
+Ampelum.Composition.Refine<TSig>
+Ampelum.Composition.Refine<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.Composition.Refine<TSig>.Refine(Ampelum.AmpelumContext! context, Ampelum.Metrics.IMetric<TSig>! metric, double threshold = 0.8, int maxRefinements = 2) -> void
+Ampelum.DependencyInjection.AmpelumBuilder
+Ampelum.DependencyInjection.AmpelumBuilder.AddBatchedAuditSink<TInner>(int capacity = 1000) -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.AddAmpelumHook<THook>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.AddProgramPersistence() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.AmpelumBuilder(Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> void
+Ampelum.DependencyInjection.AmpelumBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Ampelum.DependencyInjection.AmpelumBuilder.UseAdapter<TAdapter>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.UseSynchronousTraceSink<TSink>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.UseTraceSink<TSink>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.WithEmbeddingGenerator(System.Func<System.IServiceProvider!, Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>!>! factory) -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.WithRetriever<TRetriever>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.WithUsageTracker<TTracker>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilder.WithVectorStore<TVectorStore>() -> Ampelum.DependencyInjection.AmpelumBuilder!
+Ampelum.DependencyInjection.AmpelumBuilderAuditExtensions
+Ampelum.DependencyInjection.AmpelumBuilderCachingExtensions
+Ampelum.DependencyInjection.ServiceCollectionExtensions
+Ampelum.Diagnostics
+Ampelum.AmpelumAssert
+Ampelum.AmpelumContext
+Ampelum.AmpelumContext.<Clone>$() -> Ampelum.AmpelumContext!
+Ampelum.AmpelumContext.Adapter.get -> Ampelum.IAdapter!
+Ampelum.AmpelumContext.Adapter.init -> void
+Ampelum.AmpelumContext.Chat.get -> Microsoft.Extensions.AI.IChatClient!
+Ampelum.AmpelumContext.Chat.init -> void
+Ampelum.AmpelumContext.Deconstruct(out Microsoft.Extensions.AI.IChatClient! Chat, out Ampelum.IAdapter! Adapter, out Ampelum.ITraceSink! TraceSink, out Microsoft.Extensions.Logging.ILoggerFactory! LoggerFactory, out Microsoft.Extensions.AI.ChatOptions? DefaultChatOptions) -> void
+Ampelum.AmpelumContext.DefaultChatOptions.get -> Microsoft.Extensions.AI.ChatOptions?
+Ampelum.AmpelumContext.DefaultChatOptions.init -> void
+Ampelum.AmpelumContext.DefaultDemos.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Example!>?
+Ampelum.AmpelumContext.DefaultDemos.init -> void
+Ampelum.AmpelumContext.AmpelumContext(Microsoft.Extensions.AI.IChatClient! Chat, Ampelum.IAdapter! Adapter, Ampelum.ITraceSink! TraceSink, Microsoft.Extensions.Logging.ILoggerFactory! LoggerFactory, Microsoft.Extensions.AI.ChatOptions? DefaultChatOptions = null) -> void
+Ampelum.AmpelumContext.Equals(Ampelum.AmpelumContext? other) -> bool
+Ampelum.AmpelumContext.Hooks.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Hooks.IHook!>?
+Ampelum.AmpelumContext.Hooks.init -> void
+Ampelum.AmpelumContext.InspectHistory(int n = 1) -> string!
+Ampelum.AmpelumContext.InstructionOverrides.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Ampelum.AmpelumContext.InstructionOverrides.init -> void
+Ampelum.AmpelumContext.LoggerFactory.get -> Microsoft.Extensions.Logging.ILoggerFactory!
+Ampelum.AmpelumContext.LoggerFactory.init -> void
+Ampelum.AmpelumContext.Retriever.get -> Ampelum.Retrieval.IRetriever?
+Ampelum.AmpelumContext.Retriever.init -> void
+Ampelum.AmpelumContext.SubmoduleName.get -> string?
+Ampelum.AmpelumContext.TraceSink.get -> Ampelum.ITraceSink!
+Ampelum.AmpelumContext.TraceSink.init -> void
+Ampelum.AmpelumContext.Usage.get -> Ampelum.Usage.IUsageTracker?
+Ampelum.AmpelumContext.Usage.init -> void
+Ampelum.AmpelumContext.WithHook(Ampelum.Hooks.IHook! hook) -> Ampelum.AmpelumContext!
+Ampelum.DynamicPredict
+Ampelum.DynamicPredict.DynamicPredict(Ampelum.AmpelumContext! context) -> void
+Ampelum.DynamicPredict.ForwardAsync(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<System.Collections.Generic.IReadOnlyDictionary<string!, object?>!>!>!
+Ampelum.Evaluate<TSig>
+Ampelum.Evaluate<TSig>.Evaluate(System.Func<TSig, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!>! program, Ampelum.Metrics.IMetric<TSig>! metric, int maxDegreeOfParallelism = 8, int failureSampleCount = 10, System.IProgress<Ampelum.EvaluationProgress!>? progress = null) -> void
+Ampelum.Evaluate<TSig>.RunAsync(System.Collections.Generic.IReadOnlyList<Ampelum.LabeledExample<TSig>!>! examples, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.EvaluationResult<TSig>!>!
+Ampelum.EvaluationProgress
+Ampelum.EvaluationProgress.<Clone>$() -> Ampelum.EvaluationProgress!
+Ampelum.EvaluationProgress.Completed.get -> int
+Ampelum.EvaluationProgress.Completed.init -> void
+Ampelum.EvaluationProgress.Deconstruct(out int Completed, out int Total, out double RunningMean) -> void
+Ampelum.EvaluationProgress.Equals(Ampelum.EvaluationProgress? other) -> bool
+Ampelum.EvaluationProgress.EvaluationProgress(int Completed, int Total, double RunningMean) -> void
+Ampelum.EvaluationProgress.RunningMean.get -> double
+Ampelum.EvaluationProgress.RunningMean.init -> void
+Ampelum.EvaluationProgress.Total.get -> int
+Ampelum.EvaluationProgress.Total.init -> void
+Ampelum.EvaluationResult<TSig>
+Ampelum.EvaluationResult<TSig>.<Clone>$() -> Ampelum.EvaluationResult<TSig>!
+Ampelum.EvaluationResult<TSig>.Deconstruct(out System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>! Scores, out double Mean, out double StdDev, out int FailureCount, out System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>! FailureSamples) -> void
+Ampelum.EvaluationResult<TSig>.Equals(Ampelum.EvaluationResult<TSig>? other) -> bool
+Ampelum.EvaluationResult<TSig>.EvaluationResult(System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>! Scores, double Mean, double StdDev, int FailureCount, System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>! FailureSamples) -> void
+Ampelum.EvaluationResult<TSig>.FailureCount.get -> int
+Ampelum.EvaluationResult<TSig>.FailureCount.init -> void
+Ampelum.EvaluationResult<TSig>.Failures.get -> System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>!
+Ampelum.EvaluationResult<TSig>.FailureSamples.get -> System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>!
+Ampelum.EvaluationResult<TSig>.FailureSamples.init -> void
+Ampelum.EvaluationResult<TSig>.Mean.get -> double
+Ampelum.EvaluationResult<TSig>.Mean.init -> void
+Ampelum.EvaluationResult<TSig>.Scores.get -> System.Collections.Generic.IReadOnlyList<Ampelum.ExampleScore<TSig>!>!
+Ampelum.EvaluationResult<TSig>.Scores.init -> void
+Ampelum.EvaluationResult<TSig>.StdDev.get -> double
+Ampelum.EvaluationResult<TSig>.StdDev.init -> void
+Ampelum.Example
+Ampelum.Example.<Clone>$() -> Ampelum.Example!
+Ampelum.Example.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Inputs, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Outputs) -> void
+Ampelum.Example.Equals(Ampelum.Example? other) -> bool
+Ampelum.Example.Example(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Inputs, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Outputs) -> void
+Ampelum.Example.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Example.Inputs.init -> void
+Ampelum.Example.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Example.Outputs.init -> void
+Ampelum.ExampleScore<TSig>
+Ampelum.ExampleScore<TSig>.<Clone>$() -> Ampelum.ExampleScore<TSig>!
+Ampelum.ExampleScore<TSig>.Deconstruct(out Ampelum.LabeledExample<TSig>! Example, out Ampelum.Prediction<TSig>? Prediction, out double Score, out System.Exception? Error) -> void
+Ampelum.ExampleScore<TSig>.Equals(Ampelum.ExampleScore<TSig>? other) -> bool
+Ampelum.ExampleScore<TSig>.Error.get -> System.Exception?
+Ampelum.ExampleScore<TSig>.Error.init -> void
+Ampelum.ExampleScore<TSig>.Example.get -> Ampelum.LabeledExample<TSig>!
+Ampelum.ExampleScore<TSig>.Example.init -> void
+Ampelum.ExampleScore<TSig>.ExampleScore(Ampelum.LabeledExample<TSig>! Example, Ampelum.Prediction<TSig>? Prediction, double Score, System.Exception? Error) -> void
+Ampelum.ExampleScore<TSig>.Prediction.get -> Ampelum.Prediction<TSig>?
+Ampelum.ExampleScore<TSig>.Prediction.init -> void
+Ampelum.ExampleScore<TSig>.Score.get -> double
+Ampelum.ExampleScore<TSig>.Score.init -> void
+Ampelum.Exceptions.AdapterFormatException
+Ampelum.Exceptions.AdapterFormatException.AdapterFormatException(string! message, System.Exception? inner = null) -> void
+Ampelum.Exceptions.AdapterParseException
+Ampelum.Exceptions.AdapterParseException.AdapterName.get -> string!
+Ampelum.Exceptions.AdapterParseException.AdapterParseException(string! signatureName, string! adapterName, string! rawResponse, string! hint) -> void
+Ampelum.Exceptions.AdapterParseException.Hint.get -> string!
+Ampelum.Exceptions.AdapterParseException.RawResponse.get -> string!
+Ampelum.Exceptions.AdapterParseException.SignatureName.get -> string!
+Ampelum.Exceptions.AssertionFailedException
+Ampelum.Exceptions.AssertionFailedException.AssertionFailedException(string! message) -> void
+Ampelum.Exceptions.AmpelumException
+Ampelum.Exceptions.AmpelumException.AmpelumException(string! message, System.Exception? inner = null) -> void
+Ampelum.Exceptions.LmCallException
+Ampelum.Exceptions.LmCallException.LmCallException(string! message, System.Exception! inner) -> void
+Ampelum.Exceptions.OptimizerException
+Ampelum.Exceptions.OptimizerException.OptimizerException(string! message, System.Exception? inner = null) -> void
+Ampelum.Exceptions.ReActIterationLimitException
+Ampelum.Exceptions.ReActIterationLimitException.MaxIterations.get -> int
+Ampelum.Exceptions.ReActIterationLimitException.ReActIterationLimitException(int maxIterations, string! message) -> void
+Ampelum.Exceptions.SignatureDefinitionException
+Ampelum.Exceptions.SignatureDefinitionException.SignatureDefinitionException(string! message) -> void
+Ampelum.Exceptions.SuggestionException
+Ampelum.Exceptions.SuggestionException.Suggestion.get -> string!
+Ampelum.Exceptions.SuggestionException.SuggestionException(string! suggestion) -> void
+Ampelum.Field
+Ampelum.Field.<Clone>$() -> Ampelum.Field!
+Ampelum.Field.ClrType.get -> System.Type!
+Ampelum.Field.ClrType.init -> void
+Ampelum.Field.Deconstruct(out string! Name, out System.Type! ClrType, out string! Description, out Ampelum.FieldKind Kind, out bool IsOptional) -> void
+Ampelum.Field.Description.get -> string!
+Ampelum.Field.Description.init -> void
+Ampelum.Field.Equals(Ampelum.Field? other) -> bool
+Ampelum.Field.Field(string! Name, System.Type! ClrType, string! Description, Ampelum.FieldKind Kind, bool IsOptional) -> void
+Ampelum.Field.IsOptional.get -> bool
+Ampelum.Field.IsOptional.init -> void
+Ampelum.Field.Kind.get -> Ampelum.FieldKind
+Ampelum.Field.Kind.init -> void
+Ampelum.Field.Name.get -> string!
+Ampelum.Field.Name.init -> void
+Ampelum.FieldKind
+Ampelum.FieldKind.Input = 0 -> Ampelum.FieldKind
+Ampelum.FieldKind.Output = 1 -> Ampelum.FieldKind
+Ampelum.GenerateSignatureMetadataAttribute
+Ampelum.GenerateSignatureMetadataAttribute.GenerateSignatureMetadataAttribute() -> void
+Ampelum.HookMetadataKeys
+Ampelum.Hooks.BudgetHook
+Ampelum.Hooks.BudgetHook.BudgetHook(Ampelum.Budget.IBudget? global, System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Budget.IBudget!>? scopes = null) -> void
+Ampelum.Hooks.BudgetHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.BudgetHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.BudgetHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.BudgetHook.Order.get -> int
+Ampelum.Hooks.HookContext
+Ampelum.Hooks.HookContext.HookContext() -> void
+Ampelum.Hooks.HookContext.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Hooks.HookContext.Inputs.init -> void
+Ampelum.Hooks.HookContext.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Hooks.HookContext.ModuleName.get -> string!
+Ampelum.Hooks.HookContext.ModuleName.init -> void
+Ampelum.Hooks.HookContext.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+Ampelum.Hooks.HookContext.Outputs.set -> void
+Ampelum.Hooks.HookContext.Set(string! key, object? value) -> void
+Ampelum.Hooks.IHook
+Ampelum.Hooks.IHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.IHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.IHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.IHook.Order.get -> int
+Ampelum.Hooks.RetryHook
+Ampelum.Hooks.RetryHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.RetryHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.RetryHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+Ampelum.Hooks.RetryHook.Order.get -> int
+Ampelum.Hooks.RetryHook.RetryHook(int maxAttempts = 3, System.TimeSpan? baseDelay = null, System.TimeSpan? maxDelay = null, System.Random? rng = null) -> void
+Ampelum.IAdapter
+Ampelum.IAdapter.Format(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! demos) -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.IAdapter.Parse(Ampelum.SignatureMetadata! signature, Microsoft.Extensions.AI.ChatResponse! response) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.InMemoryTraceSink
+Ampelum.InMemoryTraceSink.Clear() -> void
+Ampelum.InMemoryTraceSink.GetRecent(int n) -> System.Collections.Generic.IReadOnlyList<Ampelum.TraceRecord!>!
+Ampelum.InMemoryTraceSink.InMemoryTraceSink() -> void
+Ampelum.InMemoryTraceSink.Records.get -> System.Collections.Generic.IReadOnlyList<Ampelum.TraceRecord!>!
+Ampelum.InMemoryTraceSink.Write(Ampelum.TraceRecord! record) -> void
+Ampelum.InputAttribute
+Ampelum.InputAttribute.Desc.get -> string?
+Ampelum.InputAttribute.Desc.init -> void
+Ampelum.InputAttribute.InputAttribute() -> void
+Ampelum.ISignature
+Ampelum.IStreamingAdapter
+Ampelum.IStreamingAdapter.Finalize(Ampelum.SignatureMetadata! signature, Ampelum.StreamingParseState! state) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.IStreamingAdapter.OnChunk(Ampelum.SignatureMetadata! signature, Ampelum.StreamingParseState! state, Microsoft.Extensions.AI.ChatResponseUpdate! chunk) -> Ampelum.StreamingParseState!
+Ampelum.IStructuredOutputAdapter
+Ampelum.IStructuredOutputAdapter.BuildResponseFormat(Ampelum.SignatureMetadata! signature) -> Microsoft.Extensions.AI.ChatResponseFormat!
+Ampelum.ITestableAdapter
+Ampelum.ITestableAdapter.FormatResponse(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! outputs) -> Microsoft.Extensions.AI.ChatResponse!
+Ampelum.ITraceSink
+Ampelum.ITraceSink.Write(Ampelum.TraceRecord! record) -> void
+Ampelum.JsonAdapter
+Ampelum.JsonAdapter.BuildResponseFormat(Ampelum.SignatureMetadata! signature) -> Microsoft.Extensions.AI.ChatResponseFormat!
+Ampelum.JsonAdapter.Format(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! demos) -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.JsonAdapter.FormatResponse(Ampelum.SignatureMetadata! signature, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! outputs) -> Microsoft.Extensions.AI.ChatResponse!
+Ampelum.JsonAdapter.JsonAdapter(bool strict = true) -> void
+Ampelum.JsonAdapter.Parse(Ampelum.SignatureMetadata! signature, Microsoft.Extensions.AI.ChatResponse! response) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.JsonDefaults
+Ampelum.LabeledExample<TSig>
+Ampelum.LabeledExample<TSig>.<Clone>$() -> Ampelum.LabeledExample<TSig>!
+Ampelum.LabeledExample<TSig>.Deconstruct(out TSig Inputs, out TSig Expected) -> void
+Ampelum.LabeledExample<TSig>.Equals(Ampelum.LabeledExample<TSig>? other) -> bool
+Ampelum.LabeledExample<TSig>.Expected.get -> TSig
+Ampelum.LabeledExample<TSig>.Expected.init -> void
+Ampelum.LabeledExample<TSig>.Inputs.get -> TSig
+Ampelum.LabeledExample<TSig>.Inputs.init -> void
+Ampelum.LabeledExample<TSig>.LabeledExample(TSig Inputs, TSig Expected) -> void
+Ampelum.LoggingTraceSink
+Ampelum.LoggingTraceSink.LoggingTraceSink(Microsoft.Extensions.Logging.ILogger<Ampelum.LoggingTraceSink!>! logger) -> void
+Ampelum.LoggingTraceSink.Write(Ampelum.TraceRecord! record) -> void
+Ampelum.Metrics.CaseInsensitiveMatch<TSig>
+Ampelum.Metrics.CaseInsensitiveMatch<TSig>.CaseInsensitiveMatch(string! fieldName) -> void
+Ampelum.Metrics.CaseInsensitiveMatch<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.ExactMatch<TSig>
+Ampelum.Metrics.ExactMatch<TSig>.ExactMatch(string! fieldName) -> void
+Ampelum.Metrics.ExactMatch<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.F1<TSig>
+Ampelum.Metrics.F1<TSig>.F1(string! fieldName) -> void
+Ampelum.Metrics.F1<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.IMetric
+Ampelum.Metrics.IMetric.Score(object! actual, object! expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.IMetric<TSig>
+Ampelum.Metrics.IMetric<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.IRefinableFeedback
+Ampelum.Metrics.IRefinableFeedback.GetFeedback(object! actual, object! expected, Ampelum.SignatureMetadata! signature) -> string!
+Ampelum.Metrics.LLMAsJudgeMetric<TSig>
+Ampelum.Metrics.LLMAsJudgeMetric<TSig>.LLMAsJudgeMetric(Microsoft.Extensions.AI.IChatClient! judgeClient, string! judgeInstructions, string![]? criteria = null, Ampelum.ITraceSink? traceSink = null) -> void
+Ampelum.Metrics.LLMAsJudgeMetric<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.NumericWithTolerance<TSig>
+Ampelum.Metrics.NumericWithTolerance<TSig>.NumericWithTolerance(string! fieldName, double tolerance) -> void
+Ampelum.Metrics.NumericWithTolerance<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.UserDefined<TSig>
+Ampelum.Metrics.UserDefined<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Metrics.UserDefined<TSig>.UserDefined(System.Func<TSig, TSig, double>! scoreFn) -> void
+Ampelum.NullTraceSink
+Ampelum.NullTraceSink.Write(Ampelum.TraceRecord! record) -> void
+Ampelum.Optimizers.BootstrapFewShot<TProgram>
+Ampelum.Optimizers.BootstrapFewShot<TProgram>.BootstrapFewShot(Ampelum.Optimizers.BootstrapFewShot<TProgram>.ProgramRunner! programRunner, int maxBootstrappedDemos = 4, int maxLabeledDemos = 16) -> void
+Ampelum.Optimizers.BootstrapFewShot<TProgram>.CompileAsync(TProgram program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram>!>!
+Ampelum.Optimizers.BootstrapFewShot<TProgram>.MaxBootstrappedDemos.get -> int
+Ampelum.Optimizers.BootstrapFewShot<TProgram>.MaxLabeledDemos.get -> int
+Ampelum.Optimizers.BootstrapFewShot<TProgram>.ProgramRunner
+Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>
+Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.BootstrapFewShotWithRandomSearch(Ampelum.Optimizers.BootstrapFewShot<TProgram!>.ProgramRunner! programRunner, int numCandidates = 8, int maxBootstrappedDemos = 4, int? seed = null, System.Func<TProgram!, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>? scoringRunner = null) -> void
+Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.CompileAsync(TProgram! program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.MaxBootstrappedDemos.get -> int
+Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.NumCandidates.get -> int
+Ampelum.Optimizers.Copro<TProgram>
+Ampelum.Optimizers.Copro<TProgram>.CandidatesPerSubmodule.get -> int
+Ampelum.Optimizers.Copro<TProgram>.CompileAsync(TProgram program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram>!>!
+Ampelum.Optimizers.Copro<TProgram>.Copro(Microsoft.Extensions.AI.IChatClient! instructionProposer, int candidatesPerSubmodule = 5, System.Func<TProgram, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>? programRunner = null) -> void
+Ampelum.Optimizers.Ensemble<TProgram>
+Ampelum.Optimizers.Ensemble<TProgram>.CompileAsync(System.Collections.Generic.IReadOnlyList<TProgram!>! programs, Ampelum.AmpelumContext! ctx, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<Ampelum.Optimizers.EnsembleProgram<TProgram!>!>!>!
+Ampelum.Optimizers.Ensemble<TProgram>.Ensemble(System.Func<System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!, Ampelum.AmpelumContext!, Ampelum.Example!>! reducer) -> void
+Ampelum.Optimizers.EnsembleProgram<TProgram>
+Ampelum.Optimizers.EnsembleProgram<TProgram>.EnsembleProgram(System.Collections.Generic.IReadOnlyList<TProgram!>! members, System.Func<System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!, Ampelum.AmpelumContext!, Ampelum.Example!>! reducer) -> void
+Ampelum.Optimizers.EnsembleProgram<TProgram>.Members.get -> System.Collections.Generic.IReadOnlyList<TProgram!>!
+Ampelum.Optimizers.EnsembleProgram<TProgram>.Reducer.get -> System.Func<System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!, Ampelum.AmpelumContext!, Ampelum.Example!>!
+Ampelum.Optimizers.IComposedModule
+Ampelum.Optimizers.IComposedModule.Rebind(System.Collections.Generic.IReadOnlyDictionary<string!, object!>! newSubmodules) -> object!
+Ampelum.Optimizers.IComposedModule.Submodules.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>!
+Ampelum.Optimizers.IMetric
+Ampelum.Optimizers.IMetric.Score(object! actual, object! expected, Ampelum.SignatureMetadata! signature) -> double
+Ampelum.Optimizers.InferRules<TProgram>
+Ampelum.Optimizers.InferRules<TProgram>.CompileAsync(TProgram! program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+Ampelum.Optimizers.InferRules<TProgram>.InferRules(Microsoft.Extensions.AI.IChatClient! ruleProposer) -> void
+Ampelum.Optimizers.IOptimizer<TProgram>
+Ampelum.Optimizers.IOptimizer<TProgram>.CompileAsync(TProgram program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram>!>!
+Ampelum.Optimizers.KnnBoundProgram<TProgram>
+Ampelum.Optimizers.KnnBoundProgram<TProgram>.Inner.get -> TProgram!
+Ampelum.Optimizers.KnnBoundProgram<TProgram>.K.get -> int
+Ampelum.Optimizers.KnnBoundProgram<TProgram>.Rebind(System.Collections.Generic.IReadOnlyDictionary<string!, object!>! replacements) -> object!
+Ampelum.Optimizers.KnnBoundProgram<TProgram>.ResolveNeighboursAsync(string! queryText, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!>!
+Ampelum.Optimizers.KnnBoundProgram<TProgram>.Submodules.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object!>!
+Ampelum.Optimizers.KnnFewShot<TProgram>
+Ampelum.Optimizers.KnnFewShot<TProgram>.CompileAsync(TProgram! program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<Ampelum.Optimizers.KnnBoundProgram<TProgram!>!>!>!
+Ampelum.Optimizers.KnnFewShot<TProgram>.K.get -> int
+Ampelum.Optimizers.KnnFewShot<TProgram>.KnnFewShot(Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>! embeddingGenerator, int k = 3) -> void
+Ampelum.Optimizers.LabeledFewShot<TProgram>
+Ampelum.Optimizers.LabeledFewShot<TProgram>.CompileAsync(TProgram program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram>!>!
+Ampelum.Optimizers.LabeledFewShot<TProgram>.LabeledFewShot(int maxDemos = 16) -> void
+Ampelum.Optimizers.LabeledFewShot<TProgram>.MaxDemos.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>
+Ampelum.Optimizers.MiproV2<TProgram>.CandidatesPerSubmodule.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.CompileAsync(TProgram! program, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>! trainset, Ampelum.Optimizers.IMetric! metric, Ampelum.AmpelumContext! context, System.IProgress<Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+Ampelum.Optimizers.MiproV2<TProgram>.MaxBootstrappedDemos.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.MaxRounds.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.MiproV2(System.Func<TProgram!, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! instructionProposerClient, int maxRounds = 3, int candidatesPerSubmodule = 3, int maxBootstrappedDemos = 4) -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>
+Ampelum.Optimizers.OptimizedProgram<TProgram>.<Clone>$() -> Ampelum.Optimizers.OptimizedProgram<TProgram>!
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Bind(Ampelum.AmpelumContext! baseContext) -> TProgram
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Deconstruct(out TProgram Program, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!>! DemosBySubmodule, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! InstructionOverrides) -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>.DemosBySubmodule.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!>!
+Ampelum.Optimizers.OptimizedProgram<TProgram>.DemosBySubmodule.init -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Equals(Ampelum.Optimizers.OptimizedProgram<TProgram>? other) -> bool
+Ampelum.Optimizers.OptimizedProgram<TProgram>.InstructionOverrides.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Ampelum.Optimizers.OptimizedProgram<TProgram>.InstructionOverrides.init -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>.OptimizedProgram(TProgram Program, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>!>! DemosBySubmodule, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! InstructionOverrides) -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Program.get -> TProgram
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Program.init -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Score.get -> double?
+Ampelum.Optimizers.OptimizedProgram<TProgram>.Score.init -> void
+Ampelum.Optimizers.OptimizedProgram<TProgram>.TrainsetSize.get -> int
+Ampelum.Optimizers.OptimizedProgram<TProgram>.TrainsetSize.init -> void
+Ampelum.Optimizers.OptimizerProgress
+Ampelum.Optimizers.OptimizerProgress.<Clone>$() -> Ampelum.Optimizers.OptimizerProgress!
+Ampelum.Optimizers.OptimizerProgress.BestScore.get -> double
+Ampelum.Optimizers.OptimizerProgress.BestScore.init -> void
+Ampelum.Optimizers.OptimizerProgress.Deconstruct(out string! Phase, out int Step, out int TotalSteps, out double BestScore, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>? Extras) -> void
+Ampelum.Optimizers.OptimizerProgress.Equals(Ampelum.Optimizers.OptimizerProgress? other) -> bool
+Ampelum.Optimizers.OptimizerProgress.Extras.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Optimizers.OptimizerProgress.Extras.init -> void
+Ampelum.Optimizers.OptimizerProgress.OptimizerProgress(string! Phase, int Step, int TotalSteps, double BestScore, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? Extras = null) -> void
+Ampelum.Optimizers.OptimizerProgress.Phase.get -> string!
+Ampelum.Optimizers.OptimizerProgress.Phase.init -> void
+Ampelum.Optimizers.OptimizerProgress.Step.get -> int
+Ampelum.Optimizers.OptimizerProgress.Step.init -> void
+Ampelum.Optimizers.OptimizerProgress.TotalSteps.get -> int
+Ampelum.Optimizers.OptimizerProgress.TotalSteps.init -> void
+Ampelum.OutputAttribute
+Ampelum.OutputAttribute.Desc.get -> string?
+Ampelum.OutputAttribute.Desc.init -> void
+Ampelum.OutputAttribute.OutputAttribute() -> void
+Ampelum.Persistence.IProgramPersistence
+Ampelum.Persistence.IProgramPersistence.LoadAsync<TProgram>(string! path, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+Ampelum.Persistence.IProgramPersistence.SaveAsync<TProgram>(Ampelum.Optimizers.OptimizedProgram<TProgram!>! optimizedProgram, string! path, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Ampelum.Persistence.JsonProgramPersistence
+Ampelum.Persistence.JsonProgramPersistence.JsonProgramPersistence() -> void
+Ampelum.Persistence.JsonProgramPersistence.LoadAsync<TProgram>(string! path, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+Ampelum.Persistence.JsonProgramPersistence.SaveAsync<TProgram>(Ampelum.Optimizers.OptimizedProgram<TProgram!>! optimizedProgram, string! path, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Ampelum.Persistence.ProgramPersistenceException
+Ampelum.Persistence.ProgramPersistenceException.ProgramPersistenceException(string! message) -> void
+Ampelum.Persistence.ProgramPersistenceException.ProgramPersistenceException(string! message, System.Exception? inner) -> void
+Ampelum.Predict
+Ampelum.Predict<TSig>
+Ampelum.Predict<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.Predict<TSig>.Predict(Ampelum.AmpelumContext! context) -> void
+Ampelum.Predict<TSig>.StreamAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.PredictionUpdate<TSig>!>!
+Ampelum.Predict<TSig>.WithContext(Ampelum.AmpelumContext! context) -> Ampelum.Predict<TSig>!
+Ampelum.Prediction<TValue>
+Ampelum.Prediction<TValue>.<Clone>$() -> Ampelum.Prediction<TValue>!
+Ampelum.Prediction<TValue>.Deconstruct(out TValue Value, out Ampelum.TraceRecord! Trace) -> void
+Ampelum.Prediction<TValue>.Equals(Ampelum.Prediction<TValue>? other) -> bool
+Ampelum.Prediction<TValue>.Prediction(TValue Value, Ampelum.TraceRecord! Trace) -> void
+Ampelum.Prediction<TValue>.Trace.get -> Ampelum.TraceRecord!
+Ampelum.Prediction<TValue>.Trace.init -> void
+Ampelum.Prediction<TValue>.Value.get -> TValue
+Ampelum.Prediction<TValue>.Value.init -> void
+Ampelum.PredictionExtensions
+Ampelum.PredictionUpdate<TSig>
+Ampelum.PredictionUpdate<TSig>.<Clone>$() -> Ampelum.PredictionUpdate<TSig>!
+Ampelum.PredictionUpdate<TSig>.Deconstruct(out string! FieldName, out string! PartialText, out bool IsFieldComplete, out bool IsFinal, out TSig? Value, out Ampelum.TraceRecord? Trace) -> void
+Ampelum.PredictionUpdate<TSig>.Equals(Ampelum.PredictionUpdate<TSig>? other) -> bool
+Ampelum.PredictionUpdate<TSig>.FieldName.get -> string!
+Ampelum.PredictionUpdate<TSig>.FieldName.init -> void
+Ampelum.PredictionUpdate<TSig>.IsFieldComplete.get -> bool
+Ampelum.PredictionUpdate<TSig>.IsFieldComplete.init -> void
+Ampelum.PredictionUpdate<TSig>.IsFinal.get -> bool
+Ampelum.PredictionUpdate<TSig>.IsFinal.init -> void
+Ampelum.PredictionUpdate<TSig>.PartialText.get -> string!
+Ampelum.PredictionUpdate<TSig>.PartialText.init -> void
+Ampelum.PredictionUpdate<TSig>.PredictionUpdate(string! FieldName, string! PartialText, bool IsFieldComplete, bool IsFinal, TSig? Value, Ampelum.TraceRecord? Trace) -> void
+Ampelum.PredictionUpdate<TSig>.Trace.get -> Ampelum.TraceRecord?
+Ampelum.PredictionUpdate<TSig>.Trace.init -> void
+Ampelum.PredictionUpdate<TSig>.Value.get -> TSig?
+Ampelum.PredictionUpdate<TSig>.Value.init -> void
+Ampelum.ReAct<TSig>
+Ampelum.ReAct<TSig>.ForwardAsync(TSig inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? demos = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+Ampelum.ReAct<TSig>.ReAct(Ampelum.AmpelumContext! context, System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.AIFunction!>! tools, int maxIterations = 5) -> void
+Ampelum.Retrieval.EmbeddingRetriever
+Ampelum.Retrieval.EmbeddingRetriever.EmbeddingRetriever(Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>! embeddingGenerator, Ampelum.Retrieval.IVectorStore! vectorStore) -> void
+Ampelum.Retrieval.EmbeddingRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+Ampelum.Retrieval.ExampleExtensions
+Ampelum.Retrieval.InMemoryRetriever
+Ampelum.Retrieval.InMemoryRetriever.InMemoryRetriever(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! corpus) -> void
+Ampelum.Retrieval.InMemoryRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+Ampelum.Retrieval.InMemoryVectorStore
+Ampelum.Retrieval.InMemoryVectorStore.InMemoryVectorStore() -> void
+Ampelum.Retrieval.InMemoryVectorStore.QueryAsync(System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(Ampelum.Retrieval.RetrievedDocument! Document, double Score)>!>!
+Ampelum.Retrieval.InMemoryVectorStore.UpsertAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! documents, System.ReadOnlyMemory<float>[]! vectors, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Ampelum.Retrieval.IRetriever
+Ampelum.Retrieval.IRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+Ampelum.Retrieval.IVectorStore
+Ampelum.Retrieval.IVectorStore.QueryAsync(System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(Ampelum.Retrieval.RetrievedDocument! Document, double Score)>!>!
+Ampelum.Retrieval.IVectorStore.UpsertAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! documents, System.ReadOnlyMemory<float>[]! vectors, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Ampelum.Retrieval.RetrievedDocument
+Ampelum.Retrieval.RetrievedDocument.<Clone>$() -> Ampelum.Retrieval.RetrievedDocument!
+Ampelum.Retrieval.RetrievedDocument.Deconstruct(out string! Id, out string! Text, out double Score, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+Ampelum.Retrieval.RetrievedDocument.Equals(Ampelum.Retrieval.RetrievedDocument? other) -> bool
+Ampelum.Retrieval.RetrievedDocument.Id.get -> string!
+Ampelum.Retrieval.RetrievedDocument.Id.init -> void
+Ampelum.Retrieval.RetrievedDocument.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Retrieval.RetrievedDocument.Metadata.init -> void
+Ampelum.Retrieval.RetrievedDocument.RetrievedDocument(string! Id, string! Text, double Score, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+Ampelum.Retrieval.RetrievedDocument.Score.get -> double
+Ampelum.Retrieval.RetrievedDocument.Score.init -> void
+Ampelum.Retrieval.RetrievedDocument.Text.get -> string!
+Ampelum.Retrieval.RetrievedDocument.Text.init -> void
+Ampelum.Retrieval.RetrieverInstrumentation
+Ampelum.Retrieval.RetrieverInstrumentation.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+Ampelum.Retrieval.RetrieverInstrumentation.RetrieverInstrumentation(Ampelum.Retrieval.IRetriever! innerRetriever) -> void
+Ampelum.Retry.RetryModule<TOut>
+Ampelum.Retry.RetryModule<TOut>.ForwardAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<TOut>!
+Ampelum.Retry.RetryModule<TOut>.RetryModule(System.Func<System.Collections.Generic.IReadOnlyList<string!>!, System.Threading.CancellationToken, System.Threading.Tasks.Task<TOut>!>! program, int maxAttempts = 3) -> void
+Ampelum.Retry.RetryModuleExtensions
+Ampelum.Signature
+Ampelum.SignatureAttribute
+Ampelum.SignatureAttribute.Instructions.get -> string!
+Ampelum.SignatureAttribute.SignatureAttribute(string! instructions) -> void
+Ampelum.SignatureMetadata
+Ampelum.SignatureMetadata.<Clone>$() -> Ampelum.SignatureMetadata!
+Ampelum.SignatureMetadata.Deconstruct(out System.Type! SignatureType, out string! Instructions, out System.Collections.Generic.IReadOnlyList<Ampelum.Field!>! Inputs, out System.Collections.Generic.IReadOnlyList<Ampelum.Field!>! Outputs) -> void
+Ampelum.SignatureMetadata.Equals(Ampelum.SignatureMetadata? other) -> bool
+Ampelum.SignatureMetadata.Inputs.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Field!>!
+Ampelum.SignatureMetadata.Inputs.init -> void
+Ampelum.SignatureMetadata.Instructions.get -> string!
+Ampelum.SignatureMetadata.Instructions.init -> void
+Ampelum.SignatureMetadata.IsDynamic.get -> bool
+Ampelum.SignatureMetadata.Outputs.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Field!>!
+Ampelum.SignatureMetadata.Outputs.init -> void
+Ampelum.SignatureMetadata.SignatureMetadata(System.Type! SignatureType, string! Instructions, System.Collections.Generic.IReadOnlyList<Ampelum.Field!>! Inputs, System.Collections.Generic.IReadOnlyList<Ampelum.Field!>! Outputs) -> void
+Ampelum.SignatureMetadata.SignatureType.get -> System.Type!
+Ampelum.SignatureMetadata.SignatureType.init -> void
+Ampelum.SignatureMetadata.WithInstructions(string! newInstructions) -> Ampelum.SignatureMetadata!
+Ampelum.SignatureMetadata.WithUpdatedFields(System.Collections.Generic.IReadOnlyDictionary<string!, string!>! fieldDescriptions) -> Ampelum.SignatureMetadata!
+Ampelum.SignatureMetadataCache
+Ampelum.Streaming.IStreamableProgram<TOut>
+Ampelum.Streaming.IStreamableProgram<TOut>.StreamAsync(System.Threading.CancellationToken ct) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Streaming.StreamUpdate<TOut>!>!
+Ampelum.Streaming.IStreamListener<TField>
+Ampelum.Streaming.IStreamListener<TField>.OnUpdate(string! partialText, bool isFinal, TField? finalValue) -> void
+Ampelum.Streaming.ProgramStreamer
+Ampelum.Streaming.StreamUpdate<TOut>
+Ampelum.Streaming.StreamUpdate<TOut>.<Clone>$() -> Ampelum.Streaming.StreamUpdate<TOut>!
+Ampelum.Streaming.StreamUpdate<TOut>.Deconstruct(out string! FieldName, out string! PartialText, out bool IsFinal, out TOut? FinalValue) -> void
+Ampelum.Streaming.StreamUpdate<TOut>.Equals(Ampelum.Streaming.StreamUpdate<TOut>? other) -> bool
+Ampelum.Streaming.StreamUpdate<TOut>.FieldName.get -> string!
+Ampelum.Streaming.StreamUpdate<TOut>.FieldName.init -> void
+Ampelum.Streaming.StreamUpdate<TOut>.FinalValue.get -> TOut?
+Ampelum.Streaming.StreamUpdate<TOut>.FinalValue.init -> void
+Ampelum.Streaming.StreamUpdate<TOut>.IsFinal.get -> bool
+Ampelum.Streaming.StreamUpdate<TOut>.IsFinal.init -> void
+Ampelum.Streaming.StreamUpdate<TOut>.PartialText.get -> string!
+Ampelum.Streaming.StreamUpdate<TOut>.PartialText.init -> void
+Ampelum.Streaming.StreamUpdate<TOut>.StreamUpdate(string! FieldName, string! PartialText, bool IsFinal, TOut? FinalValue) -> void
+Ampelum.StreamingParseState
+Ampelum.StreamingParseState.<Clone>$() -> Ampelum.StreamingParseState!
+Ampelum.StreamingParseState.AccumulatedText.get -> string!
+Ampelum.StreamingParseState.AccumulatedText.init -> void
+Ampelum.StreamingParseState.CompletedFields.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.StreamingParseState.CompletedFields.init -> void
+Ampelum.StreamingParseState.CurrentFieldName.get -> string!
+Ampelum.StreamingParseState.CurrentFieldName.init -> void
+Ampelum.StreamingParseState.Deconstruct(out string! CurrentFieldName, out string! AccumulatedText, out string! PendingTail, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! CompletedFields, out bool IsComplete) -> void
+Ampelum.StreamingParseState.Equals(Ampelum.StreamingParseState? other) -> bool
+Ampelum.StreamingParseState.IsComplete.get -> bool
+Ampelum.StreamingParseState.IsComplete.init -> void
+Ampelum.StreamingParseState.PendingTail.get -> string!
+Ampelum.StreamingParseState.PendingTail.init -> void
+Ampelum.StreamingParseState.StreamingParseState(string! CurrentFieldName, string! AccumulatedText, string! PendingTail, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! CompletedFields, bool IsComplete) -> void
+Ampelum.ToolCallRecord
+Ampelum.ToolCallRecord.<Clone>$() -> Ampelum.ToolCallRecord!
+Ampelum.ToolCallRecord.Arguments.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.ToolCallRecord.Arguments.init -> void
+Ampelum.ToolCallRecord.Deconstruct(out string! FunctionName, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Arguments, out object? Result, out System.Exception? Error, out System.TimeSpan Duration) -> void
+Ampelum.ToolCallRecord.Duration.get -> System.TimeSpan
+Ampelum.ToolCallRecord.Duration.init -> void
+Ampelum.ToolCallRecord.Equals(Ampelum.ToolCallRecord? other) -> bool
+Ampelum.ToolCallRecord.Error.get -> System.Exception?
+Ampelum.ToolCallRecord.Error.init -> void
+Ampelum.ToolCallRecord.FunctionName.get -> string!
+Ampelum.ToolCallRecord.FunctionName.init -> void
+Ampelum.ToolCallRecord.Result.get -> object?
+Ampelum.ToolCallRecord.Result.init -> void
+Ampelum.ToolCallRecord.ToolCallRecord(string! FunctionName, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Arguments, object? Result, System.Exception? Error, System.TimeSpan Duration) -> void
+Ampelum.Tools.FreeFormAttribute
+Ampelum.Tools.FreeFormAttribute.FreeFormAttribute() -> void
+Ampelum.Tools.IPreviewable
+Ampelum.Tools.IPreviewable.PreviewAsync(System.Threading.CancellationToken ct) -> string!
+Ampelum.Tools.ITypedTool<TResult>
+Ampelum.Tools.ITypedTool<TResult>.Description.get -> string!
+Ampelum.Tools.ITypedTool<TResult>.InvokeAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<TResult>
+Ampelum.Tools.ITypedTool<TResult>.Name.get -> string!
+Ampelum.Tools.ToolCategoryAttribute
+Ampelum.Tools.ToolCategoryAttribute.Kind.get -> Ampelum.Tools.ToolCategoryKind
+Ampelum.Tools.ToolCategoryAttribute.ToolCategoryAttribute(Ampelum.Tools.ToolCategoryKind kind) -> void
+Ampelum.Tools.ToolCategoryKind
+Ampelum.Tools.ToolCategoryKind.Compute = 2 -> Ampelum.Tools.ToolCategoryKind
+Ampelum.Tools.ToolCategoryKind.External = 3 -> Ampelum.Tools.ToolCategoryKind
+Ampelum.Tools.ToolCategoryKind.Read = 0 -> Ampelum.Tools.ToolCategoryKind
+Ampelum.Tools.ToolCategoryKind.Write = 1 -> Ampelum.Tools.ToolCategoryKind
+Ampelum.TraceKeys
+Ampelum.TraceRecord
+Ampelum.TraceRecord.<Clone>$() -> Ampelum.TraceRecord!
+Ampelum.TraceRecord.Deconstruct(out System.Guid Id, out string! ModuleName, out System.Type! SignatureType, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Inputs, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Outputs, out System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! PromptMessages, out string! RawResponse, out Microsoft.Extensions.AI.UsageDetails? Usage, out System.TimeSpan Duration, out System.Exception? Error, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+Ampelum.TraceRecord.Duration.get -> System.TimeSpan
+Ampelum.TraceRecord.Duration.init -> void
+Ampelum.TraceRecord.Equals(Ampelum.TraceRecord? other) -> bool
+Ampelum.TraceRecord.Error.get -> System.Exception?
+Ampelum.TraceRecord.Error.init -> void
+Ampelum.TraceRecord.Id.get -> System.Guid
+Ampelum.TraceRecord.Id.init -> void
+Ampelum.TraceRecord.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.TraceRecord.Inputs.init -> void
+Ampelum.TraceRecord.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.TraceRecord.Metadata.init -> void
+Ampelum.TraceRecord.ModuleName.get -> string!
+Ampelum.TraceRecord.ModuleName.init -> void
+Ampelum.TraceRecord.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.TraceRecord.Outputs.init -> void
+Ampelum.TraceRecord.PromptMessages.get -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.TraceRecord.PromptMessages.init -> void
+Ampelum.TraceRecord.RawResponse.get -> string!
+Ampelum.TraceRecord.RawResponse.init -> void
+Ampelum.TraceRecord.SignatureType.get -> System.Type!
+Ampelum.TraceRecord.SignatureType.init -> void
+Ampelum.TraceRecord.TraceRecord(System.Guid Id, string! ModuleName, System.Type! SignatureType, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Inputs, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Outputs, System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! PromptMessages, string! RawResponse, Microsoft.Extensions.AI.UsageDetails? Usage, System.TimeSpan Duration, System.Exception? Error, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+Ampelum.TraceRecord.Usage.get -> Microsoft.Extensions.AI.UsageDetails?
+Ampelum.TraceRecord.Usage.init -> void
+Ampelum.Usage.DefaultUsageTracker
+Ampelum.Usage.DefaultUsageTracker.DefaultUsageTracker() -> void
+Ampelum.Usage.DefaultUsageTracker.Record(Microsoft.Extensions.AI.UsageDetails? usage, bool cacheHit) -> void
+Ampelum.Usage.DefaultUsageTracker.Reset() -> void
+Ampelum.Usage.DefaultUsageTracker.Scope(string! name) -> System.IDisposable!
+Ampelum.Usage.DefaultUsageTracker.Snapshot() -> Ampelum.Usage.UsageSummary!
+Ampelum.Usage.IInspectableSink
+Ampelum.Usage.IInspectableSink.GetRecent(int n) -> System.Collections.Generic.IReadOnlyList<Ampelum.TraceRecord!>!
+Ampelum.Usage.IUsageTracker
+Ampelum.Usage.IUsageTracker.Record(Microsoft.Extensions.AI.UsageDetails? usage, bool cacheHit) -> void
+Ampelum.Usage.IUsageTracker.Reset() -> void
+Ampelum.Usage.IUsageTracker.Scope(string! name) -> System.IDisposable!
+Ampelum.Usage.IUsageTracker.Snapshot() -> Ampelum.Usage.UsageSummary!
+Ampelum.Usage.UsageSummary
+Ampelum.Usage.UsageSummary.<Clone>$() -> Ampelum.Usage.UsageSummary!
+Ampelum.Usage.UsageSummary.CacheHits.get -> int
+Ampelum.Usage.UsageSummary.CacheHits.init -> void
+Ampelum.Usage.UsageSummary.CompletionTokens.get -> long
+Ampelum.Usage.UsageSummary.CompletionTokens.init -> void
+Ampelum.Usage.UsageSummary.Deconstruct(out long PromptTokens, out long CompletionTokens, out long TotalTokens, out int RequestCount, out int CacheHits, out System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Usage.UsageSummary!>? PerScope) -> void
+Ampelum.Usage.UsageSummary.Equals(Ampelum.Usage.UsageSummary? other) -> bool
+Ampelum.Usage.UsageSummary.PerScope.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Usage.UsageSummary!>?
+Ampelum.Usage.UsageSummary.PerScope.init -> void
+Ampelum.Usage.UsageSummary.PromptTokens.get -> long
+Ampelum.Usage.UsageSummary.PromptTokens.init -> void
+Ampelum.Usage.UsageSummary.RequestCount.get -> int
+Ampelum.Usage.UsageSummary.RequestCount.init -> void
+Ampelum.Usage.UsageSummary.TotalTokens.get -> long
+Ampelum.Usage.UsageSummary.TotalTokens.init -> void
+Ampelum.Usage.UsageSummary.UsageSummary(long PromptTokens, long CompletionTokens, long TotalTokens, int RequestCount, int CacheHits, System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Usage.UsageSummary!>? PerScope) -> void
+override Ampelum.Audit.AuditChainVerificationResult.Equals(object? obj) -> bool
+override Ampelum.Audit.AuditChainVerificationResult.GetHashCode() -> int
+override Ampelum.Audit.AuditChainVerificationResult.ToString() -> string!
+override Ampelum.Audit.AuditEntry.Equals(object? obj) -> bool
+override Ampelum.Audit.AuditEntry.GetHashCode() -> int
+override Ampelum.Audit.AuditEntry.ToString() -> string!
+override Ampelum.Budget.BudgetSnapshot.Equals(object? obj) -> bool
+override Ampelum.Budget.BudgetSnapshot.GetHashCode() -> int
+override Ampelum.Budget.BudgetSnapshot.ToString() -> string!
+override Ampelum.Caching.AmpelumCachingChatClient.GetCacheKey(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options, params System.ReadOnlySpan<object?> additionalValues) -> string!
+override Ampelum.Caching.AmpelumCachingChatClient.ReadCacheAsync(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse?>!
+override Ampelum.Caching.AmpelumCachingChatClient.ReadCacheStreamingAsync(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatResponseUpdate!>?>!
+override Ampelum.AmpelumContext.Equals(object? obj) -> bool
+override Ampelum.AmpelumContext.GetHashCode() -> int
+override Ampelum.AmpelumContext.ToString() -> string!
+override Ampelum.EvaluationProgress.Equals(object? obj) -> bool
+override Ampelum.EvaluationProgress.GetHashCode() -> int
+override Ampelum.EvaluationProgress.ToString() -> string!
+override Ampelum.EvaluationResult<TSig>.Equals(object? obj) -> bool
+override Ampelum.EvaluationResult<TSig>.GetHashCode() -> int
+override Ampelum.EvaluationResult<TSig>.ToString() -> string!
+override Ampelum.Example.Equals(object? obj) -> bool
+override Ampelum.Example.GetHashCode() -> int
+override Ampelum.Example.ToString() -> string!
+override Ampelum.ExampleScore<TSig>.Equals(object? obj) -> bool
+override Ampelum.ExampleScore<TSig>.GetHashCode() -> int
+override Ampelum.ExampleScore<TSig>.ToString() -> string!
+override Ampelum.Field.Equals(object? obj) -> bool
+override Ampelum.Field.GetHashCode() -> int
+override Ampelum.Field.ToString() -> string!
+override Ampelum.LabeledExample<TSig>.Equals(object? obj) -> bool
+override Ampelum.LabeledExample<TSig>.GetHashCode() -> int
+override Ampelum.LabeledExample<TSig>.ToString() -> string!
+override Ampelum.Optimizers.OptimizedProgram<TProgram>.Equals(object? obj) -> bool
+override Ampelum.Optimizers.OptimizedProgram<TProgram>.GetHashCode() -> int
+override Ampelum.Optimizers.OptimizedProgram<TProgram>.ToString() -> string!
+override Ampelum.Optimizers.OptimizerProgress.Equals(object? obj) -> bool
+override Ampelum.Optimizers.OptimizerProgress.GetHashCode() -> int
+override Ampelum.Optimizers.OptimizerProgress.ToString() -> string!
+override Ampelum.Prediction<TValue>.Equals(object? obj) -> bool
+override Ampelum.Prediction<TValue>.GetHashCode() -> int
+override Ampelum.Prediction<TValue>.ToString() -> string!
+override Ampelum.PredictionUpdate<TSig>.Equals(object? obj) -> bool
+override Ampelum.PredictionUpdate<TSig>.GetHashCode() -> int
+override Ampelum.PredictionUpdate<TSig>.ToString() -> string!
+override Ampelum.Retrieval.RetrievedDocument.Equals(object? obj) -> bool
+override Ampelum.Retrieval.RetrievedDocument.GetHashCode() -> int
+override Ampelum.Retrieval.RetrievedDocument.ToString() -> string!
+override Ampelum.SignatureMetadata.Equals(object? obj) -> bool
+override Ampelum.SignatureMetadata.GetHashCode() -> int
+override Ampelum.SignatureMetadata.ToString() -> string!
+override Ampelum.Streaming.StreamUpdate<TOut>.Equals(object? obj) -> bool
+override Ampelum.Streaming.StreamUpdate<TOut>.GetHashCode() -> int
+override Ampelum.Streaming.StreamUpdate<TOut>.ToString() -> string!
+override Ampelum.StreamingParseState.Equals(object? obj) -> bool
+override Ampelum.StreamingParseState.GetHashCode() -> int
+override Ampelum.StreamingParseState.ToString() -> string!
+override Ampelum.ToolCallRecord.Equals(object? obj) -> bool
+override Ampelum.ToolCallRecord.GetHashCode() -> int
+override Ampelum.ToolCallRecord.ToString() -> string!
+override Ampelum.TraceRecord.Equals(object? obj) -> bool
+override Ampelum.TraceRecord.GetHashCode() -> int
+override Ampelum.TraceRecord.ToString() -> string!
+override Ampelum.Usage.UsageSummary.Equals(object? obj) -> bool
+override Ampelum.Usage.UsageSummary.GetHashCode() -> int
+override Ampelum.Usage.UsageSummary.ToString() -> string!
+static Ampelum.Audit.AuditChainVerificationResult.operator !=(Ampelum.Audit.AuditChainVerificationResult? left, Ampelum.Audit.AuditChainVerificationResult? right) -> bool
+static Ampelum.Audit.AuditChainVerificationResult.operator ==(Ampelum.Audit.AuditChainVerificationResult? left, Ampelum.Audit.AuditChainVerificationResult? right) -> bool
+static Ampelum.Audit.AuditChainVerifier.VerifyAsync(Ampelum.Audit.IAuditSink! sink, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Audit.AuditChainVerificationResult!>
+static Ampelum.Audit.AuditEntry.operator !=(Ampelum.Audit.AuditEntry? left, Ampelum.Audit.AuditEntry? right) -> bool
+static Ampelum.Audit.AuditEntry.operator ==(Ampelum.Audit.AuditEntry? left, Ampelum.Audit.AuditEntry? right) -> bool
+static Ampelum.Budget.Budget.Create() -> Ampelum.Budget.BudgetBuilder!
+static Ampelum.Budget.BudgetSnapshot.operator !=(Ampelum.Budget.BudgetSnapshot? left, Ampelum.Budget.BudgetSnapshot? right) -> bool
+static Ampelum.Budget.BudgetSnapshot.operator ==(Ampelum.Budget.BudgetSnapshot? left, Ampelum.Budget.BudgetSnapshot? right) -> bool
+static Ampelum.DependencyInjection.AmpelumBuilderAuditExtensions.AddAuditHook(this Ampelum.DependencyInjection.AmpelumBuilder! builder, bool replayMode = false) -> Ampelum.DependencyInjection.AmpelumBuilder!
+static Ampelum.DependencyInjection.AmpelumBuilderAuditExtensions.AddJsonFileAuditSink(this Ampelum.DependencyInjection.AmpelumBuilder! builder, string! path) -> Ampelum.DependencyInjection.AmpelumBuilder!
+static Ampelum.DependencyInjection.AmpelumBuilderCachingExtensions.WithResponseCache(this Ampelum.DependencyInjection.AmpelumBuilder! builder, Microsoft.Extensions.Caching.Distributed.IDistributedCache! cache) -> Ampelum.DependencyInjection.AmpelumBuilder!
+static Ampelum.DependencyInjection.ServiceCollectionExtensions.AddAmpelum(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Ampelum.DependencyInjection.AmpelumBuilder!
+static Ampelum.Diagnostics.AttributePolicyLogger.get -> Microsoft.Extensions.Logging.ILogger?
+static Ampelum.Diagnostics.AttributePolicyLogger.set -> void
+static Ampelum.Diagnostics.SetTag(System.Diagnostics.Activity? activity, string! key, object? value) -> void
+static Ampelum.Diagnostics.StrictAttributePolicy.get -> bool
+static Ampelum.Diagnostics.StrictAttributePolicy.set -> void
+static Ampelum.AmpelumAssert.Assert(bool condition, string! message) -> void
+static Ampelum.AmpelumAssert.Suggest(bool condition, string! suggestion) -> void
+static Ampelum.AmpelumContext.Ambient.get -> Ampelum.AmpelumContext?
+static Ampelum.AmpelumContext.operator !=(Ampelum.AmpelumContext? left, Ampelum.AmpelumContext? right) -> bool
+static Ampelum.AmpelumContext.operator ==(Ampelum.AmpelumContext? left, Ampelum.AmpelumContext? right) -> bool
+static Ampelum.AmpelumContext.Push(Ampelum.AmpelumContext! newCtx) -> System.IDisposable!
+static Ampelum.DynamicPredict.Create(Microsoft.Extensions.AI.IChatClient! chat, Ampelum.IAdapter? adapter = null, Ampelum.ITraceSink? sink = null, Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory = null) -> Ampelum.DynamicPredict!
+static Ampelum.EvaluationProgress.operator !=(Ampelum.EvaluationProgress? left, Ampelum.EvaluationProgress? right) -> bool
+static Ampelum.EvaluationProgress.operator ==(Ampelum.EvaluationProgress? left, Ampelum.EvaluationProgress? right) -> bool
+static Ampelum.EvaluationResult<TSig>.operator !=(Ampelum.EvaluationResult<TSig>? left, Ampelum.EvaluationResult<TSig>? right) -> bool
+static Ampelum.EvaluationResult<TSig>.operator ==(Ampelum.EvaluationResult<TSig>? left, Ampelum.EvaluationResult<TSig>? right) -> bool
+static Ampelum.Example.From<TSig>(TSig populated) -> Ampelum.Example!
+static Ampelum.Example.operator !=(Ampelum.Example? left, Ampelum.Example? right) -> bool
+static Ampelum.Example.operator ==(Ampelum.Example? left, Ampelum.Example? right) -> bool
+static Ampelum.ExampleScore<TSig>.operator !=(Ampelum.ExampleScore<TSig>? left, Ampelum.ExampleScore<TSig>? right) -> bool
+static Ampelum.ExampleScore<TSig>.operator ==(Ampelum.ExampleScore<TSig>? left, Ampelum.ExampleScore<TSig>? right) -> bool
+static Ampelum.Field.operator !=(Ampelum.Field? left, Ampelum.Field? right) -> bool
+static Ampelum.Field.operator ==(Ampelum.Field? left, Ampelum.Field? right) -> bool
+static Ampelum.JsonDefaults.Options.get -> System.Text.Json.JsonSerializerOptions!
+static Ampelum.LabeledExample<TSig>.operator !=(Ampelum.LabeledExample<TSig>? left, Ampelum.LabeledExample<TSig>? right) -> bool
+static Ampelum.LabeledExample<TSig>.operator ==(Ampelum.LabeledExample<TSig>? left, Ampelum.LabeledExample<TSig>? right) -> bool
+static Ampelum.Optimizers.OptimizedProgram<TProgram>.operator !=(Ampelum.Optimizers.OptimizedProgram<TProgram>? left, Ampelum.Optimizers.OptimizedProgram<TProgram>? right) -> bool
+static Ampelum.Optimizers.OptimizedProgram<TProgram>.operator ==(Ampelum.Optimizers.OptimizedProgram<TProgram>? left, Ampelum.Optimizers.OptimizedProgram<TProgram>? right) -> bool
+static Ampelum.Optimizers.OptimizerProgress.operator !=(Ampelum.Optimizers.OptimizerProgress? left, Ampelum.Optimizers.OptimizerProgress? right) -> bool
+static Ampelum.Optimizers.OptimizerProgress.operator ==(Ampelum.Optimizers.OptimizerProgress? left, Ampelum.Optimizers.OptimizerProgress? right) -> bool
+static Ampelum.Predict.Create<TSig>(Microsoft.Extensions.AI.IChatClient! chat, Ampelum.IAdapter? adapter = null, Ampelum.ITraceSink? sink = null, Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory = null) -> Ampelum.Predict<TSig>!
+static Ampelum.Predict<TSig>.FromAmbient() -> Ampelum.Predict<TSig>!
+static Ampelum.Prediction<TValue>.operator !=(Ampelum.Prediction<TValue>? left, Ampelum.Prediction<TValue>? right) -> bool
+static Ampelum.Prediction<TValue>.operator ==(Ampelum.Prediction<TValue>? left, Ampelum.Prediction<TValue>? right) -> bool
+static Ampelum.PredictionExtensions.Duration<T>(this Ampelum.Prediction<T>! p) -> System.TimeSpan
+static Ampelum.PredictionExtensions.Reasoning<T>(this Ampelum.Prediction<T>! p) -> string!
+static Ampelum.PredictionExtensions.Usage<T>(this Ampelum.Prediction<T>! p) -> Microsoft.Extensions.AI.UsageDetails?
+static Ampelum.PredictionUpdate<TSig>.operator !=(Ampelum.PredictionUpdate<TSig>? left, Ampelum.PredictionUpdate<TSig>? right) -> bool
+static Ampelum.PredictionUpdate<TSig>.operator ==(Ampelum.PredictionUpdate<TSig>? left, Ampelum.PredictionUpdate<TSig>? right) -> bool
+static Ampelum.Retrieval.ExampleExtensions.ToExample<TSig>(this Ampelum.Retrieval.RetrievedDocument! doc, TSig outputs) -> Ampelum.Example!
+static Ampelum.Retrieval.RetrievedDocument.operator !=(Ampelum.Retrieval.RetrievedDocument? left, Ampelum.Retrieval.RetrievedDocument? right) -> bool
+static Ampelum.Retrieval.RetrievedDocument.operator ==(Ampelum.Retrieval.RetrievedDocument? left, Ampelum.Retrieval.RetrievedDocument? right) -> bool
+static Ampelum.Retry.RetryModuleExtensions.WithRetry<TOut>(this System.Func<System.Collections.Generic.IReadOnlyList<string!>!, System.Threading.CancellationToken, System.Threading.Tasks.Task<TOut>!>! program, int maxAttempts = 3) -> Ampelum.Retry.RetryModule<TOut>!
+static Ampelum.Retry.RetryModuleExtensions.WithRetry<TOut>(this System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<TOut>!>! program, int maxAttempts = 3) -> Ampelum.Retry.RetryModule<TOut>!
+static Ampelum.Signature.Parse(string! dsl, string? instructions = null) -> Ampelum.SignatureMetadata!
+static Ampelum.SignatureMetadata.operator !=(Ampelum.SignatureMetadata? left, Ampelum.SignatureMetadata? right) -> bool
+static Ampelum.SignatureMetadata.operator ==(Ampelum.SignatureMetadata? left, Ampelum.SignatureMetadata? right) -> bool
+static Ampelum.SignatureMetadataCache.For(System.Type! signatureType) -> Ampelum.SignatureMetadata!
+static Ampelum.SignatureMetadataCache.For<TSig>() -> Ampelum.SignatureMetadata!
+static Ampelum.SignatureMetadataCache.Register(System.Type! signatureType, Ampelum.SignatureMetadata! metadata) -> void
+static Ampelum.SignatureMetadataCache.RegisterAccessors<TSig>(System.Func<TSig, object?>![]! getters) -> void
+static Ampelum.SignatureMetadataCache.TryGetAccessors(System.Type! signatureType, out System.Delegate![]? accessors) -> bool
+static Ampelum.Streaming.ProgramStreamer.Streamify<TProgram, TOut>(TProgram program, string! fieldName, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Streaming.StreamUpdate<TOut>!>!
+static Ampelum.Streaming.StreamUpdate<TOut>.operator !=(Ampelum.Streaming.StreamUpdate<TOut>? left, Ampelum.Streaming.StreamUpdate<TOut>? right) -> bool
+static Ampelum.Streaming.StreamUpdate<TOut>.operator ==(Ampelum.Streaming.StreamUpdate<TOut>? left, Ampelum.Streaming.StreamUpdate<TOut>? right) -> bool
+static Ampelum.StreamingParseState.operator !=(Ampelum.StreamingParseState? left, Ampelum.StreamingParseState? right) -> bool
+static Ampelum.StreamingParseState.operator ==(Ampelum.StreamingParseState? left, Ampelum.StreamingParseState? right) -> bool
+static Ampelum.ToolCallRecord.Failed(string! functionName, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! arguments, System.Exception! error, System.TimeSpan duration) -> Ampelum.ToolCallRecord!
+static Ampelum.ToolCallRecord.operator !=(Ampelum.ToolCallRecord? left, Ampelum.ToolCallRecord? right) -> bool
+static Ampelum.ToolCallRecord.operator ==(Ampelum.ToolCallRecord? left, Ampelum.ToolCallRecord? right) -> bool
+static Ampelum.ToolCallRecord.Success(string! functionName, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! arguments, object? result, System.TimeSpan duration) -> Ampelum.ToolCallRecord!
+static Ampelum.TraceRecord.operator !=(Ampelum.TraceRecord? left, Ampelum.TraceRecord? right) -> bool
+static Ampelum.TraceRecord.operator ==(Ampelum.TraceRecord? left, Ampelum.TraceRecord? right) -> bool
+static Ampelum.Usage.UsageSummary.operator !=(Ampelum.Usage.UsageSummary? left, Ampelum.Usage.UsageSummary? right) -> bool
+static Ampelum.Usage.UsageSummary.operator ==(Ampelum.Usage.UsageSummary? left, Ampelum.Usage.UsageSummary? right) -> bool
+static readonly Ampelum.Diagnostics.AdapterFormatDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.AdapterParseDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.AdapterParseFailures -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.EvaluateDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.EvaluateFailures -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.EvaluateScore -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.HookAfterDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.HookBeforeDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.LmCallDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.Meter -> System.Diagnostics.Metrics.Meter!
+static readonly Ampelum.Diagnostics.ModuleForwardDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.ModuleForwardErrors -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.ModuleStreamChunks -> System.Diagnostics.Metrics.Histogram<long>!
+static readonly Ampelum.Diagnostics.ModuleStreamDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.OptimizerCompileDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.OptimizerCompileExamples -> System.Diagnostics.Metrics.Histogram<long>!
+static readonly Ampelum.Diagnostics.OptimizerCompileScore -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.ReactIterations -> System.Diagnostics.Metrics.Histogram<long>!
+static readonly Ampelum.Diagnostics.ReactToolCalls -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.RetrieverQueryDuration -> System.Diagnostics.Metrics.Histogram<double>!
+static readonly Ampelum.Diagnostics.RetrieverQueryHits -> System.Diagnostics.Metrics.Histogram<long>!
+static readonly Ampelum.Diagnostics.RetryAttempts -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.RetrySucceededOnAttempt -> System.Diagnostics.Metrics.Histogram<long>!
+static readonly Ampelum.Diagnostics.Source -> System.Diagnostics.ActivitySource!
+static readonly Ampelum.Diagnostics.TokensInput -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.TokensOutput -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.Diagnostics.TraceSinkDropped -> System.Diagnostics.Metrics.Counter<long>!
+static readonly Ampelum.NullTraceSink.Instance -> Ampelum.NullTraceSink!
+virtual Ampelum.Optimizers.BootstrapFewShot<TProgram>.ProgramRunner.Invoke(TProgram program, Ampelum.Example! example, Ampelum.AmpelumContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!

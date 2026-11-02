@@ -1,0 +1,29 @@
+id: expense-approval
+version: 1.0.0
+name: Expense approval
+risk:
+  max_effect_class: additive
+steps:
+  - id: extract
+    kind: sequential
+  - id: route
+    kind: branch
+    depends_on: [extract]
+    branch_targets: [pay, review]
+    inputs:
+      limit: "500"
+  - id: pay
+    kind: tool
+    tool: pay_expense
+    depends_on: [route]
+    effect: additive
+    tool_allow_list: [pay_expense]
+  - id: review
+    kind: tool
+    tool: flag_for_review
+    depends_on: [route]
+    effect: additive
+    tool_allow_list: [flag_for_review]
+  - id: done
+    kind: join
+    depends_on: [pay, review]

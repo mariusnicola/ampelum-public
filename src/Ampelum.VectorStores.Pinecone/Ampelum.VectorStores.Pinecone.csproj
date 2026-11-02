@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.VectorStores.Pinecone</PackageId>
+    <AssemblyName>SignalGrid.Ampelum.VectorStores.Pinecone</AssemblyName>
+    <Description>Pinecone adapter for Ampelum.Retrieval.IVectorStore.</Description>
+    <PackageTags>ampelum;rag;vectorstore;pinecone</PackageTags>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <PackageReference Include="Pinecone.NET" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.VectorStores.Pinecone.Tests" />
+  </ItemGroup>
+</Project>

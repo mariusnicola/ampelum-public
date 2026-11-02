@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SignalGrid.Ampelum.Agent.Orchestration</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Agent.Postgres</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Agent.Postgres</PackageId>
+    <Version>0.8.0-rc3</Version>
+    <Description>PostgreSQL durable workflow persistence for SignalGrid.Ampelum Agent.</Description>
+    <PackageTags>signalgrid;ampelum;agents;workflows;postgresql;persistence</PackageTags>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql" />
+    <!-- Direct pin, not just transitive via Ampelum.Agent: NuGetAudit (NU1903) flags the version
+         Microsoft.Data.Sqlite resolves to when this package is reached only transitively. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Agent\Ampelum.Agent.csproj" Version="[0.8.0-rc3, 0.9.0)" />
+  </ItemGroup>
+</Project>

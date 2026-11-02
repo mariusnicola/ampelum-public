@@ -1,0 +1,7 @@
+<Project>
+  <!-- Disable central package management for the consumer-smoke project so it
+       behaves like a downstream consumer pinning versions inside its own csproj. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <!-- Exclude compiler-generated delegate-cache and closure classes from coverage.
+         These show as Ampelum.SourceGenerator.SignatureMetadataGenerator/<>c with synthesized
+         branches that are not exercisable through the public generator API. -->
+    <ExcludeByAttribute>ExcludeFromCodeCoverage,CompilerGeneratedAttribute,GeneratedCodeAttribute</ExcludeByAttribute>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Reference Ampelum for MetadataReference resolution in tests -->
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <!-- Reference generator project to test the generator class directly -->
+    <ProjectReference Include="..\..\src\Ampelum.SourceGenerator\Ampelum.SourceGenerator.csproj" />
+  </ItemGroup>
+</Project>

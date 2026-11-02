@@ -1,0 +1,1216 @@
+﻿#nullable enable
+Ampelum.AmpelumContext.WithoutHook<THook>() -> Ampelum.AmpelumContext!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.<Clone>$() -> Ampelum.Agents.AgentMessage!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.AgentMessage(string! SenderName, string! Role, string! Content) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Content.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Content.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Deconstruct(out string! SenderName, out string! Role, out string! Content) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Equals(Ampelum.Agents.AgentMessage? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Handoff.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Handoff.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.IsTerminal.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.IsTerminal.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Role.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Role.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.SenderName.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.SenderName.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Timestamp.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.Timestamp.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext.<Clone>$() -> Ampelum.Agents.ConversationContext!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext.ConversationContext(System.Collections.Generic.IEnumerable<Ampelum.Agents.AgentMessage!>! history, Ampelum.Agents.Memory.IConversationMemory? memory, int turnIndex) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext.Equals(Ampelum.Agents.ConversationContext? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext.History.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext.Memory.get -> Ampelum.Agents.Memory.IConversationMemory?
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.ConversationContext.TurnIndex.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.IConversationMemory
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.IConversationMemory.AppendAsync(Ampelum.Agents.AgentMessage! message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.IConversationMemory.GetRecentAsync(int n, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.IConversationMemory.QueryAsync(string! query, int topK, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.AgentMessage.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.AgentMessage.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.AgentMessage.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.ConversationContext.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.ConversationContext.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.ConversationContext.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.AgentMessage.operator !=(Ampelum.Agents.AgentMessage? left, Ampelum.Agents.AgentMessage? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.AgentMessage.operator ==(Ampelum.Agents.AgentMessage? left, Ampelum.Agents.AgentMessage? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.ConversationContext.operator !=(Ampelum.Agents.ConversationContext? left, Ampelum.Agents.ConversationContext? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.ConversationContext.operator ==(Ampelum.Agents.ConversationContext? left, Ampelum.Agents.ConversationContext? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.IAgent
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.IAgent.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.IAgent.ReplyAsync(Ampelum.Agents.ConversationContext! ctx, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Agents.AgentMessage!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.IAgent.Role.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.ISpeakerSelector
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.ISpeakerSelector.SelectAsync(Ampelum.Agents.ConversationContext! ctx, System.Collections.Generic.IReadOnlyList<Ampelum.Agents.IAgent!>! agents, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Agents.IAgent!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.RoundRobinSelector
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.RoundRobinSelector.RoundRobinSelector() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.RoundRobinSelector.SelectAsync(Ampelum.Agents.ConversationContext! ctx, System.Collections.Generic.IReadOnlyList<Ampelum.Agents.IAgent!>! agents, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Agents.IAgent!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.RoleBasedSelector
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.RoleBasedSelector.RoleBasedSelector(System.Collections.Generic.IReadOnlyList<string!>! roles) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.RoleBasedSelector.SelectAsync(Ampelum.Agents.ConversationContext! ctx, System.Collections.Generic.IReadOnlyList<Ampelum.Agents.IAgent!>! agents, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Agents.IAgent!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.LlmDrivenSelector
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.LlmDrivenSelector.LlmDrivenSelector(Microsoft.Extensions.AI.IChatClient! chatClient, Microsoft.Extensions.Logging.ILogger<Ampelum.Agents.SpeakerSelectors.LlmDrivenSelector!>? logger = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.SpeakerSelectors.LlmDrivenSelector.SelectAsync(Ampelum.Agents.ConversationContext! ctx, System.Collections.Generic.IReadOnlyList<Ampelum.Agents.IAgent!>! agents, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Agents.IAgent!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChat
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChat.GroupChat(System.Collections.Generic.IReadOnlyList<Ampelum.Agents.IAgent!>! agents, Ampelum.Agents.SpeakerSelectors.ISpeakerSelector! selector, Ampelum.Agents.Memory.IConversationMemory? memory = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChat.RunAsync(string! initialPrompt, int maxTurns, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Agents.GroupChatResult!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.<Clone>$() -> Ampelum.Agents.GroupChatResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>! History, out Ampelum.Agents.TerminationReason Reason) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.Equals(Ampelum.Agents.GroupChatResult? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.GroupChatResult(System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>! History, Ampelum.Agents.TerminationReason Reason) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.History.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.History.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.Reason.get -> Ampelum.Agents.TerminationReason
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChatResult.Reason.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.TerminationReason
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.TerminationReason.HandoffToUnknown = 2 -> Ampelum.Agents.TerminationReason
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.TerminationReason.MaxTurnsReached = 1 -> Ampelum.Agents.TerminationReason
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.TerminationReason.TerminalMessage = 0 -> Ampelum.Agents.TerminationReason
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.GroupChatResult.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.GroupChatResult.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.GroupChatResult.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.GroupChatResult.operator !=(Ampelum.Agents.GroupChatResult? left, Ampelum.Agents.GroupChatResult? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.GroupChatResult.operator ==(Ampelum.Agents.GroupChatResult? left, Ampelum.Agents.GroupChatResult? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.InMemoryConversationMemory
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.InMemoryConversationMemory.AppendAsync(Ampelum.Agents.AgentMessage! message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.InMemoryConversationMemory.GetRecentAsync(int n, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.InMemoryConversationMemory.InMemoryConversationMemory(int capacity) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.InMemoryConversationMemory.QueryAsync(string! query, int topK, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.VectorConversationMemory
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.VectorConversationMemory.AppendAsync(Ampelum.Agents.AgentMessage! message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.VectorConversationMemory.GetRecentAsync(int n, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.VectorConversationMemory.QueryAsync(string! query, int topK, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.VectorConversationMemory.VectorConversationMemory(Ampelum.Retrieval.IVectorStore! store, Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>! embedder, string! collection = "conv-memory") -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.EpisodicMemory
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.EpisodicMemory.AppendAsync(Ampelum.Agents.AgentMessage! message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.EpisodicMemory.EpisodicMemory(Microsoft.Extensions.AI.IChatClient! chat, int threshold = 10, int windowSize = 10) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.EpisodicMemory.GetRecentAsync(int n, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.EpisodicMemory.QueryAsync(string! query, int topK, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.CompositeConversationMemory
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.CompositeConversationMemory.AppendAsync(Ampelum.Agents.AgentMessage! message, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.CompositeConversationMemory.CompositeConversationMemory(params Ampelum.Agents.Memory.IConversationMemory![]! tiers) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.CompositeConversationMemory.GetRecentAsync(int n, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Memory.CompositeConversationMemory.QueryAsync(string! query, int topK, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<Ampelum.Agents.AgentMessage!>!>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.CompositionTrace
+[AMPELUM_V09_PREVIEW]static Ampelum.Composition.CompositionTrace.Aggregate(System.Guid id, string! moduleName, System.Type! signatureType, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! inputs, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! outputs, System.Collections.Generic.IReadOnlyList<Ampelum.TraceRecord!>! childTraces, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? extraMetadata = null) -> Ampelum.TraceRecord!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.TraceKeys
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.BranchChildTraceIds = "branch.child_trace_ids" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.BranchRoute = "branch.route" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.CompositionChildCount = "composition.child_count" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.CompositionChildTraceIds = "composition.child_trace_ids" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.CompositionPrimitive = "composition.primitive" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.LoopChildTraceIds = "loop.child_trace_ids" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.LoopConverged = "loop.converged" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.LoopIterations = "loop.iterations" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.SequenceChildTraceIds = "sequence.child_trace_ids" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Composition.TraceKeys.SequenceLength = "sequence.length" -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.IModule<TIn, TOut>
+[AMPELUM_V09_PREVIEW]Ampelum.IModule<TIn, TOut>.ForwardAsync(TIn inputs, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Prediction<TOut>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.IReActTool
+[AMPELUM_V09_PREVIEW]Ampelum.IReActTool.Description.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.IReActTool.InvokeAsync(string! argumentsJson, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string!>
+[AMPELUM_V09_PREVIEW]Ampelum.IReActTool.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.IReActTool.ParametersJsonSchema.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.ReAct<TSig>.ReAct(Ampelum.AmpelumContext! context, System.Collections.Generic.IReadOnlyList<Ampelum.IReActTool!>! typedTools, int maxIterations = 5) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolRegistry
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolRegistry.AgentToolRegistry() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolRegistry.All() -> System.Collections.Generic.IReadOnlyList<Ampelum.Agents.Tools.IAgentTool!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolRegistry.Find(string! name, string! version) -> Ampelum.Agents.Tools.IAgentTool?
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolRegistry.ListByCategory(string! category) -> System.Collections.Generic.IReadOnlyList<Ampelum.Agents.Tools.IAgentTool!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolRegistry.Register(Ampelum.Agents.Tools.IAgentTool! tool) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.<Clone>$() -> Ampelum.Agents.Tools.AgentToolResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.AgentToolResult(bool Success, string? Output, string? ErrorMessage, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Deconstruct(out bool Success, out string? Output, out string? ErrorMessage, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Equals(Ampelum.Agents.Tools.AgentToolResult? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.ErrorMessage.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.ErrorMessage.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Output.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Output.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Success.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.AgentToolResult.Success.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentTool
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentTool.Category.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentTool.Version.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentToolRegistry
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentToolRegistry.All() -> System.Collections.Generic.IReadOnlyList<Ampelum.Agents.Tools.IAgentTool!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentToolRegistry.Find(string! name, string! version) -> Ampelum.Agents.Tools.IAgentTool?
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentToolRegistry.ListByCategory(string! category) -> System.Collections.Generic.IReadOnlyList<Ampelum.Agents.Tools.IAgentTool!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.Tools.IAgentToolRegistry.Register(Ampelum.Agents.Tools.IAgentTool! tool) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.Tools.AgentToolResult.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.Tools.AgentToolResult.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Agents.Tools.AgentToolResult.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.Tools.AgentToolResult.operator !=(Ampelum.Agents.Tools.AgentToolResult? left, Ampelum.Agents.Tools.AgentToolResult? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Agents.Tools.AgentToolResult.operator ==(Ampelum.Agents.Tools.AgentToolResult? left, Ampelum.Agents.Tools.AgentToolResult? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.DisposeAsync() -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.RealtimeChatClient(System.Uri! endpoint, string! apiKey, System.Net.WebSockets.ClientWebSocket? socket = null, Microsoft.Extensions.Logging.ILogger<Ampelum.Realtime.RealtimeChatClient!>? logger = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.IRealtimeTransport
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.IRealtimeTransport.CloseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.IRealtimeTransport.ConnectAsync(System.Uri! endpoint, string! apiKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.IRealtimeTransport.ReceiveTextAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.IRealtimeTransport.SendTextAsync(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.RealtimeChatClient.RealtimeChatClient(System.Uri! endpoint, string! apiKey, Ampelum.Realtime.IRealtimeTransport! transport, Microsoft.Extensions.Logging.ILogger<Ampelum.Realtime.RealtimeChatClient!>? logger = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport.CloseAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport.ConnectAsync(System.Uri! endpoint, string! apiKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport.DisposeAsync() -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport.ReceiveTextAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport.SendTextAsync(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Realtime.WebSocketTransport.WebSocketTransport(System.Net.WebSockets.ClientWebSocket! socket) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.DependencyInjection.AmpelumBuilderAgentsExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderAgentsExtensions.AddAgents(this Ampelum.DependencyInjection.AmpelumBuilder! builder) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderAgentsExtensions.AddConversationMemory<T>(this Ampelum.DependencyInjection.AmpelumBuilder! builder) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderAgentsExtensions.AddRealtimeChatClient(this Ampelum.DependencyInjection.AmpelumBuilder! builder, System.Uri! endpoint, string! apiKey) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCache
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCache.EmbeddingCache(Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>! inner, Microsoft.Extensions.Caching.Distributed.IDistributedCache! cache, Ampelum.Retrieval.Caching.EmbeddingCacheOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCache.Metadata.get -> Microsoft.Extensions.AI.EmbeddingGeneratorMetadata!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCache.GenerateAsync(System.Collections.Generic.IEnumerable<string!>! values, Microsoft.Extensions.AI.EmbeddingGenerationOptions? generationOptions = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.GeneratedEmbeddings<Microsoft.Extensions.AI.Embedding<float>!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCache.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCache.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCacheOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCacheOptions.EmbeddingCacheOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCacheOptions.TimeToLive.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCacheOptions.TimeToLive.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCacheOptions.KeyPrefix.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Caching.EmbeddingCacheOptions.KeyPrefix.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Filtering.FilterPredicate
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Filtering.FilterPredicate.FilterPredicate() -> void
+[AMPELUM_V09_PREVIEW]abstract Ampelum.Retrieval.Filtering.FilterPredicate.Matches(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! metadata) -> bool
+[AMPELUM_V09_PREVIEW]abstract Ampelum.Retrieval.Filtering.FilterPredicate.ToFlatEqualsDictionary() -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Filtering.FilterPredicate.Equals(string! key, object? value) -> Ampelum.Retrieval.Filtering.FilterPredicate!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Filtering.FilterPredicate.In(string! key, System.Collections.Generic.IReadOnlyList<object?>! values) -> Ampelum.Retrieval.Filtering.FilterPredicate!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Filtering.FilterPredicate.And(params Ampelum.Retrieval.Filtering.FilterPredicate![]! children) -> Ampelum.Retrieval.Filtering.FilterPredicate!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Filtering.FilterPredicate.Or(params Ampelum.Retrieval.Filtering.FilterPredicate![]! children) -> Ampelum.Retrieval.Filtering.FilterPredicate!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Filtering.ScoreThresholdRetriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Filtering.ScoreThresholdRetriever.ScoreThresholdRetriever(Ampelum.Retrieval.IRetriever! inner, double minScore) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Filtering.ScoreThresholdRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.IReranker
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.IReranker.RerankAsync(string! query, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! candidates, int topK, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.ReciprocalRankFusionReranker
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.ReciprocalRankFusionReranker.ReciprocalRankFusionReranker(int k = 60) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.ReciprocalRankFusionReranker.RerankAsync(string! query, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! candidates, int topK, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Hybrid.ReciprocalRankFusionReranker.Fuse(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>! lists, int k, int topK) -> System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetriever.HybridRetriever(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.IRetriever!>! sources, Ampelum.Retrieval.Hybrid.IReranker! reranker, Ampelum.Retrieval.Hybrid.HybridRetrieverOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetrieverOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetrieverOptions.HybridRetrieverOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetrieverOptions.TopKPerSource.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.HybridRetrieverOptions.TopKPerSource.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.CohereRerankerOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.ApiKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.ApiKey.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.Model.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.Model.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.Endpoint.get -> System.Uri!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereRerankerOptions.Endpoint.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereReranker
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereReranker.CohereReranker(System.Net.Http.HttpClient! http, Ampelum.Retrieval.Hybrid.CohereRerankerOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.CohereReranker.RerankAsync(string! query, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! candidates, int topK, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.VoyageRerankerOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.ApiKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.ApiKey.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.Model.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.Model.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.Endpoint.get -> System.Uri!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageRerankerOptions.Endpoint.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageReranker
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageReranker.VoyageReranker(System.Net.Http.HttpClient! http, Ampelum.Retrieval.Hybrid.VoyageRerankerOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.VoyageReranker.RerankAsync(string! query, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! candidates, int topK, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.<Clone>$() -> Ampelum.Retrieval.Loaders.Document!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Document(string! Id, string! Text, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Deconstruct(out string! Id, out string! Text, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Equals(Ampelum.Retrieval.Loaders.Document? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Id.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Text.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Text.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.Document.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Loaders.Document.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Loaders.Document.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Loaders.Document.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Loaders.Document.operator !=(Ampelum.Retrieval.Loaders.Document? left, Ampelum.Retrieval.Loaders.Document? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Loaders.Document.operator ==(Ampelum.Retrieval.Loaders.Document? left, Ampelum.Retrieval.Loaders.Document? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.DocumentLoadContext() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.SourceUri.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.SourceUri.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.Encoding.get -> System.Text.Encoding!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.Encoding.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.MaxDocumentBytes.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.DocumentLoadContext.MaxDocumentBytes.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.LoaderBudgetExceededException
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.LoaderBudgetExceededException.LoaderBudgetExceededException(long limit, long actual) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.LoaderBudgetExceededException.Limit.get -> long
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.LoaderBudgetExceededException.Actual.get -> long
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.IDocumentLoader
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.IDocumentLoader.LoadAsync(System.IO.Stream! source, Ampelum.Retrieval.Loaders.DocumentLoadContext! context, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Retrieval.Loaders.Document!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.<Clone>$() -> Ampelum.Retrieval.Splitters.TextChunk!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.TextChunk(string! Text, int StartOffset, int EndOffset, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.Deconstruct(out string! Text, out int StartOffset, out int EndOffset, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.Equals(Ampelum.Retrieval.Splitters.TextChunk? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.Text.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.Text.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.StartOffset.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.StartOffset.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.EndOffset.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.EndOffset.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TextChunk.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Splitters.TextChunk.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Splitters.TextChunk.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Splitters.TextChunk.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Splitters.TextChunk.operator !=(Ampelum.Retrieval.Splitters.TextChunk? left, Ampelum.Retrieval.Splitters.TextChunk? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Splitters.TextChunk.operator ==(Ampelum.Retrieval.Splitters.TextChunk? left, Ampelum.Retrieval.Splitters.TextChunk? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.SplitterContext() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.ChunkSize.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.ChunkSize.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.ChunkOverlap.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.ChunkOverlap.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.SourceDocumentId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterContext.SourceDocumentId.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.ITextSplitter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.ITextSplitter.Split(string! text, Ampelum.Retrieval.Splitters.SplitterContext! context) -> System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Splitters.TextChunk!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SplitterExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Splitters.SplitterExtensions.SplitDocuments(this Ampelum.Retrieval.Splitters.ITextSplitter! splitter, System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Loaders.Document!>! docs, Ampelum.Retrieval.Splitters.SplitterContext! baseContext) -> System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Loaders.Document!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.RecursiveCharacterSplitter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.RecursiveCharacterSplitter.RecursiveCharacterSplitter(System.Collections.Generic.IReadOnlyList<string!>? separators = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.RecursiveCharacterSplitter.Split(string! text, Ampelum.Retrieval.Splitters.SplitterContext! context) -> System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Splitters.TextChunk!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SentenceSplitter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SentenceSplitter.SentenceSplitter() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.SentenceSplitter.Split(string! text, Ampelum.Retrieval.Splitters.SplitterContext! context) -> System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Splitters.TextChunk!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.HydeOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.IsEnabled.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.IsEnabled.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.HypothesisTokens.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.HypothesisTokens.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.SystemPrompt.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.SystemPrompt.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.ChatOptions.get -> Microsoft.Extensions.AI.ChatOptions?
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeOptions.ChatOptions.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeRetriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeRetriever.HydeRetriever(Ampelum.Retrieval.IRetriever! inner, Microsoft.Extensions.AI.IChatClient! chat, Ampelum.Retrieval.Patterns.HydeOptions! options, Ampelum.Safety.Pii.IPiiRedactor? piiRedactor = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.HydeRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionOptions.SubQuestionOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionOptions.MaxSubQuestions.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionOptions.MaxSubQuestions.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionOptions.SystemPrompt.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionOptions.SystemPrompt.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionRetriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionRetriever.SubQuestionRetriever(Ampelum.Retrieval.IRetriever! inner, Microsoft.Extensions.AI.IChatClient! chat, Ampelum.Retrieval.Patterns.SubQuestionOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.SubQuestionRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryOptions.MultiQueryOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryOptions.NumParaphrases.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryOptions.NumParaphrases.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryOptions.SystemPrompt.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryOptions.SystemPrompt.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryRetriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryRetriever.MultiQueryRetriever(Ampelum.Retrieval.IRetriever! inner, Microsoft.Extensions.AI.IChatClient! chat, Ampelum.Retrieval.Patterns.MultiQueryOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.MultiQueryRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.QueryRouterOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.Routes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Retrieval.IRetriever!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.Routes.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.SystemPrompt.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.SystemPrompt.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.DefaultRoute.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouterOptions.DefaultRoute.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouter.QueryRouter(Microsoft.Extensions.AI.IChatClient! chat, Ampelum.Retrieval.Patterns.QueryRouterOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRouter.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRewriter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRewriter.QueryRewriter(Microsoft.Extensions.AI.IChatClient! chat, string! systemPrompt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.QueryRewriter.RewriteAsync(string! query, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackOptions.StepBackOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackOptions.SystemPrompt.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackOptions.SystemPrompt.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackOptions.IncludeOriginal.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackOptions.IncludeOriginal.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackRetriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackRetriever.StepBackRetriever(Ampelum.Retrieval.IRetriever! inner, Microsoft.Extensions.AI.IChatClient! chat, Ampelum.Retrieval.Patterns.StepBackOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Patterns.StepBackRetriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.IRetrievalMetric
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.IRetrievalMetric.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.IRetrievalMetric.Compute(System.Collections.Generic.IReadOnlyList<string!>! retrievedIds, System.Collections.Generic.IReadOnlyList<string!>! goldIds, int? k = null) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvaluationExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Evaluation.RetrievalEvaluationExtensions.EvaluateRetrievalAsync(this Ampelum.Retrieval.IRetriever! retriever, System.Collections.Generic.IReadOnlyList<(string! Query, System.Collections.Generic.IReadOnlyList<string!>! GoldIds)>! dataset, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.Evaluation.IRetrievalMetric!>! metrics, int topK, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyDictionary<string!, double>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorOptions.RagAdvisorOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorOptions.TopK.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorOptions.TopK.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorOptions.ContextSeparator.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorOptions.ContextSeparator.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisor
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisor.RagAdvisor(Ampelum.Retrieval.IRetriever! retriever, Microsoft.Extensions.AI.IChatClient! chat, Ampelum.Retrieval.RagAdvisorOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisor.AskAsync(string! question, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Retrieval.RagAdvisorResponse!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.<Clone>$() -> Ampelum.Retrieval.RagAdvisorResponse!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.RagAdvisorResponse(string! Answer, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! Citations) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.Deconstruct(out string! Answer, out System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! Citations) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.Equals(Ampelum.Retrieval.RagAdvisorResponse? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.Answer.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.Answer.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.Citations.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.RagAdvisorResponse.Citations.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.RagAdvisorResponse.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.RagAdvisorResponse.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.RagAdvisorResponse.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.RagAdvisorResponse.operator !=(Ampelum.Retrieval.RagAdvisorResponse? left, Ampelum.Retrieval.RagAdvisorResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.RagAdvisorResponse.operator ==(Ampelum.Retrieval.RagAdvisorResponse? left, Ampelum.Retrieval.RagAdvisorResponse? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.<Clone>$() -> Ampelum.Retrieval.Persistence.VectorIndexSnapshot!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.VectorIndexSnapshot(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! Documents, System.Collections.Generic.IReadOnlyList<float[]!>! Vectors) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Deconstruct(out System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! Documents, out System.Collections.Generic.IReadOnlyList<float[]!>! Vectors) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Equals(Ampelum.Retrieval.Persistence.VectorIndexSnapshot? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Documents.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Documents.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Vectors.get -> System.Collections.Generic.IReadOnlyList<float[]!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Vectors.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Persistence.VectorIndexSnapshot.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Persistence.VectorIndexSnapshot.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Persistence.VectorIndexSnapshot.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Persistence.VectorIndexSnapshot.operator !=(Ampelum.Retrieval.Persistence.VectorIndexSnapshot? left, Ampelum.Retrieval.Persistence.VectorIndexSnapshot? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Persistence.VectorIndexSnapshot.operator ==(Ampelum.Retrieval.Persistence.VectorIndexSnapshot? left, Ampelum.Retrieval.Persistence.VectorIndexSnapshot? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Persistence.VectorIndexSerializer
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Persistence.VectorIndexSerializer.SaveAsync(Ampelum.Retrieval.IVectorStore! store, System.IO.Stream! destination, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Persistence.VectorIndexSerializer.LoadAsync(Ampelum.Retrieval.IVectorStore! store, System.IO.Stream! source, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.IPiiRedactor
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.IPiiRedactor.Redact(string! text) -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.IPiiRedactor.RedactDictionary(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! source) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiCategory.CreditCard = 3 -> Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiCategory.Email = 0 -> Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiCategory.Other = 4 -> Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiCategory.Phone = 1 -> Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiCategory.Ssn = 2 -> Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.<Clone>$() -> Ampelum.Safety.Pii.PiiRule!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.Category.get -> Ampelum.Safety.Pii.PiiCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.Category.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.Deconstruct(out Ampelum.Safety.Pii.PiiCategory Category, out System.Text.RegularExpressions.Regex! Pattern, out string! ReplacementToken, out System.Func<System.Text.RegularExpressions.Match!, bool>? PostMatchValidator) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.Equals(Ampelum.Safety.Pii.PiiRule? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.Pattern.get -> System.Text.RegularExpressions.Regex!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.Pattern.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.PiiRule(Ampelum.Safety.Pii.PiiCategory Category, System.Text.RegularExpressions.Regex! Pattern, string! ReplacementToken, System.Func<System.Text.RegularExpressions.Match!, bool>? PostMatchValidator = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.PostMatchValidator.get -> System.Func<System.Text.RegularExpressions.Match!, bool>?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.PostMatchValidator.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.ReplacementToken.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRule.ReplacementToken.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Pii.PiiRule.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Pii.PiiRule.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Pii.PiiRule.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Pii.PiiRule.operator !=(Ampelum.Safety.Pii.PiiRule? left, Ampelum.Safety.Pii.PiiRule? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Pii.PiiRule.operator ==(Ampelum.Safety.Pii.PiiRule? left, Ampelum.Safety.Pii.PiiRule? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.RegexPiiRedactor
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.RegexPiiRedactor.Redact(string! text) -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.RegexPiiRedactor.RedactDictionary(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! source) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.RegexPiiRedactor.RegexPiiRedactor(System.Collections.Generic.IReadOnlyList<Ampelum.Safety.Pii.PiiRule!>? rules = null) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Pii.RegexPiiRedactor.DefaultRules.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Safety.Pii.PiiRule!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRedactionHook
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRedactionHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRedactionHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRedactionHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRedactionHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Pii.PiiRedactionHook.PiiRedactionHook(Ampelum.Safety.Pii.IPiiRedactor! redactor) -> void
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Pii.PiiRedactionHook.RedactedFlagKey = "pii.redacted" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Pii.PiiRedactionHook.RedactedInputsKey = "pii.redacted_inputs" -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.HeuristicDetector
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.HeuristicDetector.HeuristicDetector(System.Collections.Generic.IReadOnlyList<(string! RuleId, System.Text.RegularExpressions.Regex! Pattern)>? rules = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.HeuristicDetector.Scan(string! text) -> Ampelum.Safety.PromptInjection.PromptInjectionResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.IPromptInjectionDetector
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.IPromptInjectionDetector.Scan(string! text) -> Ampelum.Safety.PromptInjection.PromptInjectionResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionDetectedException
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionDetectedException.Excerpt.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionDetectedException.PromptInjectionDetectedException(string! ruleId, string? excerpt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionDetectedException.RuleId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionHook
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionHook.PromptInjectionHook(Ampelum.Safety.PromptInjection.IPromptInjectionDetector! detector) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.<Clone>$() -> Ampelum.Safety.PromptInjection.PromptInjectionResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.Deconstruct(out bool Flagged, out string? RuleId, out string? Excerpt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.Equals(Ampelum.Safety.PromptInjection.PromptInjectionResult? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.Excerpt.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.Excerpt.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.Flagged.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.Flagged.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.PromptInjectionResult(bool Flagged, string? RuleId, string? Excerpt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.RuleId.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.PromptInjection.PromptInjectionResult.RuleId.init -> void
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.PromptInjection.PromptInjectionHook.FlaggedKey = "prompt_injection.flagged" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.PromptInjection.PromptInjectionHook.RuleIdKey = "prompt_injection.rule_id" -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.PromptInjection.PromptInjectionResult.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.PromptInjection.PromptInjectionResult.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.PromptInjection.PromptInjectionResult.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.PromptInjection.HeuristicDetector.DefaultRules.get -> System.Collections.Generic.IReadOnlyList<(string! RuleId, System.Text.RegularExpressions.Regex! Pattern)>!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.PromptInjection.PromptInjectionResult.operator !=(Ampelum.Safety.PromptInjection.PromptInjectionResult? left, Ampelum.Safety.PromptInjection.PromptInjectionResult? right) -> bool
+[AMPELUM_V09_PREVIEW]virtual Ampelum.Safety.PromptInjection.PromptInjectionHook.OnFlaggedAsync(Ampelum.Hooks.HookContext! ctx, Ampelum.Safety.PromptInjection.PromptInjectionResult! verdict, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.PromptInjection.PromptInjectionResult.operator ==(Ampelum.Safety.PromptInjection.PromptInjectionResult? left, Ampelum.Safety.PromptInjection.PromptInjectionResult? right) -> bool
+*REMOVED*Ampelum.Hooks.RetryHook.RetryHook(int maxAttempts = 3, System.TimeSpan? baseDelay = null, System.TimeSpan? maxDelay = null, System.Random? rng = null) -> void
+Ampelum.Hooks.RetryHook.RetryHook(int maxAttempts = 3, System.TimeSpan? baseDelay = null, System.TimeSpan? maxDelay = null, System.Random? rng = null, int maxRecoveryAttempts = 2) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.IOutputModerator
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.IOutputModerator.ModerateAsync(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Safety.Moderation.ModerationResult!>
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationException
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationException.Categories.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationException.ModerationException(System.Collections.Generic.IReadOnlyList<string!>! categories) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.<Clone>$() -> Ampelum.Safety.Moderation.ModerationResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Categories.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Categories.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Confidence.get -> double?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Confidence.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Deconstruct(out bool Flagged, out System.Collections.Generic.IReadOnlyList<string!>! Categories, out double? Confidence) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Equals(Ampelum.Safety.Moderation.ModerationResult? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Flagged.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.Flagged.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationResult.ModerationResult(bool Flagged, System.Collections.Generic.IReadOnlyList<string!>! Categories, double? Confidence) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.OpenAiModerator
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.OpenAiModerator.ModerateAsync(string! text, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Ampelum.Safety.Moderation.ModerationResult!>
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.OpenAiModerator.OpenAiModerator(System.Net.Http.HttpClient! http, string! apiKey, System.Uri? endpoint = null, int cacheSize = 1024) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Moderation.ModerationResult.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Moderation.ModerationResult.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Moderation.ModerationResult.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Moderation.ModerationResult.operator !=(Ampelum.Safety.Moderation.ModerationResult? left, Ampelum.Safety.Moderation.ModerationResult? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Moderation.ModerationResult.operator ==(Ampelum.Safety.Moderation.ModerationResult? left, Ampelum.Safety.Moderation.ModerationResult? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationHook
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationHook.ModerationHook(Ampelum.Safety.Moderation.IOutputModerator! moderator, bool failOpen = false) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Moderation.ModerationHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Moderation.ModerationHook.CategoriesKey = "moderation.categories" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Moderation.ModerationHook.FlaggedKey = "moderation.flagged" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Moderation.ModerationHook.TransportErrorKey = "moderation.transport_error" -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.AmpelumToolRegistryServiceExtensions
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ForbiddenToolException
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ForbiddenToolException.ForbiddenToolException(string! toolName, string! toolVersion, string! reason) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ForbiddenToolException.Reason.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ForbiddenToolException.ToolName.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ForbiddenToolException.ToolVersion.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.IToolRegistry
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.IToolRegistry.GetAll() -> System.Collections.Generic.IEnumerable<Ampelum.Safety.Tools.ToolRegistration!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.IToolRegistry.TryGet(string! name, string! version, out Ampelum.Safety.Tools.ToolRegistration? registration) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.InMemoryToolRegistry
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.InMemoryToolRegistry.GetAll() -> System.Collections.Generic.IEnumerable<Ampelum.Safety.Tools.ToolRegistration!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.InMemoryToolRegistry.InMemoryToolRegistry() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.InMemoryToolRegistry.Register(Ampelum.Safety.Tools.ToolRegistration! registration) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.InMemoryToolRegistry.TryGet(string! name, string! version, out Ampelum.Safety.Tools.ToolRegistration? registration) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory.Communication = 2 -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory.Computation = 1 -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory.DataAccess = 3 -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory.DataMutation = 4 -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory.Information = 0 -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolCategory.SystemControl = 5 -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGateHook
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGateHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGateHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGateHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGateHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGateHook.ToolGateHook(Ampelum.Safety.Tools.IToolRegistry! registry, Ampelum.Safety.Tools.ToolGatePolicy! defaultPolicy) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.<Clone>$() -> Ampelum.Safety.Tools.ToolGatePolicy!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.Allow.get -> System.Collections.Generic.IReadOnlySet<string!>?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.Allow.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.AllowCategories.get -> System.Collections.Generic.IReadOnlySet<Ampelum.Safety.Tools.ToolCategory>?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.AllowCategories.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.Deconstruct(out System.Collections.Generic.IReadOnlySet<string!>? Allow, out System.Collections.Generic.IReadOnlySet<string!>? Deny, out System.Collections.Generic.IReadOnlySet<Ampelum.Safety.Tools.ToolCategory>? AllowCategories, out System.Collections.Generic.IReadOnlySet<Ampelum.Safety.Tools.ToolCategory>? DenyCategories) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.Deny.get -> System.Collections.Generic.IReadOnlySet<string!>?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.Deny.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.DenyCategories.get -> System.Collections.Generic.IReadOnlySet<Ampelum.Safety.Tools.ToolCategory>?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.DenyCategories.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.Equals(Ampelum.Safety.Tools.ToolGatePolicy? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.IsAllowed(string! name, Ampelum.Safety.Tools.ToolCategory category) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolGatePolicy.ToolGatePolicy(System.Collections.Generic.IReadOnlySet<string!>? Allow = null, System.Collections.Generic.IReadOnlySet<string!>? Deny = null, System.Collections.Generic.IReadOnlySet<Ampelum.Safety.Tools.ToolCategory>? AllowCategories = null, System.Collections.Generic.IReadOnlySet<Ampelum.Safety.Tools.ToolCategory>? DenyCategories = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.<Clone>$() -> Ampelum.Safety.Tools.ToolRegistration!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Category.get -> Ampelum.Safety.Tools.ToolCategory
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Category.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Deconstruct(out string! Name, out string! Version, out Ampelum.Safety.Tools.ToolCategory Category, out string? Description, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>? Metadata) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Description.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Description.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Equals(Ampelum.Safety.Tools.ToolRegistration? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Name.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.ToolRegistration(string! Name, string! Version, Ampelum.Safety.Tools.ToolCategory Category, string? Description = null, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? Metadata = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Version.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Version.init -> void
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Tools.ToolGateHook.PolicyOverrideKey = "tools.policy" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Tools.ToolGateHook.RequestedKey = "tools.requested" -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolGatePolicy.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolGatePolicy.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolGatePolicy.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolRegistration.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolRegistration.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolRegistration.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Tools.AmpelumToolRegistryServiceExtensions.AddAmpelumToolRegistry(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<Ampelum.Safety.Tools.InMemoryToolRegistry!>! configure) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Tools.ToolGatePolicy.Open.get -> Ampelum.Safety.Tools.ToolGatePolicy!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Tools.ToolGatePolicy.operator !=(Ampelum.Safety.Tools.ToolGatePolicy? left, Ampelum.Safety.Tools.ToolGatePolicy? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Tools.ToolGatePolicy.operator ==(Ampelum.Safety.Tools.ToolGatePolicy? left, Ampelum.Safety.Tools.ToolGatePolicy? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Tools.ToolRegistration.operator !=(Ampelum.Safety.Tools.ToolRegistration? left, Ampelum.Safety.Tools.ToolRegistration? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Tools.ToolRegistration.operator ==(Ampelum.Safety.Tools.ToolRegistration? left, Ampelum.Safety.Tools.ToolRegistration? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicy
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicy.Rules.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Safety.Policy.OutputRule!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyBuilder
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyBuilder.Build() -> Ampelum.Safety.Policy.ContentPolicy!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyBuilder.ContentPolicyBuilder() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyBuilder.Redact(string! ruleId, System.Text.RegularExpressions.Regex! pattern, string! token) -> Ampelum.Safety.Policy.ContentPolicyBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyBuilder.Reject(string! ruleId, System.Text.RegularExpressions.Regex! pattern) -> Ampelum.Safety.Policy.ContentPolicyBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyBuilder.Warn(string! ruleId, System.Text.RegularExpressions.Regex! pattern) -> Ampelum.Safety.Policy.ContentPolicyBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyHook
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyHook.ContentPolicyHook(Ampelum.Safety.Policy.ContentPolicy! policy) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyViolationException
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyViolationException.ContentPolicyViolationException(string! ruleId, string! excerpt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyViolationException.Excerpt.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.ContentPolicyViolationException.RuleId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.<Clone>$() -> Ampelum.Safety.Policy.OutputRule!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.Deconstruct(out string! RuleId, out System.Text.RegularExpressions.Regex! Pattern, out Ampelum.Safety.Policy.OutputRuleAction OnMatch, out string? RedactionToken) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.Equals(Ampelum.Safety.Policy.OutputRule? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.OnMatch.get -> Ampelum.Safety.Policy.OutputRuleAction
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.OnMatch.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.OutputRule(string! RuleId, System.Text.RegularExpressions.Regex! Pattern, Ampelum.Safety.Policy.OutputRuleAction OnMatch, string? RedactionToken = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.Pattern.get -> System.Text.RegularExpressions.Regex!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.Pattern.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.RedactionToken.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.RedactionToken.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.RuleId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRule.RuleId.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRuleAction
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRuleAction.Redact = 1 -> Ampelum.Safety.Policy.OutputRuleAction
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRuleAction.Reject = 0 -> Ampelum.Safety.Policy.OutputRuleAction
+[AMPELUM_V09_PREVIEW]Ampelum.Safety.Policy.OutputRuleAction.Warn = 2 -> Ampelum.Safety.Policy.OutputRuleAction
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Policy.ContentPolicyHook.WarnedKey = "policy.warned" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Policy.ContentPolicyHook.WarnedRulesKey = "policy.warned.rules" -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Policy.OutputRule.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Policy.OutputRule.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Safety.Policy.OutputRule.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Policy.ContentPolicy.Empty.get -> Ampelum.Safety.Policy.ContentPolicy!
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Policy.OutputRule.operator !=(Ampelum.Safety.Policy.OutputRule? left, Ampelum.Safety.Policy.OutputRule? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Safety.Policy.OutputRule.operator ==(Ampelum.Safety.Policy.OutputRule? left, Ampelum.Safety.Policy.OutputRule? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.ExporterDiagnostics
+[AMPELUM_V09_PREVIEW]static readonly Ampelum.Observability.ExporterDiagnostics.ExporterAuthFailures -> System.Diagnostics.Metrics.Counter<long>!
+[AMPELUM_V09_PREVIEW]static readonly Ampelum.Observability.ExporterDiagnostics.ExporterDropped -> System.Diagnostics.Metrics.Counter<long>!
+[AMPELUM_V09_PREVIEW]static readonly Ampelum.Observability.ExporterDiagnostics.ExporterFailures -> System.Diagnostics.Metrics.Counter<long>!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.ExporterDiagnostics.RecordExporterAuthFailure(string! exporter) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.ExporterDiagnostics.RecordExporterDrop(string! exporter) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.ExporterDiagnostics.RecordExporterFailure(string! exporter, System.Exception! exception) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.OtelLogsBridge
+[AMPELUM_V09_PREVIEW]static readonly Ampelum.Observability.OtelLogsBridge.GenAiTagNames -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.OtelLogsBridge.BeginGenAiScope(Microsoft.Extensions.Logging.ILogger! logger) -> System.IDisposable?
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.OtelLogsBridge.Snapshot(System.Diagnostics.Activity? activity) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Metrics.INamedMetric
+Ampelum.Metrics.INamedMetric.Name.get -> string!
+Ampelum.Metrics.ExactMatch<TSig>.Name.get -> string!
+Ampelum.Metrics.F1<TSig>.Name.get -> string!
+Ampelum.Metrics.LLMAsJudgeMetric<TSig>.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeN<TSig>
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeN<TSig>.RougeN(int n, string! fieldName) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeN<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeN<TSig>.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeL<TSig>
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeL<TSig>.RougeL(string! fieldName) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeL<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.RougeL<TSig>.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.Bleu<TSig>
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.Bleu<TSig>.Bleu(int maxN, string! fieldName) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.Bleu<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.Bleu<TSig>.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.EmbeddingSimilarity<TSig>
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.EmbeddingSimilarity<TSig>.EmbeddingSimilarity(string! fieldName, Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>! embedder, double? threshold = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.EmbeddingSimilarity<TSig>.Score(TSig actual, TSig expected, Ampelum.SignatureMetadata! signature) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.EmbeddingSimilarity<TSig>.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.IMetricRegistry
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.IMetricRegistry.Get(string! name) -> Ampelum.Metrics.IMetric!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.IMetricRegistry.TryGet(string! name, out Ampelum.Metrics.IMetric! metric) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.IMetricRegistry.Names.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistry
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistry.MetricRegistry(System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Metrics.IMetric!>! entries) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistry.Get(string! name) -> Ampelum.Metrics.IMetric!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistry.TryGet(string! name, out Ampelum.Metrics.IMetric! metric) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistry.Names.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistryBuilder
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistryBuilder.MetricRegistryBuilder() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistryBuilder.Add(Ampelum.Metrics.INamedMetric! metric) -> Ampelum.Metrics.MetricRegistryBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistryBuilder.Add(string! name, Ampelum.Metrics.IMetric! metric) -> Ampelum.Metrics.MetricRegistryBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Metrics.MetricRegistryBuilder.Build() -> Ampelum.Metrics.IMetricRegistry!
+[AMPELUM_V09_PREVIEW]Ampelum.DependencyInjection.MetricRegistryDIExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.MetricRegistryDIExtensions.AddMetricRegistry(this Ampelum.DependencyInjection.AmpelumBuilder! builder, System.Action<Ampelum.Metrics.MetricRegistryBuilder!>! configure) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.IDataset
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.IDataset.RowCount.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.IDataset.EnumerateAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<System.Collections.Generic.IReadOnlyDictionary<string!, object?>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.JsonLineDataset
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.JsonLineDataset.JsonLineDataset(System.Func<System.IO.Stream!>! streamFactory) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Evaluation.JsonLineDataset.FromFile(string! path) -> Ampelum.Evaluation.JsonLineDataset!
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.JsonLineDataset.RowCount.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.JsonLineDataset.EnumerateAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<System.Collections.Generic.IReadOnlyDictionary<string!, object?>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.CsvDataset
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.CsvDataset.CsvDataset(System.Func<System.IO.Stream!>! streamFactory) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Evaluation.CsvDataset.FromFile(string! path) -> Ampelum.Evaluation.CsvDataset!
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.CsvDataset.RowCount.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.CsvDataset.EnumerateAsync(System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<System.Collections.Generic.IReadOnlyDictionary<string!, object?>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluate<TSig>.RunAsync(Ampelum.Evaluation.IDataset! dataset, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.EvaluationResult<TSig>!>!
+Ampelum.Evaluate<TSig>.Evaluate(System.Func<TSig, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!>! program, Ampelum.Metrics.IMetric<TSig>! metric, int maxDegreeOfParallelism, int failureSampleCount, System.IProgress<Ampelum.EvaluationProgress!>? progress, Ampelum.Budget.IBudget? budget) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.EvalReport
+[AMPELUM_V09_PREVIEW]static Ampelum.Evaluation.EvalReport.Render<TSig>(Ampelum.EvaluationResult<TSig>! result, System.Collections.Generic.IReadOnlyList<Ampelum.Metrics.IMetric!>! metricsForLabels) -> (string! Markdown, string! Json)
+[AMPELUM_V09_PREVIEW]Ampelum.Evaluation.EvalComparisonReport
+[AMPELUM_V09_PREVIEW]static Ampelum.Evaluation.EvalComparisonReport.Render<TSig>(string! labelA, Ampelum.EvaluationResult<TSig>! a, string! labelB, Ampelum.EvaluationResult<TSig>! b, int bootstrapIterations = 2000, int? randomSeed = null) -> (string! Markdown, string! Json)
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RecallAtK
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RecallAtK.RecallAtK(int defaultK) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RecallAtK.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RecallAtK.Compute(System.Collections.Generic.IReadOnlyList<string!>! retrievedIds, System.Collections.Generic.IReadOnlyList<string!>! goldIds, int? k = null) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.PrecisionAtK
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.PrecisionAtK.PrecisionAtK(int defaultK) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.PrecisionAtK.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.PrecisionAtK.Compute(System.Collections.Generic.IReadOnlyList<string!>! retrievedIds, System.Collections.Generic.IReadOnlyList<string!>! goldIds, int? k = null) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.MRR
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.MRR.MRR() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.MRR.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.MRR.Compute(System.Collections.Generic.IReadOnlyList<string!>! retrievedIds, System.Collections.Generic.IReadOnlyList<string!>! goldIds, int? k = null) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.NDCGAtK
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.NDCGAtK.NDCGAtK(int defaultK) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.NDCGAtK.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.NDCGAtK.Compute(System.Collections.Generic.IReadOnlyList<string!>! retrievedIds, System.Collections.Generic.IReadOnlyList<string!>! goldIds, int? k = null) -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalHarness
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalHarness.RetrievalEvalHarness(Ampelum.Retrieval.IRetriever! retriever, System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.Evaluation.IRetrievalMetric!>! metrics, int topK = 10, int maxDegreeOfParallelism = 8) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalHarness.RunAsync(Ampelum.Evaluation.IDataset! dataset, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Retrieval.Evaluation.RetrievalEvalResult!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.RetrievalEvalResult(int Examples, System.Collections.Generic.IReadOnlyDictionary<string!, double>! Means) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Examples.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Examples.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Means.get -> System.Collections.Generic.IReadOnlyDictionary<string!, double>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Means.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.<Clone>$() -> Ampelum.Retrieval.Evaluation.RetrievalEvalResult!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Equals(Ampelum.Retrieval.Evaluation.RetrievalEvalResult? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Deconstruct(out int Examples, out System.Collections.Generic.IReadOnlyDictionary<string!, double>! Means) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Evaluation.RetrievalEvalResult.ToString() -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Evaluation.RetrievalEvalResult.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Retrieval.Evaluation.RetrievalEvalResult.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Evaluation.RetrievalEvalResult.operator ==(Ampelum.Retrieval.Evaluation.RetrievalEvalResult? left, Ampelum.Retrieval.Evaluation.RetrievalEvalResult? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Retrieval.Evaluation.RetrievalEvalResult.operator !=(Ampelum.Retrieval.Evaluation.RetrievalEvalResult? left, Ampelum.Retrieval.Evaluation.RetrievalEvalResult? right) -> bool
+Ampelum.Metrics.JudgeAggregation
+Ampelum.Metrics.JudgeAggregation.Median = 0 -> Ampelum.Metrics.JudgeAggregation
+Ampelum.Metrics.JudgeAggregation.MajorityVote = 1 -> Ampelum.Metrics.JudgeAggregation
+Ampelum.Metrics.JudgeAggregation.Mean = 2 -> Ampelum.Metrics.JudgeAggregation
+Ampelum.Metrics.LLMAsJudgeOptions
+Ampelum.Metrics.LLMAsJudgeOptions.LLMAsJudgeOptions(int Samples = 1, Ampelum.Metrics.JudgeAggregation Aggregation = Ampelum.Metrics.JudgeAggregation.Median, string![]? Criteria = null, Ampelum.ITraceSink? TraceSink = null) -> void
+Ampelum.Metrics.LLMAsJudgeOptions.Samples.get -> int
+Ampelum.Metrics.LLMAsJudgeOptions.Samples.init -> void
+Ampelum.Metrics.LLMAsJudgeOptions.Aggregation.get -> Ampelum.Metrics.JudgeAggregation
+Ampelum.Metrics.LLMAsJudgeOptions.Aggregation.init -> void
+Ampelum.Metrics.LLMAsJudgeOptions.Criteria.get -> string![]?
+Ampelum.Metrics.LLMAsJudgeOptions.Criteria.init -> void
+Ampelum.Metrics.LLMAsJudgeOptions.TraceSink.get -> Ampelum.ITraceSink?
+Ampelum.Metrics.LLMAsJudgeOptions.TraceSink.init -> void
+Ampelum.Metrics.LLMAsJudgeOptions.<Clone>$() -> Ampelum.Metrics.LLMAsJudgeOptions!
+Ampelum.Metrics.LLMAsJudgeOptions.Equals(Ampelum.Metrics.LLMAsJudgeOptions? other) -> bool
+Ampelum.Metrics.LLMAsJudgeOptions.Deconstruct(out int Samples, out Ampelum.Metrics.JudgeAggregation Aggregation, out string![]? Criteria, out Ampelum.ITraceSink? TraceSink) -> void
+override Ampelum.Metrics.LLMAsJudgeOptions.ToString() -> string!
+override Ampelum.Metrics.LLMAsJudgeOptions.GetHashCode() -> int
+override Ampelum.Metrics.LLMAsJudgeOptions.Equals(object? obj) -> bool
+static Ampelum.Metrics.LLMAsJudgeOptions.operator ==(Ampelum.Metrics.LLMAsJudgeOptions? left, Ampelum.Metrics.LLMAsJudgeOptions? right) -> bool
+static Ampelum.Metrics.LLMAsJudgeOptions.operator !=(Ampelum.Metrics.LLMAsJudgeOptions? left, Ampelum.Metrics.LLMAsJudgeOptions? right) -> bool
+Ampelum.Metrics.LLMAsJudgeMetric<TSig>.LLMAsJudgeMetric(Microsoft.Extensions.AI.IChatClient! judgeClient, string! judgeInstructions, Ampelum.Metrics.LLMAsJudgeOptions! options) -> void
+Ampelum.Tools.AllowFreeFormAttribute
+Ampelum.Tools.AllowFreeFormAttribute.AllowFreeFormAttribute() -> void
+const Ampelum.HookMetadataKeys.RateLimitKey = "rate_limit.key" -> string!
+const Ampelum.HookMetadataKeys.RouterTargetName = "router.target.name" -> string!
+const Ampelum.HookMetadataKeys.DeadlineUtc = "deadline.utc" -> string!
+const Ampelum.HookMetadataKeys.AuditReplaying = "ampelum.audit.replaying" -> string!
+const Ampelum.HookMetadataKeys.SemanticCacheHit = "ampelum.semantic_cache_hit" -> string!
+const Ampelum.HookMetadataKeys.SemanticCacheSimilarity = "ampelum.semantic_cache_similarity" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeRouterFailover = "router.failover" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeSemcacheHit = "semcache.hit" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeSemcacheStore = "semcache.store" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeRatelimitAcquired = "ratelimit.acquired" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeRatelimitRejected = "ratelimit.rejected" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeCircuitBreakerOpen = "circuitbreaker.open" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeCircuitBreakerHalfOpen = "circuitbreaker.halfopen" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeCircuitBreakerClosed = "circuitbreaker.closed" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeDeadlineExceeded = "deadline.exceeded" -> string!
+const Ampelum.Audit.AuditMetadataKeys.RouterFrom = "router.from" -> string!
+const Ampelum.Audit.AuditMetadataKeys.RouterTo = "router.to" -> string!
+const Ampelum.Audit.AuditMetadataKeys.RouterErrorKind = "router.error.kind" -> string!
+Ampelum.AmpelumContext.Deadline.get -> System.DateTimeOffset?
+Ampelum.AmpelumContext.Deadline.init -> void
+Ampelum.AmpelumContext.WithDeadline(System.TimeSpan duration) -> Ampelum.AmpelumContext!
+Ampelum.Exceptions.DeadlineExceededException
+Ampelum.Exceptions.DeadlineExceededException.Deadline.get -> System.DateTimeOffset
+Ampelum.Exceptions.DeadlineExceededException.Phase.get -> string!
+Ampelum.Exceptions.DeadlineExceededException.DeadlineExceededException(System.DateTimeOffset deadline, string! phase) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.<Clone>$() -> Ampelum.Routing.ProviderEndpoint!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.ProviderEndpoint(string! Name, Microsoft.Extensions.AI.IChatClient! Client, double Weight = 1) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Name.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Client.get -> Microsoft.Extensions.AI.IChatClient!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Client.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Weight.get -> double
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Weight.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Equals(Ampelum.Routing.ProviderEndpoint? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.ProviderEndpoint.Deconstruct(out string! Name, out Microsoft.Extensions.AI.IChatClient! Client, out double Weight) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.<Clone>$() -> Ampelum.Routing.RoutingDecision!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.RoutingDecision(Ampelum.Routing.ProviderEndpoint! Primary, System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! Fallbacks) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.Primary.get -> Ampelum.Routing.ProviderEndpoint!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.Primary.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.Fallbacks.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.Fallbacks.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.Equals(Ampelum.Routing.RoutingDecision? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutingDecision.Deconstruct(out Ampelum.Routing.ProviderEndpoint! Primary, out System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! Fallbacks) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.IRoutingStrategy
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.IRoutingStrategy.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.IRoutingStrategy.Select(System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! endpoints) -> Ampelum.Routing.RoutingDecision!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.Failover
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.Failover.Failover() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.Failover.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.Failover.Select(System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! endpoints) -> Ampelum.Routing.RoutingDecision!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.LoadBalanced
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.LoadBalanced.LoadBalanced() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.LoadBalanced.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.LoadBalanced.Select(System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! endpoints) -> Ampelum.Routing.RoutingDecision!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.KeyRotating
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.KeyRotating.KeyRotating(int callsPerKey = 1) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.KeyRotating.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.KeyRotating.Select(System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! endpoints) -> Ampelum.Routing.RoutingDecision!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutedChatClient
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutedChatClient.RoutedChatClient(System.Collections.Generic.IReadOnlyList<Ampelum.Routing.ProviderEndpoint!>! endpoints, Ampelum.Routing.IRoutingStrategy! strategy) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutedChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutedChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutedChatClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.Routing.RoutedChatClient.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.DependencyInjection.AmpelumBuilderRoutingExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderRoutingExtensions.AddProviderEndpoint(this Ampelum.DependencyInjection.AmpelumBuilder! builder, Ampelum.Routing.ProviderEndpoint! endpoint) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderRoutingExtensions.AddRouting<TStrategy>(this Ampelum.DependencyInjection.AmpelumBuilder! builder) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]override Ampelum.Routing.ProviderEndpoint.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Routing.ProviderEndpoint.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Routing.ProviderEndpoint.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Routing.ProviderEndpoint.operator ==(Ampelum.Routing.ProviderEndpoint? left, Ampelum.Routing.ProviderEndpoint? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Routing.ProviderEndpoint.operator !=(Ampelum.Routing.ProviderEndpoint? left, Ampelum.Routing.ProviderEndpoint? right) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Routing.RoutingDecision.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Routing.RoutingDecision.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Routing.RoutingDecision.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Routing.RoutingDecision.operator ==(Ampelum.Routing.RoutingDecision? left, Ampelum.Routing.RoutingDecision? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Routing.RoutingDecision.operator !=(Ampelum.Routing.RoutingDecision? left, Ampelum.Routing.RoutingDecision? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.ISemanticCache
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.ISemanticCache.Count.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.ISemanticCache.TryGet(string! key) -> Ampelum.Caching.Semantic.SemanticCacheEntry?
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.ISemanticCache.Set(string! key, Ampelum.Caching.Semantic.SemanticCacheEntry! entry) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.<Clone>$() -> Ampelum.Caching.Semantic.SemanticCacheEntry!
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.SemanticCacheEntry(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Outputs, string! ModelId, long PromptTokens, long CompletionTokens) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.ModelId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.ModelId.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.PromptTokens.get -> long
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.PromptTokens.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.CompletionTokens.get -> long
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.CompletionTokens.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.Equals(Ampelum.Caching.Semantic.SemanticCacheEntry? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheEntry.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Outputs, out string! ModelId, out long PromptTokens, out long CompletionTokens) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Caching.Semantic.SemanticCacheEntry.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Caching.Semantic.SemanticCacheEntry.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Caching.Semantic.SemanticCacheEntry.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Caching.Semantic.SemanticCacheEntry.operator ==(Ampelum.Caching.Semantic.SemanticCacheEntry? left, Ampelum.Caching.Semantic.SemanticCacheEntry? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Caching.Semantic.SemanticCacheEntry.operator !=(Ampelum.Caching.Semantic.SemanticCacheEntry? left, Ampelum.Caching.Semantic.SemanticCacheEntry? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.InMemorySemanticCache(int capacity = 256) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.Count.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.TryGet(string! key) -> Ampelum.Caching.Semantic.SemanticCacheEntry?
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.Set(string! key, Ampelum.Caching.Semantic.SemanticCacheEntry! entry) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.SemanticCacheHook(Ampelum.Caching.Semantic.ISemanticCache! cache) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.Order.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.OnErrorAsync(Ampelum.Hooks.HookContext! ctx, System.Exception! error, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.DependencyInjection.AmpelumBuilderSemanticCacheExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderSemanticCacheExtensions.AddSemanticCache(this Ampelum.DependencyInjection.AmpelumBuilder! builder, int capacity = 256) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Exceptions.RateLimitedException
+[AMPELUM_V09_PREVIEW]Ampelum.Exceptions.RateLimitedException.RateLimitedException(string! partitionKey, System.TimeSpan waitTime) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Exceptions.RateLimitedException.PartitionKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Exceptions.RateLimitedException.WaitTime.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.RateLimitingOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.RequestsPerMinute.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.RequestsPerMinute.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.BurstMultiplier.get -> double
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.BurstMultiplier.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.AcquireTimeout.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.AcquireTimeout.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.Equals(Ampelum.RateLimiting.RateLimitingOptions? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.RateLimiting.RateLimitingOptions.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.RateLimiting.RateLimitingOptions.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.RateLimiting.RateLimitingOptions.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.RateLimiting.RateLimitingOptions.operator ==(Ampelum.RateLimiting.RateLimitingOptions? left, Ampelum.RateLimiting.RateLimitingOptions? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.RateLimiting.RateLimitingOptions.operator !=(Ampelum.RateLimiting.RateLimitingOptions? left, Ampelum.RateLimiting.RateLimitingOptions? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitedChatClient
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitedChatClient.RateLimitedChatClient(Microsoft.Extensions.AI.IChatClient! inner, Ampelum.RateLimiting.RateLimitingOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitedChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitedChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitedChatClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitedChatClient.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.DependencyInjection.AmpelumBuilderRateLimitingExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderRateLimitingExtensions.AddRateLimit(this Ampelum.DependencyInjection.AmpelumBuilder! builder, Ampelum.RateLimiting.RateLimitingOptions? options = null) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.CircuitBreakerOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.FailureThreshold.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.FailureThreshold.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.BreakDuration.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.BreakDuration.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.ShouldTrip.get -> System.Func<System.Exception!, bool>!
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.ShouldTrip.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.Equals(Ampelum.Resilience.CircuitBreakerOptions? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Resilience.CircuitBreakerOptions.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Resilience.CircuitBreakerOptions.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Resilience.CircuitBreakerOptions.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Resilience.CircuitBreakerOptions.operator ==(Ampelum.Resilience.CircuitBreakerOptions? left, Ampelum.Resilience.CircuitBreakerOptions? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Resilience.CircuitBreakerOptions.operator !=(Ampelum.Resilience.CircuitBreakerOptions? left, Ampelum.Resilience.CircuitBreakerOptions? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerChatClient
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerChatClient.CircuitBreakerChatClient(Microsoft.Extensions.AI.IChatClient! inner, Ampelum.Resilience.CircuitBreakerOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerChatClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerChatClient.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.DependencyInjection.AmpelumBuilderCircuitBreakerExtensions
+[AMPELUM_V09_PREVIEW]static Ampelum.DependencyInjection.AmpelumBuilderCircuitBreakerExtensions.AddCircuitBreaker(this Ampelum.DependencyInjection.AmpelumBuilder! builder, Ampelum.Resilience.CircuitBreakerOptions? options = null) -> Ampelum.DependencyInjection.AmpelumBuilder!
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.NormalizedToolCall(string! Id, string! Name, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Arguments) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Id.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Name.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Arguments.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Arguments.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Equals(Ampelum.ProviderAdapters.NormalizedToolCall? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.Deconstruct(out string! Id, out string! Name, out System.Collections.Generic.IReadOnlyDictionary<string!, object?>! Arguments) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.ProviderAdapters.NormalizedToolCall.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.ProviderAdapters.NormalizedToolCall.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.ProviderAdapters.NormalizedToolCall.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.NormalizedToolCall.operator ==(Ampelum.ProviderAdapters.NormalizedToolCall? left, Ampelum.ProviderAdapters.NormalizedToolCall? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.NormalizedToolCall.operator !=(Ampelum.ProviderAdapters.NormalizedToolCall? left, Ampelum.ProviderAdapters.NormalizedToolCall? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.ToolCallFormatConverter
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.ToolCallFormatConverter.FromOpenAi(string! openAiToolCallsJson) -> System.Collections.Generic.IReadOnlyList<Ampelum.ProviderAdapters.NormalizedToolCall!>!
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.ToolCallFormatConverter.ToOpenAi(System.Collections.Generic.IReadOnlyList<Ampelum.ProviderAdapters.NormalizedToolCall!>! calls) -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.ToolCallFormatConverter.FromAnthropic(string! anthropicContentJson) -> System.Collections.Generic.IReadOnlyList<Ampelum.ProviderAdapters.NormalizedToolCall!>!
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.ToolCallFormatConverter.ToAnthropic(System.Collections.Generic.IReadOnlyList<Ampelum.ProviderAdapters.NormalizedToolCall!>! calls) -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.ToolCallFormatConverter.FromGemini(string! geminiPartsJson) -> System.Collections.Generic.IReadOnlyList<Ampelum.ProviderAdapters.NormalizedToolCall!>!
+[AMPELUM_V09_PREVIEW]static Ampelum.ProviderAdapters.ToolCallFormatConverter.ToGemini(System.Collections.Generic.IReadOnlyList<Ampelum.ProviderAdapters.NormalizedToolCall!>! calls) -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.RateLimiting.RateLimitingOptions.<Clone>$() -> Ampelum.RateLimiting.RateLimitingOptions!
+[AMPELUM_V09_PREVIEW]Ampelum.Resilience.CircuitBreakerOptions.<Clone>$() -> Ampelum.Resilience.CircuitBreakerOptions!
+[AMPELUM_V09_PREVIEW]Ampelum.ProviderAdapters.NormalizedToolCall.<Clone>$() -> Ampelum.ProviderAdapters.NormalizedToolCall!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.<Clone>$() -> Ampelum.Batch.BatchHandle!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.BatchHandle(string! Id, string! Provider, System.DateTimeOffset SubmittedAt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.Deconstruct(out string! Id, out string! Provider, out System.DateTimeOffset SubmittedAt) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.Equals(Ampelum.Batch.BatchHandle? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.Id.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.Provider.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.Provider.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.SubmittedAt.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchHandle.SubmittedAt.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchHandle.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchHandle.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchHandle.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchHandle.operator !=(Ampelum.Batch.BatchHandle? left, Ampelum.Batch.BatchHandle? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchHandle.operator ==(Ampelum.Batch.BatchHandle? left, Ampelum.Batch.BatchHandle? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.<Clone>$() -> Ampelum.Batch.BatchRequest!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.BatchRequest(string! CustomId, System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! Messages, Microsoft.Extensions.AI.ChatOptions? Options = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.CustomId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.CustomId.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.Deconstruct(out string! CustomId, out System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! Messages, out Microsoft.Extensions.AI.ChatOptions? Options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.Equals(Ampelum.Batch.BatchRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.Messages.get -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.Messages.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.Options.get -> Microsoft.Extensions.AI.ChatOptions?
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchRequest.Options.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchRequest.operator !=(Ampelum.Batch.BatchRequest? left, Ampelum.Batch.BatchRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchRequest.operator ==(Ampelum.Batch.BatchRequest? left, Ampelum.Batch.BatchRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.<Clone>$() -> Ampelum.Batch.BatchResultItem!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.BatchResultItem(string! CustomId, Microsoft.Extensions.AI.ChatResponse? Response, string? ErrorMessage) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.CustomId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.CustomId.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.Deconstruct(out string! CustomId, out Microsoft.Extensions.AI.ChatResponse? Response, out string? ErrorMessage) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.Equals(Ampelum.Batch.BatchResultItem? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.ErrorMessage.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.ErrorMessage.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.Response.get -> Microsoft.Extensions.AI.ChatResponse?
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchResultItem.Response.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchResultItem.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchResultItem.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchResultItem.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchResultItem.operator !=(Ampelum.Batch.BatchResultItem? left, Ampelum.Batch.BatchResultItem? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchResultItem.operator ==(Ampelum.Batch.BatchResultItem? left, Ampelum.Batch.BatchResultItem? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchState.Cancelled = 3 -> Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchState.Completed = 1 -> Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchState.Expired = 4 -> Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchState.Failed = 2 -> Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchState.InProgress = 0 -> Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.<Clone>$() -> Ampelum.Batch.BatchStatus!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.BatchStatus(Ampelum.Batch.BatchState State, int CompletedCount, int FailedCount, int TotalCount) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.CompletedCount.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.CompletedCount.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.Deconstruct(out Ampelum.Batch.BatchState State, out int CompletedCount, out int FailedCount, out int TotalCount) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.Equals(Ampelum.Batch.BatchStatus? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.FailedCount.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.FailedCount.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.State.get -> Ampelum.Batch.BatchState
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.State.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.TotalCount.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.BatchStatus.TotalCount.init -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchStatus.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchStatus.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Batch.BatchStatus.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchStatus.operator !=(Ampelum.Batch.BatchStatus? left, Ampelum.Batch.BatchStatus? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Batch.BatchStatus.operator ==(Ampelum.Batch.BatchStatus? left, Ampelum.Batch.BatchStatus? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.IBatchChatClient
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.IBatchChatClient.CancelAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.IBatchChatClient.GetStatusAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Batch.BatchStatus!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.IBatchChatClient.StreamResultsAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Batch.BatchResultItem!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.IBatchChatClient.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Batch.BatchRequest!>! requests, Microsoft.Extensions.AI.ChatOptions? options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Batch.BatchHandle!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.OpenAIBatchSubmitter
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.OpenAIBatchSubmitter.OpenAIBatchSubmitter(System.Net.Http.HttpClient! httpClient, string? apiKey = null, System.TimeProvider? timeProvider = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.OpenAIBatchSubmitter.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Batch.BatchRequest!>! requests, Microsoft.Extensions.AI.ChatOptions? options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Batch.BatchHandle!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.OpenAIBatchSubmitter.GetStatusAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Batch.BatchStatus!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.OpenAIBatchSubmitter.StreamResultsAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Batch.BatchResultItem!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.OpenAIBatchSubmitter.CancelAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]const Ampelum.Batch.OpenAIBatchSubmitter.ProviderName = "openai" -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.AnthropicBatchSubmitter
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.AnthropicBatchSubmitter.AnthropicBatchSubmitter(System.Net.Http.HttpClient! httpClient, string? apiKey = null, System.TimeProvider? timeProvider = null) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.AnthropicBatchSubmitter.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Batch.BatchRequest!>! requests, Microsoft.Extensions.AI.ChatOptions? options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Batch.BatchHandle!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.AnthropicBatchSubmitter.GetStatusAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Ampelum.Batch.BatchStatus!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.AnthropicBatchSubmitter.StreamResultsAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Batch.BatchResultItem!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Batch.AnthropicBatchSubmitter.CancelAsync(Ampelum.Batch.BatchHandle! handle, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]const Ampelum.Batch.AnthropicBatchSubmitter.ApiVersion = "2023-06-01" -> string!
+[AMPELUM_V09_PREVIEW]const Ampelum.Batch.AnthropicBatchSubmitter.ProviderName = "anthropic" -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Persistence.JsonProgramPersistence.LoadPredictAsync<TSig>(string! path, Ampelum.AmpelumContext! context, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Ampelum.Optimizers.OptimizedProgram<Ampelum.Predict<TSig>!>!>!
+Ampelum.Audit.AuditEntry.EventType.get -> string!
+Ampelum.Audit.AuditEntry.EventType.init -> void
+const Ampelum.Audit.AuditMetadataKeys.EventType = "ampelum.audit.event_type" -> string!
+const Ampelum.Audit.AuditMetadataKeys.EventTypeAgentHandoff = "agent.handoff" -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Agents.GroupChat.GroupChat(System.Collections.Generic.IReadOnlyList<Ampelum.Agents.IAgent!>! agents, Ampelum.Agents.SpeakerSelectors.ISpeakerSelector! selector, Ampelum.Agents.Memory.IConversationMemory? memory, Ampelum.Audit.IAuditSink? auditSink) -> void
+Ampelum.Hooks.HookContext.ModelId.get -> string?
+Ampelum.Hooks.HookContext.ModelId.set -> void
+Ampelum.Hooks.HookContext.PromptTokens.get -> long?
+Ampelum.Hooks.HookContext.PromptTokens.set -> void
+Ampelum.Hooks.HookContext.CompletionTokens.get -> long?
+Ampelum.Hooks.HookContext.CompletionTokens.set -> void
+Ampelum.Hooks.HookContext.LmCallDurationMs.get -> double?
+Ampelum.Hooks.HookContext.LmCallDurationMs.set -> void
+Ampelum.Hooks.HookContext.ContainsKey(string! key) -> bool
+Ampelum.Hooks.HookContext.TryGetValue(string! key, out object? value) -> bool
+Ampelum.Hooks.HookContext.this[string! key].get -> object?
+Ampelum.Hooks.HookContext.Keys.get -> System.Collections.Generic.IEnumerable<string!>!
+Ampelum.Hooks.HookContext.Values.get -> System.Collections.Generic.IEnumerable<object?>!
+Ampelum.Hooks.HookContext.Count.get -> int
+Ampelum.Hooks.HookContext.GetEnumerator() -> System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string!, object?>>!
+[AMPELUM_V09_PREVIEW]Ampelum.Budget.IBudget.TryReserve(int calls, long tokens, decimal costCents) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Budget.IBudget.Release(int calls, long tokens, decimal costCents) -> void
+Ampelum.Hooks.BudgetHook.BudgetHook(Ampelum.Budget.IBudget? global, System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.Budget.IBudget!>? scopes, long defaultExpectedPromptTokens, long defaultExpectedCompletionTokens) -> void
+const Ampelum.HookMetadataKeys.ExpectedPromptTokens = "budget.expected.prompt_tokens" -> string!
+const Ampelum.HookMetadataKeys.ExpectedCompletionTokens = "budget.expected.completion_tokens" -> string!
+const Ampelum.HookMetadataKeys.ExpectedCostCents = "budget.expected.cost_cents" -> string!
+const Ampelum.HookMetadataKeys.BudgetExpectedPromptTokensDefault = 500 -> long
+const Ampelum.HookMetadataKeys.BudgetExpectedCompletionTokensDefault = 500 -> long
+[AMPELUM_V09_PREVIEW]Ampelum.Audit.AuditEntryReplay
+[AMPELUM_V09_PREVIEW]static Ampelum.Audit.AuditEntryReplay.GetReplayHash(this Ampelum.Audit.AuditEntry! entry) -> string!
+Ampelum.Audit.AuditEntry.SchemaVersion.get -> int
+Ampelum.Audit.AuditEntry.SchemaVersion.init -> void
+Ampelum.Audit.AuditEntry.TraceId.get -> string!
+Ampelum.Audit.AuditEntry.TraceId.init -> void
+const Ampelum.Audit.AuditMetadataKeys.TraceId = "ampelum.audit.trace_id" -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Audit.AuditEntryReplay.GetTraceId(this Ampelum.Audit.AuditEntry! entry) -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.<Clone>$() -> Ampelum.Composition.LoopState<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.CurrentValue.get -> T
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.CurrentValue.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.Equals(Ampelum.Composition.LoopState<T>? other) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.History.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Prediction<T>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.History.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.IsConverged.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.IsConverged.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.Iteration.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.Iteration.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopState<T>.LoopState() -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.LoopState<T>.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.LoopState<T>.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.LoopState<T>.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Composition.LoopState<T>.operator !=(Ampelum.Composition.LoopState<T>? left, Ampelum.Composition.LoopState<T>? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Composition.LoopState<T>.operator ==(Ampelum.Composition.LoopState<T>? left, Ampelum.Composition.LoopState<T>? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopPredicate<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopPredicate<T>.LoopPredicate() -> void
+[AMPELUM_V09_PREVIEW]abstract Ampelum.Composition.LoopPredicate<T>.ShouldStop(Ampelum.Composition.LoopState<T>! state) -> bool
+[AMPELUM_V09_PREVIEW]abstract Ampelum.Composition.LoopPredicate<T>.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]abstract Ampelum.Composition.LoopPredicate<T>.WithParameters(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.ThresholdDirection
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.ThresholdDirection.LessThan = 0 -> Ampelum.Composition.ThresholdDirection
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.ThresholdDirection.LessThanOrEqual = 1 -> Ampelum.Composition.ThresholdDirection
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.ThresholdDirection.GreaterThan = 2 -> Ampelum.Composition.ThresholdDirection
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.ThresholdDirection.GreaterThanOrEqual = 3 -> Ampelum.Composition.ThresholdDirection
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.MaxIterations<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.MaxIterations<T>.MaxIterations(int max) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.MaxIterations<T>.ShouldStop(Ampelum.Composition.LoopState<T>! state) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.MaxIterations<T>.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.MaxIterations<T>.WithParameters(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.FieldThreshold<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.FieldThreshold<T>.FieldThreshold(string! field, decimal threshold, Ampelum.Composition.ThresholdDirection direction) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.FieldThreshold<T>.ShouldStop(Ampelum.Composition.LoopState<T>! state) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.FieldThreshold<T>.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.FieldThreshold<T>.WithParameters(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.FieldChangeBelow<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.FieldChangeBelow<T>.FieldChangeBelow(string! field, decimal epsilon) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.FieldChangeBelow<T>.ShouldStop(Ampelum.Composition.LoopState<T>! state) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.FieldChangeBelow<T>.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.FieldChangeBelow<T>.WithParameters(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.CompositeAll<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.CompositeAll<T>.CompositeAll(params Ampelum.Composition.LoopPredicate<T>![]! inner) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.CompositeAll<T>.ShouldStop(Ampelum.Composition.LoopState<T>! state) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.CompositeAll<T>.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.CompositeAll<T>.WithParameters(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.CompositeAny<T>
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.CompositeAny<T>.CompositeAny(params Ampelum.Composition.LoopPredicate<T>![]! inner) -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.CompositeAny<T>.ShouldStop(Ampelum.Composition.LoopState<T>! state) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.CompositeAny<T>.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+[AMPELUM_V09_PREVIEW]override Ampelum.Composition.CompositeAny<T>.WithParameters(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.LoopPredicateRegistry
+[AMPELUM_V09_PREVIEW]static Ampelum.Composition.LoopPredicateRegistry.Register<T>(string! name, System.Func<System.Collections.Generic.IReadOnlyDictionary<string!, object?>!, Ampelum.Composition.LoopPredicate<T>!>! factory) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Composition.LoopPredicateRegistry.Names<T>() -> System.Collections.Generic.IReadOnlyCollection<string!>!
+[AMPELUM_V09_PREVIEW]static Ampelum.Composition.LoopPredicateRegistry.Create<T>(string! name, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! parameters) -> Ampelum.Composition.LoopPredicate<T>!
+[AMPELUM_V09_PREVIEW]Ampelum.Predict<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.BestOfN<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.Refine<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.Parallel<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Composition.MultiChainComparison<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.ModelRateTable.EstimateCost(string! modelId, long inputTokens, long outputTokens) -> decimal
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.<Clone>$() -> SignalGrid.Ampelum.Detection!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.Detection(SignalGrid.Ampelum.DetectionType Type, string! Rule, int StartIndex, int Length, string! Replacement) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.Equals(SignalGrid.Ampelum.Detection? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.Length.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.Replacement.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.Rule.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.StartIndex.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.Type.get -> SignalGrid.Ampelum.DetectionType
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.DetectionType
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.DetectionType.Credential = 0
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.DetectionType.InjectionAttempt = 1
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.IContentDetector
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.IContentDetector.Detect(string! content, SignalGrid.Ampelum.ScanSource source) -> System.Collections.Generic.IEnumerable<SignalGrid.Ampelum.Detection!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.IContentDetector.Type.get -> SignalGrid.Ampelum.DetectionType
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.EntropyCredentialDetector
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.EntropyCredentialDetector.EntropyCredentialDetector() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.KnownFormatCredentialDetector
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.KnownFormatCredentialDetector.KnownFormatCredentialDetector() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.InjectionPatternDetector
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.InjectionPatternDetector.InjectionPatternDetector() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.OutboundSanitizer
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.OutboundSanitizer.OutboundSanitizer(System.Collections.Generic.IEnumerable<SignalGrid.Ampelum.IContentDetector!>! detectors) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.OutboundSanitizer.Default.get -> SignalGrid.Ampelum.OutboundSanitizer!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.OutboundSanitizer.Sanitize(string! content, SignalGrid.Ampelum.ScanSource source) -> SignalGrid.Ampelum.SanitizeResult!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.OutboundSanitizer.ComputeEntropy(string! input) -> double
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SanitizeResult
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SanitizeResult.<Clone>$() -> SignalGrid.Ampelum.SanitizeResult!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SanitizeResult.SanitizeResult(string! SanitizedContent, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Detection!>! Detections) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SanitizeResult.Detections.get -> System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Detection!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SanitizeResult.Equals(SignalGrid.Ampelum.SanitizeResult? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SanitizeResult.SanitizedContent.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource.ToolResult = 0
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource.WebContent = 1
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource.UserInput = 2
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource.FileContent = 3
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource.LogOutput = 4
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ScanSource.InternalState = 5
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ICriticPolicy<TSig>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.ICriticPolicy<TSig>.EvaluateAsync(SignalGrid.Ampelum.Example! input, SignalGrid.Ampelum.Example! generatorOutput, SignalGrid.Ampelum.AmpelumContext! context, System.Threading.CancellationToken ct = default) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.CriticVerdict!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.<Clone>$() -> SignalGrid.Ampelum.CriticVerdict!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.Approved.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.CriticVerdict(bool Approved, string! Reasoning, SignalGrid.Ampelum.CriticRejectionReason? RejectionReason = null, System.Collections.Generic.IReadOnlyList<string!>? Suggestions = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.Equals(SignalGrid.Ampelum.CriticVerdict? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.Reasoning.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.RejectionReason.get -> SignalGrid.Ampelum.CriticRejectionReason?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticVerdict.Suggestions.get -> System.Collections.Generic.IReadOnlyList<string!>?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticRejectionReason
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticRejectionReason.Custom = 4
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticRejectionReason.FactualError = 1
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticRejectionReason.QualityBelowThreshold = 3
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticRejectionReason.SafetyViolation = 2
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CriticRejectionReason.SchemaViolation = 0
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictOptions.MaxRetries.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictOptions.ReturnLastOnExhaustion.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictOptions.ThrowOnRejection.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictOptions.VerifiedPredictOptions() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerificationFailedException
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerificationFailedException.AttemptCount.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerificationFailedException.LastVerdict.get -> SignalGrid.Ampelum.CriticVerdict!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerificationFailedException.VerificationFailedException(int attemptCount, SignalGrid.Ampelum.CriticVerdict! lastVerdict) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.<Clone>$() -> SignalGrid.Ampelum.VerifiedPredictAuditEntry!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.AttemptNumber.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.AuditId.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.CriticModel.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.CriticVerdict.get -> SignalGrid.Ampelum.CriticVerdict!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.Equals(SignalGrid.Ampelum.VerifiedPredictAuditEntry? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.Final.get -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.GeneratorModel.get -> string?
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.GeneratorOutput.get -> SignalGrid.Ampelum.Example!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.SignatureType.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.Timestamp.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredictAuditEntry.VerifiedPredictAuditEntry(string! AuditId, string! SignatureType, int AttemptNumber, string? GeneratorModel, SignalGrid.Ampelum.Example! GeneratorOutput, string? CriticModel, SignalGrid.Ampelum.CriticVerdict! CriticVerdict, bool Final, System.DateTimeOffset Timestamp) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SchemaCriticPolicy<TSig>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SchemaCriticPolicy<TSig>.EvaluateAsync(SignalGrid.Ampelum.Example! input, SignalGrid.Ampelum.Example! generatorOutput, SignalGrid.Ampelum.AmpelumContext! context, System.Threading.CancellationToken ct = default) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.CriticVerdict!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.SchemaCriticPolicy<TSig>.SchemaCriticPolicy() -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CompositeCriticPolicy<TSig>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CompositeCriticPolicy<TSig>.CompositeCriticPolicy(System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.ICriticPolicy<TSig>!>! policies) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.CompositeCriticPolicy<TSig>.EvaluateAsync(SignalGrid.Ampelum.Example! input, SignalGrid.Ampelum.Example! generatorOutput, SignalGrid.Ampelum.AmpelumContext! context, System.Threading.CancellationToken ct = default) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.CriticVerdict!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.LlmCriticPolicy<TSig>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.LlmCriticPolicy<TSig>.EvaluateAsync(SignalGrid.Ampelum.Example! input, SignalGrid.Ampelum.Example! generatorOutput, SignalGrid.Ampelum.AmpelumContext! context, System.Threading.CancellationToken ct = default) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.CriticVerdict!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.LlmCriticPolicy<TSig>.LlmCriticPolicy(Microsoft.Extensions.AI.IChatClient? criticClient = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredict<TSig>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredict<TSig>.PredictAsync(SignalGrid.Ampelum.Example! input, SignalGrid.Ampelum.AmpelumContext! context, System.Threading.CancellationToken ct = default) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.Example!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredict<TSig>.VerifiedPredict(SignalGrid.Ampelum.Predict<TSig>! generator, SignalGrid.Ampelum.ICriticPolicy<TSig>! criticPolicy, SignalGrid.Ampelum.VerifiedPredictOptions? options = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Hooks.HookedLmCall
+[AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Hooks.HookedLmCall.ResponseOutputKey = "response" -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Hooks.HookedLmCall.InvokeAsync(SignalGrid.Ampelum.AmpelumContext! context, string! moduleName, System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!

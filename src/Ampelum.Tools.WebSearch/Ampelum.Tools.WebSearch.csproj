@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Tools.WebSearch</PackageId>
+    <Description>Ampelum pre-built ITypedTool: web search via pluggable IWebSearchProvider (default Brave Search).</Description>
+    <PackageTags>ampelum;tools;web-search;brave;llm</PackageTags>
+    <RootNamespace>SignalGrid.Ampelum.Tools.WebSearch</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Tools.WebSearch</AssemblyName>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

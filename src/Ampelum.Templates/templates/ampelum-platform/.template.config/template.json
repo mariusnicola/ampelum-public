@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Ampelum contributors",
+  "classifications": [ "Web", "Ampelum", "Multi-tenant" ],
+  "name": "Ampelum Platform (multi-tenant + multi-provider)",
+  "identity": "Ampelum.Templates.Platform",
+  "shortName": "ampelum-platform",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "Company.Platform",
+  "preferNameDirectory": true
+}

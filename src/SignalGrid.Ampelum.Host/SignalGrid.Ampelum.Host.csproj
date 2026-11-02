@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <OutputType>Exe</OutputType>
+    <Description>Thin ASP.NET Core minimal API + SSE wrapper around Ampelum.</Description>
+    <PackageId>SignalGrid.Ampelum.Host</PackageId>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+    <RootNamespace>SignalGrid.Ampelum.Host</RootNamespace>
+    <UserSecretsId>signalgrid-ampelum-host</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\SignalGrid.Ampelum.Host.Contracts\SignalGrid.Ampelum.Host.Contracts.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+    <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" />
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

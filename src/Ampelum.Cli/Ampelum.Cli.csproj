@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>true</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ampelum</ToolCommandName>
+    <PackageId>SignalGrid.Ampelum.Cli</PackageId>
+    <Description>Ampelum command-line tool: project scaffolding, benchmark and evaluation harnesses.</Description>
+    <PackageTags>ampelum;cli;dotnet-tool;llm;ai</PackageTags>
+    <RootNamespace>SignalGrid.Ampelum.Cli</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Cli</AssemblyName>
+    <AssemblyVersion>0.9.0</AssemblyVersion>
+    <FileVersion>0.9.0</FileVersion>
+    <InformationalVersion>0.9.0-alpha.7</InformationalVersion>
+    <!-- ModelConfig is [Experimental("AMPELUM_V09_PREVIEW")]; OpenAIClientOptions.Endpoint is OPENAI001. -->
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW;OPENAI001</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="OpenAI" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\Ampelum.Repl\Ampelum.Repl.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Cli.Tests" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,24 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.AmpelumBuilderPhoenixExtensions
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixActivitySource
+[AMPELUM_V09_PREVIEW]const Ampelum.Observability.Phoenix.PhoenixActivitySource.Name = "Ampelum.Observability.Phoenix" -> string!
+[AMPELUM_V09_PREVIEW]static readonly Ampelum.Observability.Phoenix.PhoenixActivitySource.Source -> System.Diagnostics.ActivitySource!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixCredentials
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixCredentials.PhoenixCredentials() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixCredentials.Endpoint.get -> System.Uri!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixCredentials.Endpoint.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixCredentials.ApiKey.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixCredentials.ApiKey.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporter
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporter.PhoenixExporter(Ampelum.ITraceSink! inner, Ampelum.Observability.Phoenix.PhoenixSpanMapper! mapper, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.Phoenix.PhoenixExporterOptions!>! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporter.Write(Ampelum.TraceRecord! record) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporterOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporterOptions.PhoenixExporterOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporterOptions.EmitOpenInferenceAliases.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporterOptions.EmitOpenInferenceAliases.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporterOptions.IncludeAuditPayload.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixExporterOptions.IncludeAuditPayload.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixSpanMapper
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixSpanMapper.PhoenixSpanMapper() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.Phoenix.PhoenixSpanMapper.Apply(System.Diagnostics.Activity! activity, Ampelum.TraceRecord! record, Ampelum.Observability.Phoenix.PhoenixExporterOptions! options) -> void
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.Phoenix.AmpelumBuilderPhoenixExtensions.AddPhoenixExporter(this Ampelum.DependencyInjection.AmpelumBuilder! builder, System.Action<Ampelum.Observability.Phoenix.PhoenixCredentials!>? configureCredentials = null, System.Action<Ampelum.Observability.Phoenix.PhoenixExporterOptions!>? configureOptions = null) -> Ampelum.DependencyInjection.AmpelumBuilder!

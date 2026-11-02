@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <AssemblyName>SignalGrid.Ampelum.Persistence.Sqlite</AssemblyName>
+    <PackageId>SignalGrid.Ampelum.Persistence.Sqlite</PackageId>
+    <Description>SQLite-backed event store persistence for Ampelum.</Description>
+    <PackageTags>ampelum;llm;ai;persistence;sqlite</PackageTags>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Tests" />
+  </ItemGroup>
+</Project>

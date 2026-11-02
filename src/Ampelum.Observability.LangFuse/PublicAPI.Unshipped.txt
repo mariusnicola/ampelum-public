@@ -1,0 +1,132 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.AmpelumBuilderLangFuseExtensions
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.ILangFuseClient
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.ILangFuseClient.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangFuse.LangFuseEvent!>! events, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseClient
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseClient.LangFuseClient(System.Net.Http.HttpClient! http, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.LangFuse.LangFuseCredentials!>! credentials, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.LangFuse.LangFuseExporterOptions!>! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseClient.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangFuse.LangFuseEvent!>! events, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.LangFuseCredentials() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.PublicKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.PublicKey.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.SecretKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.SecretKey.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.Endpoint.get -> System.Uri!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.Endpoint.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseCredentials.ToBasicAuthHeaderValue() -> string!
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseCredentials.ToString() -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.LangFuseEvent() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.<Clone>$() -> Ampelum.Observability.LangFuse.LangFuseEvent!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Id.get -> System.Guid
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Type.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Type.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Timestamp.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Timestamp.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Body.get -> object!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Body.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEvent.Equals(Ampelum.Observability.LangFuse.LangFuseEvent? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseEvent.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseEvent.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseEvent.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseEvent.operator !=(Ampelum.Observability.LangFuse.LangFuseEvent? left, Ampelum.Observability.LangFuse.LangFuseEvent? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseEvent.operator ==(Ampelum.Observability.LangFuse.LangFuseEvent? left, Ampelum.Observability.LangFuse.LangFuseEvent? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseIngestionRequest
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseIngestionRequest.LangFuseIngestionRequest() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseIngestionRequest.<Clone>$() -> Ampelum.Observability.LangFuse.LangFuseIngestionRequest!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseIngestionRequest.Batch.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangFuse.LangFuseEvent!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseIngestionRequest.Batch.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseIngestionRequest.Equals(Ampelum.Observability.LangFuse.LangFuseIngestionRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseIngestionRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseIngestionRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseIngestionRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseIngestionRequest.operator !=(Ampelum.Observability.LangFuse.LangFuseIngestionRequest? left, Ampelum.Observability.LangFuse.LangFuseIngestionRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseIngestionRequest.operator ==(Ampelum.Observability.LangFuse.LangFuseIngestionRequest? left, Ampelum.Observability.LangFuse.LangFuseIngestionRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEventMapper
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEventMapper.LangFuseEventMapper() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEventMapper.LangFuseEventMapper(System.TimeProvider! timeProvider) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseEventMapper.Map(Ampelum.TraceRecord! record, bool includeAuditPayload) -> System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangFuse.LangFuseEvent!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporter
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporter.LangFuseExporter(Ampelum.ITraceSink! inner, Ampelum.Observability.LangFuse.ILangFuseClient! client, Ampelum.Observability.LangFuse.LangFuseEventMapper! mapper, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.LangFuse.LangFuseExporterOptions!>! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporter.Write(Ampelum.TraceRecord! record) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporter.DisposeAsync() -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporter.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.LangFuseExporterOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.MaxBatchSize.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.MaxBatchSize.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.QueueCapacity.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.QueueCapacity.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.IncludeAuditPayload.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.IncludeAuditPayload.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.ExportTimeout.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseExporterOptions.ExportTimeout.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.LangFuseGenerationBody() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.<Clone>$() -> Ampelum.Observability.LangFuse.LangFuseGenerationBody!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Id.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.TraceId.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.TraceId.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Name.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.StartTime.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.StartTime.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.EndTime.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.EndTime.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Model.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Model.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Usage.get -> Ampelum.Observability.LangFuse.LangFuseUsage?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Usage.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Input.get -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Input.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Output.get -> object?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Output.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Level.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Level.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.StatusMessage.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.StatusMessage.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseGenerationBody.Equals(Ampelum.Observability.LangFuse.LangFuseGenerationBody? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseGenerationBody.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseGenerationBody.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseGenerationBody.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseGenerationBody.operator !=(Ampelum.Observability.LangFuse.LangFuseGenerationBody? left, Ampelum.Observability.LangFuse.LangFuseGenerationBody? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseGenerationBody.operator ==(Ampelum.Observability.LangFuse.LangFuseGenerationBody? left, Ampelum.Observability.LangFuse.LangFuseGenerationBody? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.LangFuseTraceBody() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.<Clone>$() -> Ampelum.Observability.LangFuse.LangFuseTraceBody!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Id.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Name.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Metadata.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Metadata.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Tags.get -> System.Collections.Generic.IReadOnlyList<string!>?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Tags.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseTraceBody.Equals(Ampelum.Observability.LangFuse.LangFuseTraceBody? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseTraceBody.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseTraceBody.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseTraceBody.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseTraceBody.operator !=(Ampelum.Observability.LangFuse.LangFuseTraceBody? left, Ampelum.Observability.LangFuse.LangFuseTraceBody? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseTraceBody.operator ==(Ampelum.Observability.LangFuse.LangFuseTraceBody? left, Ampelum.Observability.LangFuse.LangFuseTraceBody? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.LangFuseUsage() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.<Clone>$() -> Ampelum.Observability.LangFuse.LangFuseUsage!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Input.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Input.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Output.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Output.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Total.get -> long?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Total.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Unit.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Unit.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangFuse.LangFuseUsage.Equals(Ampelum.Observability.LangFuse.LangFuseUsage? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseUsage.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseUsage.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangFuse.LangFuseUsage.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseUsage.operator !=(Ampelum.Observability.LangFuse.LangFuseUsage? left, Ampelum.Observability.LangFuse.LangFuseUsage? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.LangFuseUsage.operator ==(Ampelum.Observability.LangFuse.LangFuseUsage? left, Ampelum.Observability.LangFuse.LangFuseUsage? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangFuse.AmpelumBuilderLangFuseExtensions.AddLangFuseExporter(this Ampelum.DependencyInjection.AmpelumBuilder! builder, System.Action<Ampelum.Observability.LangFuse.LangFuseCredentials!>! configureCredentials, System.Action<Ampelum.Observability.LangFuse.LangFuseExporterOptions!>? configureOptions = null) -> Ampelum.DependencyInjection.AmpelumBuilder!

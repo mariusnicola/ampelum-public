@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Ampelum contributors",
+  "classifications": [ "Console", "Ampelum", "Enterprise", "AOT" ],
+  "name": "Ampelum Enterprise (Audit + Budget + AOT-ready)",
+  "identity": "Ampelum.Templates.Enterprise",
+  "shortName": "ampelum-enterprise",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "sourceName": "Company.Enterprise",
+  "preferNameDirectory": true
+}

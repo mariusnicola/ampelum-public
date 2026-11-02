@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Tools.CodeInterpreter</PackageId>
+    <Description>Ampelum pre-built ITypedTool: unsandboxed Roslyn-Scripting code interpreter. Host-process execution; do not run on untrusted input.</Description>
+    <PackageTags>ampelum;tools;code;scripting;llm</PackageTags>
+    <RootNamespace>SignalGrid.Ampelum.Tools.CodeInterpreter</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Tools.CodeInterpreter</AssemblyName>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+</Project>

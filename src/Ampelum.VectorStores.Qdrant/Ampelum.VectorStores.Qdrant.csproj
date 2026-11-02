@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.VectorStores.Qdrant</PackageId>
+    <AssemblyName>SignalGrid.Ampelum.VectorStores.Qdrant</AssemblyName>
+    <Description>Qdrant adapter for Ampelum.Retrieval.IVectorStore.</Description>
+    <PackageTags>ampelum;rag;vectorstore;qdrant</PackageTags>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <PackageReference Include="Qdrant.Client" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.VectorStores.Qdrant.Tests" />
+  </ItemGroup>
+</Project>

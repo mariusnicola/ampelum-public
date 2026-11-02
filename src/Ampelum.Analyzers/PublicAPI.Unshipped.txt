@@ -1,0 +1,5 @@
+#nullable enable
+Ampelum.Analyzers.Amp1010FreeFormOptInAnalyzer
+Ampelum.Analyzers.Amp1010FreeFormOptInAnalyzer.Amp1010FreeFormOptInAnalyzer() -> void
+override Ampelum.Analyzers.Amp1010FreeFormOptInAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
+override Ampelum.Analyzers.Amp1010FreeFormOptInAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>

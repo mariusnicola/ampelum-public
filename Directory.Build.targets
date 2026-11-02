@@ -1,0 +1,39 @@
+<Project>
+  <!-- Shared NuGet metadata for all packable library projects.
+       This file is imported AFTER the individual .csproj, so $(IsPackable) is already set. -->
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <!-- v1.0-rc1.alpha.10 (consumer-smoke): every pack ships at 0.8.0-rc1 so the
+         sister-pack -> Ampelum core dependency floor matches the prerelease that
+         actually ships. Stable 0.8.0 sister packs declaring stable dep on Ampelum
+         0.8.0 (which doesn't exist; only -rc1 does) caused NU1605 downgrades on
+         every community install. -->
+    <Version Condition="'$(Version)' == '' or '$(Version)' == '1.0.0'">0.8.0-rc1</Version>
+    <Authors>SignalGrid contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/SignalGrid/Ampelum</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/SignalGrid/Ampelum</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <!-- Include the repo-root README and LICENSE in the nupkg -->
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <!-- Non-packable projects (test projects, samples) do not need XML doc comments. -->
+  <PropertyGroup Condition="'$(IsPackable)' != 'true'">
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+  <!-- v0.7 Task 11c: PublicApiAnalyzer RS0016 (missing API) + RS0017 (stale API)
+       are warning-only during v0.7 development.
+       The overload backcompat advisories RS0026/RS0027 stay suppressed because they fire on
+       non-breaking additions (e.g. new optional parameter). -->
+  <!-- v0.7 preview: AMPELUM_V09_PREVIEW experimental diagnostics are warning-only
+       during v0.7 development; promoted to errors at v1.0 tag time. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(EnablePublicApiAnalyzer)' == 'true'">
+    <NoWarn>$(NoWarn);RS0016;RS0017;RS0026;RS0027</NoWarn>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1",
+  "mode": "warn",
+  "budgets": {
+    "Ampelum.Predict`1.ForwardAsync": {
+      "p50_us": 15,
+      "alloc_bytes": 512,
+      "_source": "spec §5 D1/D3, mock LM no-hooks"
+    }
+  }
+}

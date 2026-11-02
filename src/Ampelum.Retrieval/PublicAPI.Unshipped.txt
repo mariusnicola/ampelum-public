@@ -1,0 +1,31 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.BM25IndexOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.IndexDirectory.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.IndexDirectory.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.K1.get -> float
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.K1.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.B.get -> float
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25IndexOptions.B.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25Retriever
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25Retriever.BM25Retriever(Ampelum.Retrieval.Hybrid.BM25IndexOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25Retriever.IndexAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! documents, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25Retriever.RetrieveAsync(string! query, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Hybrid.BM25Retriever.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.PdfLoader
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.PdfLoader.PdfLoader() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.PdfLoader.LoadAsync(System.IO.Stream! source, Ampelum.Retrieval.Loaders.DocumentLoadContext! context, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Retrieval.Loaders.Document!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.HtmlLoader
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.HtmlLoader.HtmlLoader() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.HtmlLoader.LoadAsync(System.IO.Stream! source, Ampelum.Retrieval.Loaders.DocumentLoadContext! context, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Retrieval.Loaders.Document!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.MarkdownLoader
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.MarkdownLoader.MarkdownLoader() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Loaders.MarkdownLoader.LoadAsync(System.IO.Stream! source, Ampelum.Retrieval.Loaders.DocumentLoadContext! context, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Ampelum.Retrieval.Loaders.Document!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TokenSplitter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TokenSplitter.TokenSplitter(string! encodingName = "cl100k_base") -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.TokenSplitter.Split(string! text, Ampelum.Retrieval.Splitters.SplitterContext! context) -> System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Splitters.TextChunk!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.MarkdownAwareSplitter
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.MarkdownAwareSplitter.MarkdownAwareSplitter() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Retrieval.Splitters.MarkdownAwareSplitter.Split(string! text, Ampelum.Retrieval.Splitters.SplitterContext! context) -> System.Collections.Generic.IEnumerable<Ampelum.Retrieval.Splitters.TextChunk!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Context.Selection.Cl100kTokenCounter
+[AMPELUM_V09_PREVIEW]static Ampelum.Context.Selection.Cl100kTokenCounter.Count(string! text) -> int

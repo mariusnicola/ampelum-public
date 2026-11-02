@@ -1,0 +1,69 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Comparative Benchmarks — v0.9.1-alpha.4 skeleton.
+
+    NOT coverage-gated, NOT a test project. BenchmarkDotNet console app.
+    Isolated CPM via the sibling Directory.Packages.props so competitor
+    transitive closures (SK, AutoGen, LangChain) cannot perturb the root
+    package graph.
+
+    Scenario file numbering matches the v0.9h plan (Scenario01, 02, 12).
+    User-facing priority order (S1/S2/S3 in the alpha.4 brief) maps to:
+      S1 (must-be-#1, D1)  -> Scenario01_SinglePredict
+      S2 (must-be-#1, D3)  -> Scenario12_AllocationPerPredict
+      S3 (must-be-#1, D2)  -> Scenario02_PredictPlus4HookPipeline
+
+    Remaining 12 scenarios + Python DSPy subprocess harness body land in
+    v0.9.1-alpha.5 / alpha.6.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- Excluded from the test runner and from the coverage gate. -->
+    <IsTestProject>false</IsTestProject>
+    <Optimize>true</Optimize>
+    <!-- Suppress doc-gen for benchmark sources. -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <RootNamespace>Ampelum.ComparativeBenchmarks</RootNamespace>
+    <AssemblyName>Ampelum.ComparativeBenchmarks</AssemblyName>
+
+    <!--
+      NoWarn is scoped tightly to KNOWN competitor-pin warnings:
+        NU1701 — competitor package targets a TFM not in our list (e.g. AutoGen 0.2.3
+                 may target net8.0; harmless for an inproc reference).
+        NU1603/NU1605 — version-drift warnings when SK/AutoGen/LangChain pull in
+                 different patch versions of MEAI/Logging than our root pins.
+        SKEXP0001/SKEXP0010 — Semantic Kernel "experimental" surface guard; we
+                 use experimental kernel-builder APIs deliberately for a benchmark.
+        CS1591 — missing XML doc comments (we already disabled GenerateDocumentationFile,
+                 but Directory.Build.targets still adds it for non-packable projects;
+                 keep here so each scenario file does not need a /// header).
+      Document any future addition with a one-line comment explaining the source.
+    -->
+    <NoWarn>$(NoWarn);NU1701;NU1603;NU1605;SKEXP0001;SKEXP0010;CS1591;AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="Microsoft.Extensions.AI" />
+    <PackageReference Include="Microsoft.Extensions.AI.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+
+    <!-- Competitors -->
+    <PackageReference Include="Microsoft.SemanticKernel" />
+    <PackageReference Include="AutoGen" />
+    <PackageReference Include="AutoGen.Core" />
+    <PackageReference Include="LangChain" />
+    <PackageReference Include="LangChain.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- System Under Test. -->
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <!-- FakeChatClient for scripted multi-call scenarios (S5 follow-up). -->
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+  </ItemGroup>
+
+</Project>

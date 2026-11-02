@@ -1,0 +1,21 @@
+#nullable enable
+Ampelum.Tools.CodeInterpreter.CodeInterpreterTool
+Ampelum.Tools.CodeInterpreter.CodeInterpreterTool.CodeInterpreterTool(string! code) -> void
+Ampelum.Tools.CodeInterpreter.CodeInterpreterTool.Name.get -> string!
+Ampelum.Tools.CodeInterpreter.CodeInterpreterTool.Description.get -> string!
+Ampelum.Tools.CodeInterpreter.CodeInterpreterTool.Code.get -> string!
+Ampelum.Tools.CodeInterpreter.CodeInterpreterTool.InvokeAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Ampelum.Tools.CodeInterpreter.CodeResult!>
+Ampelum.Tools.CodeInterpreter.CodeResult
+Ampelum.Tools.CodeInterpreter.CodeResult.CodeResult(object? Value, string! Display) -> void
+Ampelum.Tools.CodeInterpreter.CodeResult.Value.init -> void
+Ampelum.Tools.CodeInterpreter.CodeResult.Value.get -> object?
+Ampelum.Tools.CodeInterpreter.CodeResult.Display.init -> void
+Ampelum.Tools.CodeInterpreter.CodeResult.Display.get -> string!
+override Ampelum.Tools.CodeInterpreter.CodeResult.ToString() -> string!
+override Ampelum.Tools.CodeInterpreter.CodeResult.GetHashCode() -> int
+override Ampelum.Tools.CodeInterpreter.CodeResult.Equals(object? obj) -> bool
+Ampelum.Tools.CodeInterpreter.CodeResult.Equals(Ampelum.Tools.CodeInterpreter.CodeResult? other) -> bool
+Ampelum.Tools.CodeInterpreter.CodeResult.Deconstruct(out object? Value, out string! Display) -> void
+static Ampelum.Tools.CodeInterpreter.CodeResult.operator !=(Ampelum.Tools.CodeInterpreter.CodeResult? left, Ampelum.Tools.CodeInterpreter.CodeResult? right) -> bool
+static Ampelum.Tools.CodeInterpreter.CodeResult.operator ==(Ampelum.Tools.CodeInterpreter.CodeResult? left, Ampelum.Tools.CodeInterpreter.CodeResult? right) -> bool
+Ampelum.Tools.CodeInterpreter.CodeResult.<Clone>$() -> Ampelum.Tools.CodeInterpreter.CodeResult!

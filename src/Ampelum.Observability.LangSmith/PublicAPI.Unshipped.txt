@@ -1,0 +1,76 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.AmpelumBuilderLangSmithExtensions
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.ILangSmithClient
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.ILangSmithClient.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangSmith.LangSmithRun!>! runs, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithClient
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithClient.LangSmithClient(System.Net.Http.HttpClient! http, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.LangSmith.LangSmithCredentials!>! credentials) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithClient.SubmitAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangSmith.LangSmithRun!>! runs, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.LangSmithCredentials() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.ApiKey.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.ApiKey.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.Endpoint.get -> System.Uri!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.Endpoint.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.ProjectName.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithCredentials.ProjectName.set -> void
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithCredentials.ToString() -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporter
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporter.LangSmithExporter(Ampelum.ITraceSink! inner, Ampelum.Observability.LangSmith.ILangSmithClient! client, Ampelum.Observability.LangSmith.LangSmithRunMapper! mapper, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.LangSmith.LangSmithExporterOptions!>! options, Microsoft.Extensions.Options.IOptions<Ampelum.Observability.LangSmith.LangSmithCredentials!>! credentials) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporter.Write(Ampelum.TraceRecord! record) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporter.DisposeAsync() -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporter.Dispose() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.LangSmithExporterOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.MaxBatchSize.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.MaxBatchSize.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.QueueCapacity.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.QueueCapacity.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.IncludeAuditPayload.get -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.IncludeAuditPayload.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.ExportTimeout.get -> System.TimeSpan
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithExporterOptions.ExportTimeout.set -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.LangSmithRun() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.<Clone>$() -> Ampelum.Observability.LangSmith.LangSmithRun!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Id.get -> System.Guid
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Id.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Name.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Name.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.RunType.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.RunType.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.StartTime.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.StartTime.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.EndTime.get -> System.DateTimeOffset
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.EndTime.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Inputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Inputs.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Outputs.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Outputs.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Extra.get -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Extra.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Error.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Error.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.SessionName.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.SessionName.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRun.Equals(Ampelum.Observability.LangSmith.LangSmithRun? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithRun.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithRun.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithRun.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangSmith.LangSmithRun.operator !=(Ampelum.Observability.LangSmith.LangSmithRun? left, Ampelum.Observability.LangSmith.LangSmithRun? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangSmith.LangSmithRun.operator ==(Ampelum.Observability.LangSmith.LangSmithRun? left, Ampelum.Observability.LangSmith.LangSmithRun? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunBatch
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunBatch.LangSmithRunBatch() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunBatch.<Clone>$() -> Ampelum.Observability.LangSmith.LangSmithRunBatch!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunBatch.Post.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Observability.LangSmith.LangSmithRun!>!
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunBatch.Post.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunBatch.Equals(Ampelum.Observability.LangSmith.LangSmithRunBatch? other) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithRunBatch.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithRunBatch.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override Ampelum.Observability.LangSmith.LangSmithRunBatch.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangSmith.LangSmithRunBatch.operator !=(Ampelum.Observability.LangSmith.LangSmithRunBatch? left, Ampelum.Observability.LangSmith.LangSmithRunBatch? right) -> bool
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangSmith.LangSmithRunBatch.operator ==(Ampelum.Observability.LangSmith.LangSmithRunBatch? left, Ampelum.Observability.LangSmith.LangSmithRunBatch? right) -> bool
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunMapper
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunMapper.LangSmithRunMapper() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunMapper.LangSmithRunMapper(System.TimeProvider! timeProvider) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Observability.LangSmith.LangSmithRunMapper.Map(Ampelum.TraceRecord! record, string! projectName, bool includeAuditPayload) -> Ampelum.Observability.LangSmith.LangSmithRun!
+[AMPELUM_V09_PREVIEW]static Ampelum.Observability.LangSmith.AmpelumBuilderLangSmithExtensions.AddLangSmithExporter(this Ampelum.DependencyInjection.AmpelumBuilder! builder, System.Action<Ampelum.Observability.LangSmith.LangSmithCredentials!>! configureCredentials, System.Action<Ampelum.Observability.LangSmith.LangSmithExporterOptions!>? configureOptions = null) -> Ampelum.DependencyInjection.AmpelumBuilder!

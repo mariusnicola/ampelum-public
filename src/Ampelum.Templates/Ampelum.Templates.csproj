@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageType>Template</PackageType>
+    <PackageId>SignalGrid.Ampelum.Templates</PackageId>
+    <AssemblyName>SignalGrid.Ampelum.Templates</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <Description>Ampelum persona templates for `dotnet new` (backend, researcher, enterprise, platform, agent).</Description>
+    <PackageTags>ampelum;dotnet-new;templates;llm;ai</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!-- Templates ship as content; we compile a placeholder type here only so the SDK has something. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="templates\**\*"
+             Exclude="templates\**\bin\**;templates\**\obj\**"
+             Pack="true"
+             PackagePath="content\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

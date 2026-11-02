@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <!-- Consumer smoke: opt OUT of repo's TreatWarningsAsErrors and central PM.
+         Mimic a fresh downstream consumer's csproj. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);NU5104;AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.0" />
+    <PackageReference Include="Shouldly" Version="4.3.0" />
+    <!-- For analyzer-pack smoke test (Scenario C): load the analyzer DLL out of
+         the packed nupkg and run it against an in-memory compilation. -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Existing core packs remain at rc1. The P5 Agent graph is rc2 so local
+         artifact immutability is preserved while its internal packages move together. -->
+    <PackageReference Include="SignalGrid.Ampelum" Version="0.8.0-rc1" />
+    <PackageReference Include="SignalGrid.Ampelum.Testing" Version="0.8.0-rc1" />
+    <PackageReference Include="SignalGrid.Ampelum.Analyzers" Version="0.8.0-rc1" />
+    <PackageReference Include="SignalGrid.Ampelum.SourceGenerator" Version="0.8.0-rc1" />
+    <PackageReference Include="SignalGrid.Ampelum.Tools.Calculator" Version="0.8.0-rc1" />
+    <PackageReference Include="SignalGrid.Ampelum.Agent.Contracts" Version="0.8.0-rc2" />
+    <PackageReference Include="SignalGrid.Ampelum.Agent" Version="0.8.0-rc3" />
+    <PackageReference Include="SignalGrid.Ampelum.Agent.Postgres" Version="0.8.0-rc3" />
+    <PackageReference Include="SignalGrid.Ampelum.Agent.Tools" Version="0.8.0-rc2" />
+    <PackageReference Include="SignalGrid.Ampelum.Agent.Synthesis" Version="0.8.0-rc2" />
+  </ItemGroup>
+</Project>

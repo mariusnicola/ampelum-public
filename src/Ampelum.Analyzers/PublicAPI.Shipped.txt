@@ -1,0 +1,13 @@
+#nullable enable
+Ampelum.Analyzers.Amp001FreeFormAnalyzer
+Ampelum.Analyzers.Amp001FreeFormAnalyzer.Amp001FreeFormAnalyzer() -> void
+Ampelum.Analyzers.Amp002ToolCategoryAnalyzer
+Ampelum.Analyzers.Amp002ToolCategoryAnalyzer.Amp002ToolCategoryAnalyzer() -> void
+Ampelum.Analyzers.Amp003SideEffectPreviewableAnalyzer
+Ampelum.Analyzers.Amp003SideEffectPreviewableAnalyzer.Amp003SideEffectPreviewableAnalyzer() -> void
+override Ampelum.Analyzers.Amp001FreeFormAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
+override Ampelum.Analyzers.Amp001FreeFormAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
+override Ampelum.Analyzers.Amp002ToolCategoryAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
+override Ampelum.Analyzers.Amp002ToolCategoryAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>
+override Ampelum.Analyzers.Amp003SideEffectPreviewableAnalyzer.Initialize(Microsoft.CodeAnalysis.Diagnostics.AnalysisContext! context) -> void
+override Ampelum.Analyzers.Amp003SideEffectPreviewableAnalyzer.SupportedDiagnostics.get -> System.Collections.Immutable.ImmutableArray<Microsoft.CodeAnalysis.DiagnosticDescriptor!>

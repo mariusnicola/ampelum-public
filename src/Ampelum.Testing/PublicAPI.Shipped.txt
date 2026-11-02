@@ -1,0 +1,51 @@
+#nullable enable
+Ampelum.Testing.CapturingTraceSink
+Ampelum.Testing.CapturingTraceSink.CapturingTraceSink() -> void
+Ampelum.Testing.CapturingTraceSink.Clear() -> void
+Ampelum.Testing.CapturingTraceSink.GetRecent(int n) -> System.Collections.Generic.IReadOnlyList<Ampelum.TraceRecord!>!
+Ampelum.Testing.CapturingTraceSink.Records.get -> System.Collections.Generic.IReadOnlyList<Ampelum.TraceRecord!>!
+Ampelum.Testing.CapturingTraceSink.Write(Ampelum.TraceRecord! record) -> void
+Ampelum.Testing.FakeChatClient
+Ampelum.Testing.FakeChatClient.Dispose() -> void
+Ampelum.Testing.FakeChatClient.EnqueueError(System.Exception! ex) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueOutputs<TSig>(TSig outputs, Ampelum.IAdapter? adapter = null) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueRaw(Microsoft.Extensions.AI.ChatResponse! response) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueStreamingChunks(params string![]! chunks) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueStreamingOutputs<TSig>(TSig outputs, Ampelum.IAdapter? adapter = null) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueText(string! text) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueText(string! text, Microsoft.Extensions.AI.UsageDetails? usage) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.EnqueueText(string! text, Microsoft.Extensions.AI.UsageDetails? usage, string? modelId, string? responseId) -> Ampelum.Testing.FakeChatClient!
+Ampelum.Testing.FakeChatClient.FakeChatClient() -> void
+Ampelum.Testing.FakeChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+Ampelum.Testing.FakeChatClient.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+Ampelum.Testing.FakeChatClient.GetStreamingResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<Microsoft.Extensions.AI.ChatResponseUpdate!>!
+Ampelum.Testing.FakeChatClient.Metadata.get -> Microsoft.Extensions.AI.ChatClientMetadata!
+Ampelum.Testing.FakeChatClient.RecordedCalls.get -> System.Collections.Generic.IReadOnlyList<Ampelum.Testing.RecordedChatCall!>!
+Ampelum.Testing.FakeEmbeddingGenerator
+Ampelum.Testing.FakeEmbeddingGenerator.Dispose() -> void
+Ampelum.Testing.FakeEmbeddingGenerator.FakeEmbeddingGenerator(System.Collections.Generic.IReadOnlyDictionary<string!, float[]!>! scripted, int fallbackDimensions) -> void
+Ampelum.Testing.FakeEmbeddingGenerator.GenerateAsync(System.Collections.Generic.IEnumerable<string!>! values, Microsoft.Extensions.AI.EmbeddingGenerationOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.GeneratedEmbeddings<Microsoft.Extensions.AI.Embedding<float>!>!>!
+Ampelum.Testing.FakeEmbeddingGenerator.GetService(System.Type! serviceType, object? serviceKey = null) -> object?
+Ampelum.Testing.FakeEmbeddingGenerator.Metadata.get -> Microsoft.Extensions.AI.EmbeddingGeneratorMetadata!
+Ampelum.Testing.RecordedChatCall
+Ampelum.Testing.RecordedChatCall.<Clone>$() -> Ampelum.Testing.RecordedChatCall!
+Ampelum.Testing.RecordedChatCall.CancellationToken.get -> System.Threading.CancellationToken
+Ampelum.Testing.RecordedChatCall.CancellationToken.init -> void
+Ampelum.Testing.RecordedChatCall.Deconstruct(out System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! Messages, out Microsoft.Extensions.AI.ChatOptions? Options, out System.Threading.CancellationToken CancellationToken) -> void
+Ampelum.Testing.RecordedChatCall.Equals(Ampelum.Testing.RecordedChatCall? other) -> bool
+Ampelum.Testing.RecordedChatCall.Messages.get -> System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!
+Ampelum.Testing.RecordedChatCall.Messages.init -> void
+Ampelum.Testing.RecordedChatCall.Options.get -> Microsoft.Extensions.AI.ChatOptions?
+Ampelum.Testing.RecordedChatCall.Options.init -> void
+Ampelum.Testing.RecordedChatCall.RecordedChatCall(System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! Messages, Microsoft.Extensions.AI.ChatOptions? Options, System.Threading.CancellationToken CancellationToken) -> void
+Ampelum.Testing.SignatureAssertionException
+Ampelum.Testing.SignatureAssertionException.SignatureAssertionException(string! message) -> void
+Ampelum.Testing.SignatureAssertions
+override Ampelum.Testing.RecordedChatCall.Equals(object? obj) -> bool
+override Ampelum.Testing.RecordedChatCall.GetHashCode() -> int
+override Ampelum.Testing.RecordedChatCall.ToString() -> string!
+static Ampelum.Testing.RecordedChatCall.operator !=(Ampelum.Testing.RecordedChatCall? left, Ampelum.Testing.RecordedChatCall? right) -> bool
+static Ampelum.Testing.RecordedChatCall.operator ==(Ampelum.Testing.RecordedChatCall? left, Ampelum.Testing.RecordedChatCall? right) -> bool
+static Ampelum.Testing.SignatureAssertions.ShouldBeValidSignature<TSig>() -> void
+static Ampelum.Testing.SignatureAssertions.ShouldHaveInput<TSig>(string! name) -> void
+static Ampelum.Testing.SignatureAssertions.ShouldHaveOutput<TSig>(string! name) -> void

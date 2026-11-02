@@ -1,0 +1,23 @@
+#nullable enable
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.QdrantOptions() -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.CollectionName.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.CollectionName.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.VectorDimension.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.VectorDimension.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.Host.get -> string!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.Host.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.Port.get -> int
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.Port.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.ApiKey.get -> string?
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantOptions.ApiKey.init -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.IQdrantBackend
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.IQdrantBackend.EnsureCollectionAsync(string! collection, int dimension, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.IQdrantBackend.UpsertAsync(string! collection, System.Collections.Generic.IReadOnlyList<(string! Id, System.ReadOnlyMemory<float> Vector, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Payload)>! points, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.IQdrantBackend.SearchAsync(string! collection, System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? filterEquals, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(string! Id, double Score, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Payload)>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantVectorStore
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantVectorStore.QdrantVectorStore(Ampelum.VectorStores.Qdrant.QdrantOptions! options) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantVectorStore.QdrantVectorStore(Ampelum.VectorStores.Qdrant.QdrantOptions! options, Ampelum.VectorStores.Qdrant.IQdrantBackend! backend) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantVectorStore.UpsertAsync(System.Collections.Generic.IReadOnlyList<Ampelum.Retrieval.RetrievedDocument!>! documents, System.ReadOnlyMemory<float>[]! vectors, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantVectorStore.QueryAsync(System.ReadOnlyMemory<float> queryVector, int topK, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? filters = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<(Ampelum.Retrieval.RetrievedDocument! Document, double Score)>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.VectorStores.Qdrant.QdrantVectorStore.DisposeAsync() -> System.Threading.Tasks.ValueTask

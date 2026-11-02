@@ -1,0 +1,13 @@
+#nullable enable
+Ampelum.Repl.ReplGlobals
+Ampelum.Repl.ReplGlobals.ReplGlobals(Ampelum.AmpelumContext! ctx) -> void
+Ampelum.Repl.ReplGlobals.Ctx.get -> Ampelum.AmpelumContext!
+Ampelum.Repl.ReplHost
+Ampelum.Repl.ReplHost.ReplHost(Ampelum.Repl.ReplGlobals! globals) -> void
+Ampelum.Repl.ReplHost.EvaluateAsync(string! code, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<object?>!
+Ampelum.Repl.ReplHost.Save(string! slot) -> void
+Ampelum.Repl.ReplHost.Load(string! slot) -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>?
+Ampelum.Repl.ReplHost.CurrentVariables() -> System.Collections.Generic.IReadOnlyDictionary<string!, object?>!
+Ampelum.Repl.ReplLoop
+Ampelum.Repl.ReplLoop.ReplLoop(Ampelum.Repl.ReplHost! host, System.IO.TextReader! input, System.IO.TextWriter! output, System.IO.TextWriter! error) -> void
+Ampelum.Repl.ReplLoop.RunAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task!

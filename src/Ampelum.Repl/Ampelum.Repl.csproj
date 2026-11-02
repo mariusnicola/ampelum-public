@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <PackageId>SignalGrid.Ampelum.Repl</PackageId>
+    <Description>Roslyn-Scripting interactive C# REPL host for Ampelum.</Description>
+    <PackageTags>ampelum;repl;scripting;llm;ai</PackageTags>
+    <RootNamespace>SignalGrid.Ampelum.Repl</RootNamespace>
+    <AssemblyName>SignalGrid.Ampelum.Repl</AssemblyName>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" />
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\Ampelum.Testing\Ampelum.Testing.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Repl.Tests" />
+    <InternalsVisibleTo Include="SignalGrid.Ampelum.Cli" />
+  </ItemGroup>
+</Project>

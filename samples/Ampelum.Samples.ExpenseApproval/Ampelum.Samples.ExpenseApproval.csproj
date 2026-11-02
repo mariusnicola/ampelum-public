@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Ampelum.Samples.ExpenseApproval</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="expense-approval.yml" LogicalName="expense-approval.yml" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Samples.ExpenseApproval.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Samples.Shared\Ampelum.Samples.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent\Ampelum.Agent.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Yaml\Ampelum.Agent.Yaml.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+  </ItemGroup>
+</Project>

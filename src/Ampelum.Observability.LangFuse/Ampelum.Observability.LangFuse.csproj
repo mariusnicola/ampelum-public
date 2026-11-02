@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <AssemblyName>SignalGrid.Ampelum.Observability.LangFuse</AssemblyName>
+    <PackageId>SignalGrid.Ampelum.Observability.LangFuse</PackageId>
+    <Description>LangFuse exporter for Ampelum traces. Ships as an additive ITraceSink decorator that mirrors every TraceRecord onto the LangFuse /api/public/ingestion endpoint.</Description>
+    <PackageTags>ampelum;llm;ai;observability;langfuse;tracing</PackageTags>
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Observability.LangFuse.Tests" />
+  </ItemGroup>
+</Project>

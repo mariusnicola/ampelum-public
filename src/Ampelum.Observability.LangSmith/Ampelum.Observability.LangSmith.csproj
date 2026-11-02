@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <AssemblyName>SignalGrid.Ampelum.Observability.LangSmith</AssemblyName>
+    <PackageId>SignalGrid.Ampelum.Observability.LangSmith</PackageId>
+    <Description>LangSmith exporter for Ampelum traces. Ships as an additive ITraceSink decorator that forwards every TraceRecord to the LangSmith /runs ingestion endpoint.</Description>
+    <PackageTags>ampelum;llm;ai;observability;langsmith;tracing</PackageTags>
+    <!-- v0.9e plan deviation: defer IsAotCompatible until wire models drop reflection-typed payloads. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <EnablePublicApiAnalyzer>true</EnablePublicApiAnalyzer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Api" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum\Ampelum.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Observability.LangSmith.Tests" />
+  </ItemGroup>
+</Project>
