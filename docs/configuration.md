@@ -70,4 +70,4 @@ The `rebuild-index` command reads `appsettings.json` from the working directory.
 | `AMPELUM_E2E_SCENARIOS` | `ScenarioFixture` in `Ampelum.Testing`: `true` or `1` enables scenario tests |
 | `AMPELUM_CONVENTIONS` | `ConventionManifest`: path to a conventions file, checked before the project and user files |
 | `AMPL_SECRET_<alias>` | `EnvironmentSecretStore` in `Ampelum.Agent`: the value of the secret named `<alias>` |
-| `AMPELUM_TEST_POSTGRES` | `PostgresWorkflowPersistenceTests` in `Ampelum.Agent.Tests`: connection string of an isolated database. The three tests fail when it is unset, and CI does not run that project |
+| `AMPELUM_TEST_POSTGRES` | `PostgresWorkflowPersistenceTests` in `Ampelum.Agent.Tests`: connection string of an isolated database. The three tests fail when it is unset, and CI leaves them out |

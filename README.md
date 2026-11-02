@@ -119,7 +119,7 @@ dotnet test tests/Ampelum.Tests/Ampelum.Tests.csproj -c Release
 
 `tests/Ampelum.ContractTests` includes live Ollama tests, and these fail rather than skip when Ollama is not running. Some Host and provider tests also need real credentials, so a full-solution run without them will not be green. `tests/ConsumerSmoke.Tests` sits outside the solution on purpose and needs locally packed packages: see [docs/release/consumer-smoke.md](docs/release/consumer-smoke.md).
 
-CI is configured in [.github/workflows/ci.yml](.github/workflows/ci.yml). It enforces 100% line coverage on `Ampelum` and `Ampelum.Testing`, and line and branch coverage on `Ampelum.Mcp`.
+CI is configured in [.github/workflows/ci.yml](.github/workflows/ci.yml). It builds the solution and runs the unit tests on Linux. It leaves out the Ollama tests, the PostgreSQL tests and the analyzer packaging test, which need a running service or a packed nupkg.
 
 ## Known limits
 

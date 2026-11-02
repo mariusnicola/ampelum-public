@@ -443,7 +443,7 @@ mixes three categories** that should be split:
 
 | Current B3 claim | Status |
 |------------------|--------|
-| "AOT cold-start" | M3 not measured this pass; CI nightly authoritative on linux-x64. **Verify on linux-x64 before v1.0**. |
+| "AOT cold-start" | M3 not measured this pass. **Verify on linux-x64 before v1.0**. |
 | "optimizer compile time vs DSPy-py" | M4 not measured this pass; needs Python subprocess harness pinned. **Verify on linux-x64 CI before v1.0**. |
 
 ## Why some alpha.6 numbers were pessimistic vs CI
@@ -475,5 +475,4 @@ artifact, not a real architectural cost.)
 5. Evaluates 6 must-be-#1 rules (M1-M6 above).
 6. Reads `tools/cold-start-result.json` for the M3 AOT verdict (driver-emitted).
 7. Prints PASS/FAIL summary + per-row table.
-8. Exits with non-zero when any must-be-#1 metric fails — wired into
-   the `comparative-nightly.yml` GH workflow.
+8. Exits with non-zero when any must-be-#1 metric fails.

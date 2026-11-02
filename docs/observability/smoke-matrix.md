@@ -17,11 +17,11 @@ Run the smoke gate with:
 dotnet test tests/Ampelum.Observability.SmokeTests --filter Category=Docker
 ```
 
-## Best-effort tier (env-gated, nightly)
+## Best-effort tier (env-gated)
 
 LangSmith, LangFuse, and Phoenix smoke uses HTTP record/replay against
 captured fixtures committed under each exporter's tests project — no live
-cloud calls in CI. Optional nightly probes hit real cloud sandboxes when
+cloud calls in CI. Optional probes hit real cloud sandboxes when
 the corresponding env vars are set:
 
 - `AMPELUM_OBSERVABILITY_LANGSMITH_KEY` (+ `_PROJECT`)

@@ -135,8 +135,6 @@ is documented inline. `TreatWarningsAsErrors=true` from the root
 - `tools/comparative-rank.csx` — 95% CI + must-be-#1 ranker reading
   `BenchmarkDotNet.Artifacts/results/*-report-full-compressed.json` and
   emitting per-scenario verdicts.
-- `.github/workflows/comparative-nightly.yml` (full comparative + Pareto
-  real-LM) and `.github/workflows/pareto-integration.yml` (per-PR mock-LM).
 - Idiomatic SK `Kernel.InvokeAsync` + AutoGen agent harness + LangChain
   chain wiring so orchestration deltas reflect each framework's typical
   usage rather than a placeholder direct chat call.

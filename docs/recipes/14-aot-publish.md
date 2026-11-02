@@ -19,5 +19,4 @@ dotnet publish tests/Ampelum.AotSmoke/Ampelum.AotSmoke.csproj -c Release -r linu
 The smoke project drives a single `Predict<SmokeSig>.ForwardAsync` against
 a scripted chat client, so it needs no key and no network. `PublishAot` is set
 in its project file, and warnings are treated as errors so any AOT or trim
-warning fails the publish. CI publishes and runs this same project as a
-regression gate.
+warning fails the publish.

@@ -24,20 +24,9 @@ Pinned in [`stryker-config.json`](../../stryker-config.json):
 | `thresholds.high` | `95` | Aspirational ceiling for green. |
 | `concurrency` | `4` | Bounded to keep nightly runner under 90 min. |
 
-## CI workflow
+## CI
 
-[`.github/workflows/mutation-nightly.yml`](../../.github/workflows/mutation-nightly.yml)
-runs Stryker:
-
-- **Schedule:** 03:30 UTC nightly (off the PR critical path).
-- **Manual:** `workflow_dispatch` for ad-hoc runs.
-- **PR:** runs on PRs that touch `stryker-config.json` or the workflow itself, so
-  config changes are validated before merge.
-- **Artefact:** `StrykerOutput/` (HTML + JSON reports), 30-day retention.
-
-The legacy informational workflow `.github/workflows/stryker-nightly.yml` is
-superseded by this gate; both can coexist temporarily — the new workflow
-authoritatively fails the build, the legacy one will be removed at v1.0 GA.
+CI does not run Stryker. Run it locally with the command below.
 
 ## Local run
 
