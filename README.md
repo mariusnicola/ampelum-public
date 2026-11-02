@@ -91,6 +91,13 @@ dotnet run --project samples/Ampelum.Samples.TracedPipeline -c Release -- --fake
 dotnet test tests/Ampelum.Samples.TracedPipeline.Tests
 ```
 
+**Bulk documents** (`samples/Ampelum.Samples.BulkDocuments`). Summarize a set of documents through a batch API and retry the ones that fail, keeping what already finished. Interactive requests run through failover, load-balanced or key-rotating routing, with a circuit breaker, a rate limit and an exact-match response cache. Streaming stays on the primary endpoint and does not fail over. Without `--fake` it also needs the keys marked for this sample in `.sample.env`.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.BulkDocuments -c Release -- --fake
+dotnet test tests/Ampelum.Samples.BulkDocuments.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
