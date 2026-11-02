@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="coverlet.msbuild" />
+    <!-- Direct pin, not just transitive via the Host: NuGetAudit (NU1903) flags the version
+         Microsoft.Data.Sqlite resolves to when this package is reached only transitively. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+    <ProjectReference Include="..\..\src\SignalGrid.Ampelum.Host.Contracts\SignalGrid.Ampelum.Host.Contracts.csproj" />
+    <ProjectReference Include="..\..\samples\Ampelum.Samples.AgentService\Ampelum.Samples.AgentService.csproj" />
+  </ItemGroup>
+</Project>

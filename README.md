@@ -112,6 +112,13 @@ dotnet run --project samples/Ampelum.Samples.VectorStoreSwap -c Release -- --fak
 dotnet test tests/Ampelum.Samples.VectorStoreSwap.Tests
 ```
 
+**Agent service** (`samples/Ampelum.Samples.AgentService`). Serve a program over HTTP with the Ampelum Host, call it from a client, read and verify its audit trail, give a ReAct agent MCP tools, and run an evaluation through the CLI as a process. Streaming is switched off because the Host stream endpoint fails, as Known limits says.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.AgentService -c Release -- --fake
+dotnet test tests/Ampelum.Samples.AgentService.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
@@ -184,6 +191,7 @@ MCP
 
 Host
 
+- The Host stream endpoint does not work. A normal call returns HTTP 200, an `error` frame and `done`, with no `partial` or `final` frame, because `StreamEndpoint` reads `Trace` on chunks where it is null. `final` can never be sent, because the endpoint reads `Trace` from the stream object. The Host tests read only the headers, so they pass.
 - `rebuild-index --config <path>` ignores the path. `Program` passes the whole argument list, so the first argument is `rebuild-index` and the `--config` check never matches; the command always reads `appsettings.json` from the working directory (`src/SignalGrid.Ampelum.Host/Program.cs`, line 17, and `src/SignalGrid.Ampelum.Host/Tools/HostCli.cs`, line 20).
 
 Written but not called by shipped code

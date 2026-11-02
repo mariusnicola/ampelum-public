@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Ampelum.Samples.AgentService</RootNamespace>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Microsoft.AspNetCore.OpenApi.Generated</InterceptorsNamespaces>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Samples.Shared\Ampelum.Samples.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent\Ampelum.Agent.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Mcp\Ampelum.Mcp.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Repl\Ampelum.Repl.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Cli\Ampelum.Cli.csproj" />
+    <ProjectReference Include="..\..\src\SignalGrid.Ampelum.Host\SignalGrid.Ampelum.Host.csproj" />
+    <ProjectReference Include="..\..\src\SignalGrid.Ampelum.Host.Contracts\SignalGrid.Ampelum.Host.Contracts.csproj" />
+  </ItemGroup>
+</Project>
