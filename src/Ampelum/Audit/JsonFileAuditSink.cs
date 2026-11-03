@@ -42,7 +42,8 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
                 throw new InvalidOperationException(
                     $"Out-of-order audit entry: expected sequence {_nextSequence}, got {entry.Sequence}.");
 
-            var json = JsonSerializer.Serialize(entry, AuditEntryJson.Default.AuditEntry);
+            var stored = entry with { Inputs = Concrete(entry.Inputs), Outputs = Concrete(entry.Outputs) };
+            var json = JsonSerializer.Serialize(stored, AuditEntryJson.Default.AuditEntry);
             var bytes = System.Text.Encoding.UTF8.GetBytes(json + "\n");
             _stream.Write(bytes, 0, bytes.Length);
             _stream.Flush(flushToDisk: true);
@@ -65,6 +66,19 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
         }
     }
 
+    // The source-generated context only knows a fixed set of runtime types, so dictionaries and lists
+    // of any kind are copied into the two it was generated for. The values are unchanged, so the hash is too.
+    static Dictionary<string, object?> Concrete(IReadOnlyDictionary<string, object?> values) =>
+        values.ToDictionary(kv => kv.Key, kv => Concrete(kv.Value), StringComparer.Ordinal);
+
+    static object? Concrete(object? value) => value switch
+    {
+        string => value,
+        IReadOnlyDictionary<string, object?> nested => Concrete(nested),
+        System.Collections.IEnumerable list => list.Cast<object?>().Select(Concrete).ToList(),
+        _ => value,
+    };
+
     static Dictionary<string, object?> Plain(IReadOnlyDictionary<string, object?> values) =>
         values.ToDictionary(kv => kv.Key, kv => Plain(kv.Value), StringComparer.Ordinal);
 
@@ -73,7 +87,7 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
         : element.ValueKind switch
         {
             JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt64(out var whole) ? whole : element.GetDouble(),
+            JsonValueKind.Number => element.TryGetInt64(out var whole) ? (object)whole : element.GetDouble(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.Array => element.EnumerateArray().Select(item => Plain(item)).ToList(),
@@ -101,4 +115,8 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
 
 [System.Text.Json.Serialization.JsonSourceGenerationOptions]
 [System.Text.Json.Serialization.JsonSerializable(typeof(AuditEntry))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(List<object?>))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(double))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(bool))]
 internal sealed partial class AuditEntryJson : System.Text.Json.Serialization.JsonSerializerContext { }

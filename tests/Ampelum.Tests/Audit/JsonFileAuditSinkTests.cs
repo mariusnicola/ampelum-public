@@ -82,6 +82,45 @@ public sealed class JsonFileAuditSinkTests : IAsyncLifetime
         read.Inputs["more"].ShouldBe("there");
     }
 
+    public static TheoryData<string, object?> NonStringValues => new()
+    {
+        { "long", 7L },
+        { "long max", long.MaxValue },
+        { "int", 5 },
+        { "double", 2.5 },
+        { "double that is a whole number", 3.0 },
+        { "double with an exponent", 3e18 },
+        { "bool", true },
+        { "null", null },
+        { "list", new List<object?> { "a", 1L, 2.5, false, null } },
+        { "empty list", new List<object?>() },
+        { "array", new object?[] { "a", 1L } },
+        { "nested object", new Dictionary<string, object?> { ["k"] = "v", ["n"] = 1L, ["inner"] = new Dictionary<string, object?> { ["d"] = 0.5 } } },
+        { "list of objects", new List<object?> { new Dictionary<string, object?> { ["k"] = true } } },
+    };
+
+    [Theory]
+    [MemberData(nameof(NonStringValues))]
+    public async Task AppendAsync_WritesNonStringValues_ThatReadBackAndVerify(string label, object? value)
+    {
+        var ts = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        var ins = new Dictionary<string, object?> { ["v"] = value };
+        var outs = new Dictionary<string, object?> { ["w"] = value };
+        var entry = new AuditEntry
+        {
+            Sequence = 0, Timestamp = ts, ModuleName = "M", ModelId = "m",
+            Inputs = ins, Outputs = outs, PromptTokens = 1, CompletionTokens = 2,
+            PrevHash = AuditChainHasher.ZeroHash,
+            EntryHash = AuditChainHasher.Compute(0, ts, "M", "m", ins, outs, 1, 2, AuditChainHasher.ZeroHash),
+        };
+
+        await using var sink = new JsonFileAuditSink(_path);
+        await sink.AppendAsync(entry, TestContext.Current.CancellationToken);
+
+        var verdict = await AuditChainVerifier.VerifyAsync(sink, TestContext.Current.CancellationToken);
+        verdict.IsValid.ShouldBeTrue($"{label}: {verdict.Reason}");
+    }
+
     [Fact]
     public async Task EnumerateAsync_ReturnsPlainLists_AndObjects_FromALineWrittenByAnotherWriter()
     {
