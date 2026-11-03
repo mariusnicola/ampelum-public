@@ -130,6 +130,7 @@ public sealed class HostEndpointTests
     {
         await using var service = await StartAsync();
 
-        (await service.Client.ReadyStatusAsync(Ct)).ShouldBe(HttpStatusCode.OK);
+        var ready = await service.Client.WaitUntilReadyAsync(50, TimeSpan.FromMilliseconds(100), Ct);
+        ready.Status.ShouldBe(HttpStatusCode.OK, ready.Body);
     }
 }

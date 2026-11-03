@@ -257,6 +257,7 @@ Host
 - Audit lookup by trace id returns 404 until the index is rebuilt. Replay looks the module up by the audited name `Predict`, so a module registered under another name cannot be replayed.
 - `/audit/verify` and replay reject entries read back by `JsonFileAuditSink`, because it returns `JsonElement` values the hasher refuses.
 - The Host `rebuild-index` command fails when the working directory holds an `appsettings.json`.
+- `/readyz` answers 503 when one SQLite open takes longer than 50 ms, which can happen on a cold start, so a client must poll it (`src/SignalGrid.Ampelum.Host/Persistence/HostSqliteConnectionFactory.cs`, line 39).
 - `ChatAdapter.OnChunk` treats the closing `[[ ## completed ## ]]` marker as a field. The Host stream endpoint filters it out, but a direct `Predict.StreamAsync` caller sees an update named `completed`.
 - A chunk that carries the last tokens and that marker together is not sent as a `partial`, so the last `partial` can lag the text. The `final` frame is always complete.
 
