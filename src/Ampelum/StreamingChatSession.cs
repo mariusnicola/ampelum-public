@@ -108,6 +108,7 @@ public sealed class StreamingChatSession
             }
 
             _history.Add(new ChatMessage(ChatRole.User, userMessage));
+            var historyAfterUserMessage = _history.Count;
 
             var hookPipeline = _ctx.Hooks is { } h ? HookPipeline.GetOrCreate(h) : null;
             var hookCtx = new HookContext
@@ -115,6 +116,7 @@ public sealed class StreamingChatSession
                 ModuleName = "StreamingChatSession",
                 Inputs = new Dictionary<string, object?> { ["message"] = userMessage }
             };
+            hookCtx.Set(HookMetadataKeys.Streamed, true);
             if (_tools is { Count: > 0 })
                 hookCtx.Set(Safety.Tools.ToolGateHook.OfferedKey, _tools.Select(t => t.Name).ToArray());
 
@@ -305,7 +307,13 @@ public sealed class StreamingChatSession
                 {
                     // The after hooks (moderation, PII redaction, audit) work on outputs, so they get the whole reply.
                     hookCtx.Outputs = new Dictionary<string, object?> { ["text"] = fullResponse.ToString() };
-                    await hookPipeline.RunAfterAsync(hookCtx, ct).ConfigureAwait(false);
+                    try { await hookPipeline.RunAfterAsync(hookCtx, ct).ConfigureAwait(false); }
+                    catch
+                    {
+                        // The turn failed: the reply (and any tool exchange) does not stay in the history.
+                        _history.RemoveRange(historyAfterUserMessage, _history.Count - historyAfterUserMessage);
+                        throw;
+                    }
                 }
                 else
                     await hookPipeline.RunErrorAsync(hookCtx, terminalError, CancellationToken.None)

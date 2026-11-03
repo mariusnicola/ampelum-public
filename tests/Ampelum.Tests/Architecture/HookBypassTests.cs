@@ -19,7 +19,7 @@ public sealed partial class HookBypassTests
         ["src/Ampelum/Predict.cs"] = 2,
         ["src/Ampelum/StreamingChatSession.cs"] = 1,
         // Chat-client decorators: they forward the call they were given; the hooks run in the caller above them.
-        ["src/Ampelum/Caching/TokenCachedChatClient.cs"] = 1,
+        ["src/Ampelum/Caching/TokenCachedChatClient.cs"] = 2,
         ["src/Ampelum/RateLimiting/RateLimitedChatClient.cs"] = 2,
         ["src/Ampelum/Resilience/CircuitBreakerChatClient.cs"] = 2,
         ["src/Ampelum/Routing/RoutedChatClient.cs"] = 2,

@@ -118,7 +118,7 @@ public sealed class HookPipelineTests
     }
 
     [Fact]
-    public async Task OnAfter_Throws_PropagatesAndStopsRemaining()
+    public async Task OnAfter_Throws_PropagatesAfterTheRemainingHooksRan()
     {
         var log = new List<string>();
         var pipe = HookPipeline.GetOrCreate(new IHook[]
@@ -128,7 +128,7 @@ public sealed class HookPipelineTests
         });
         await Should.ThrowAsync<InvalidOperationException>(
             () => pipe.RunAfterAsync(NewCtx(), TestContext.Current.CancellationToken).AsTask());
-        log.ShouldBe(new[] { "after:B" });
+        log.ShouldBe(new[] { "after:B", "after:A" });
     }
 
     [Fact]

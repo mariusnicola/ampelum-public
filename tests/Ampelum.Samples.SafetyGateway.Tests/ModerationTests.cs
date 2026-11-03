@@ -34,9 +34,11 @@ public sealed class ModerationTests
 
         error.Categories.ShouldBe([FakeData.FakeModerationCategory]);
         h.Moderation.Requests.Single().Input.ShouldContain(FakeData.UnsafeMarker);
-        var entry = (await h.AuditEntriesAsync()).Single();
-        entry.EventType.ShouldBe(SafetyNotes.ReplyBlocked);
+        var entries = await h.AuditEntriesAsync();
+        var entry = entries.Single(e => e.EventType == SafetyNotes.ReplyBlocked);
         entry.Outputs["categories"].ShouldBe(FakeData.FakeModerationCategory);
+        // The call itself is audited too (the after hooks all run), with its outputs withheld.
+        entries.Single(e => e.EventType != SafetyNotes.ReplyBlocked).Outputs.ShouldBeEmpty();
         h.AuditText().ShouldNotContain(FakeData.UnsafeMarker);
         (await h.Gateway.VerifyAuditAsync(TestContext.Current.CancellationToken)).IsValid.ShouldBeTrue();
     }
@@ -51,8 +53,7 @@ public sealed class ModerationTests
         await Should.ThrowAsync<ModerationUnavailableException>(
             () => h.Gateway.AskAsync("How many leave days?", TestContext.Current.CancellationToken));
 
-        var entry = (await h.AuditEntriesAsync()).Single();
-        entry.EventType.ShouldBe(SafetyNotes.ModerationUnavailable);
+        var entry = (await h.AuditEntriesAsync()).Single(e => e.EventType == SafetyNotes.ModerationUnavailable);
         entry.Outputs["error"].ShouldBe(nameof(HttpRequestException));
         h.AuditText().ShouldNotContain(FakeScript.LeaveAnswer);
     }
@@ -69,8 +70,7 @@ public sealed class ModerationTests
             () => h.Gateway.AskAsync("How many leave days?", TestContext.Current.CancellationToken));
 
         error.InnerException.ShouldBeOfType<TaskCanceledException>();
-        var entry = (await h.AuditEntriesAsync()).Single();
-        entry.EventType.ShouldBe(SafetyNotes.ModerationUnavailable);
+        var entry = (await h.AuditEntriesAsync()).Single(e => e.EventType == SafetyNotes.ModerationUnavailable);
         entry.Outputs["error"].ShouldBe(nameof(TaskCanceledException));
         h.AuditText().ShouldNotContain(FakeScript.LeaveAnswer);
     }
@@ -85,7 +85,7 @@ public sealed class ModerationTests
         await Should.ThrowAsync<ModerationUnavailableException>(
             () => h.Gateway.AskAsync("How many leave days?", TestContext.Current.CancellationToken));
 
-        (await h.AuditEntriesAsync()).Single().EventType.ShouldBe(SafetyNotes.ModerationUnavailable);
+        (await h.AuditEntriesAsync()).Count(e => e.EventType == SafetyNotes.ModerationUnavailable).ShouldBe(1);
         h.AuditText().ShouldNotContain(FakeScript.LeaveAnswer);
     }
 

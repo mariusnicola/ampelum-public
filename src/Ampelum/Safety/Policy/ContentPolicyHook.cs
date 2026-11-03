@@ -50,6 +50,8 @@ public sealed class ContentPolicyHook : IHook
                 switch (rule.OnMatch)
                 {
                     case OutputRuleAction.Reject:
+                        // The after hooks all run even when this one throws; the rejected text must not reach them.
+                        ctx.Outputs = new Dictionary<string, object?>();
                         throw new ContentPolicyViolationException(rule.RuleId, match.Value);
                     case OutputRuleAction.Redact:
                         current = rule.Pattern.Replace(current, rule.RedactionToken ?? "<REDACTED>");

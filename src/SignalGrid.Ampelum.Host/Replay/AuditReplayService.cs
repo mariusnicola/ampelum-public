@@ -45,8 +45,9 @@ internal sealed class AuditReplayService : IAuditReplayService
     }
 
     // A Predict call is audited as "Predict" whatever name the module is served under, so when no module
-    // carries that name the replayable module whose signature accepts the recorded inputs is the one.
-    // Two such modules cannot be told apart from the entry, so that case is refused.
+    // carries that name the replayable module whose signature accepts the recorded inputs is the one. When
+    // several accept, the one whose inputs have exactly the recorded names wins. Only when that does not
+    // settle it are the modules indistinguishable from the entry, and the call is refused.
     ModuleSlot FindSlot(AuditEntry entry)
     {
         if (_registry.TryGet(entry.ModuleName, out var exact))
@@ -58,6 +59,12 @@ internal sealed class AuditReplayService : IAuditReplayService
                 .Select(n => _registry.Get(n))
                 .Where(s => s.Current is IReplayableModule r && r.AcceptsInputs(entry.Inputs))
                 .ToList();
+            if (candidates.Count > 1)
+            {
+                var exactInputs = candidates.Where(s => ((IReplayableModule)s.Current).HasExactInputs(entry.Inputs)).ToList();
+                if (exactInputs.Count > 0)
+                    candidates = exactInputs;
+            }
             if (candidates.Count == 1)
                 return candidates[0];
             if (candidates.Count > 1)

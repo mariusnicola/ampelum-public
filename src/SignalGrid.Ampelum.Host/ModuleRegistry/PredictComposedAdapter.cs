@@ -34,8 +34,17 @@ public sealed class PredictComposedAdapter<TSig> : IComposedModule, IReplayableM
         return new PredictComposedAdapter<TSig>(p);
     }
 
+    bool IReplayableModule.HasExactInputs(IReadOnlyDictionary<string, object?> inputs)
+    {
+        var names = SignatureMetadataCache.For<TSig>().Inputs.Select(f => f.Name).ToHashSet(StringComparer.Ordinal);
+        return names.SetEquals(inputs.Keys);
+    }
+
     bool IReplayableModule.AcceptsInputs(IReadOnlyDictionary<string, object?> inputs)
     {
+        var names = SignatureMetadataCache.For<TSig>().Inputs.Select(f => f.Name).ToHashSet(StringComparer.Ordinal);
+        if (inputs.Keys.Any(k => !names.Contains(k)))
+            return false;
         try { SignaturePropertyProjector.ProjectTo<TSig>(inputs); return true; }
         catch (ArgumentException) { return false; }
     }

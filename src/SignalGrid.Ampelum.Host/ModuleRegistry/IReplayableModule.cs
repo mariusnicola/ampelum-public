@@ -6,13 +6,19 @@ namespace SignalGrid.Ampelum.Host.ModuleRegistry;
 internal interface IReplayableModule
 {
     /// <summary>
+    /// True when <paramref name="inputs"/> carry every required input of this module's signature and
+    /// no name the signature does not have.
+    /// </summary>
+    bool AcceptsInputs(IReadOnlyDictionary<string, object?> inputs);
+
+    /// <summary>True when <paramref name="inputs"/> hold exactly the names of this module's signature inputs.</summary>
+    bool HasExactInputs(IReadOnlyDictionary<string, object?> inputs);
+
+    /// <summary>
     /// Re-runs forward with the provided typed inputs and a custom AmpelumContext (typically
     /// stripped of AuditHook + BudgetHook, with AuditReplayHook prepended).
     /// Returns the output field dict for wire serialisation.
     /// </summary>
-    /// <summary>True when <paramref name="inputs"/> carry every required input of this module's signature.</summary>
-    bool AcceptsInputs(IReadOnlyDictionary<string, object?> inputs);
-
     ValueTask<IReadOnlyDictionary<string, object?>> ReplayAsync(
         IReadOnlyDictionary<string, object?> inputs, AmpelumContext ctx, CancellationToken ct);
 }

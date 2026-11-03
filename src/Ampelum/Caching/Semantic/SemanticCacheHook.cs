@@ -8,11 +8,10 @@ namespace SignalGrid.Ampelum.Caching.Semantic;
 /// <summary>
 /// Hook that wires an <see cref="ISemanticCache"/> into the forward pipeline. On cache hit
 /// (<see cref="OnBeforeAsync"/>) the hook short-circuits the LM call by populating
-/// <see cref="HookContext.Outputs"/>, AND restores the <c>HookMetadataKeys.ModelId</c> /
-/// <c>PromptTokens</c> / <c>CompletionTokens</c> values so the downstream <see cref="AuditHook"/>
-/// records an audit chain entry semantically identical to the original cache-miss entry â€” the
-/// PSQ-2 F4 replay-determinism guard. On miss (<see cref="OnAfterAsync"/>) the hook captures the
-/// parsed outputs together with the same metadata for future replays (PSQ-2, v0.9g).
+/// <see cref="HookContext.Outputs"/>, and publishes the model id that produced the stored answer
+/// (with zero prompt and completion tokens, since the hit costs nothing) so the downstream
+/// <see cref="AuditHook"/> records that model. On miss (<see cref="OnAfterAsync"/>) the hook stores the
+/// parsed outputs with the model id (the audit key, else <c>HookMetadataKeys.ModelId</c>) and the tokens used.
 /// </summary>
 /// <remarks>
 /// An entry belongs to the module name, the signature type (<c>HookMetadataKeys.SignatureType</c>, set by
@@ -20,10 +19,15 @@ namespace SignalGrid.Ampelum.Caching.Semantic;
 /// lookup that misses exactly embeds the inputs and takes the most similar stored entry of the same module
 /// and signature whose cosine similarity reaches the threshold, and records it in
 /// <c>HookMetadataKeys.SemanticCacheSimilarity</c>. The hook keeps the vectors itself (at most 4096, oldest
-/// dropped first); an embedding generator that throws fails the call.
+/// dropped first). The embedding service only speeds lookups up: an embedding call that throws is skipped
+/// (the exact entry is still stored, the lookup falls back to the exact match) and does not fail the model
+/// call; cancellation still propagates. A streamed turn (<c>HookMetadataKeys.Streamed</c>) is never served,
+/// stored or embedded, because its tokens reach the caller before any cached answer could be used. Nothing is
+/// stored or embedded either once an after hook has thrown (<c>HookMetadataKeys.AfterHookFailed</c>), so a blocked
+/// reply is never served later.
 ///
 /// Order (52) is just after the PII redaction hook (50) and the replay-mode audit hook (51), so on a hit that hook's OnBefore has already
-/// published the redacted inputs that <see cref="AuditHook"/> records; hooks ordered above 51 do not
+/// published the redacted inputs that <see cref="AuditHook"/> records; hooks ordered above 52 do not
 /// run their OnBefore on a hit. When the
 /// <c>HookMetadataKeys.AuditReplaying</c> flag is set, the hook bypasses the cache entirely
 /// to let the canonical recorded entry surface (spec PSQ-2 / Â§6.G S3).
@@ -71,7 +75,7 @@ public sealed class SemanticCacheHook : IHook
     public async ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(ctx);
-        if (IsReplaying(ctx))
+        if (IsReplaying(ctx) || IsStreamed(ctx))
             return;
 
         var signature = SignatureOf(ctx);
@@ -90,10 +94,10 @@ public sealed class SemanticCacheHook : IHook
         if (entry is null)
             return;
 
-        // Restore audit-determinism metadata so AuditHook.OnAfter records the same content.
+        // AuditHook records the model that produced the answer; the hit itself used no tokens.
         ctx.Set(AuditMetadataKeys.ModelId, entry.ModelId);
-        ctx.Set(HookMetadataKeys.PromptTokens, entry.PromptTokens);
-        ctx.Set(HookMetadataKeys.CompletionTokens, entry.CompletionTokens);
+        ctx.Set(HookMetadataKeys.PromptTokens, 0L);
+        ctx.Set(HookMetadataKeys.CompletionTokens, 0L);
         ctx.Set(HookMetadataKeys.SemanticCacheHit, true);
         ctx.Outputs = entry.Outputs;
     }
@@ -106,7 +110,10 @@ public sealed class SemanticCacheHook : IHook
         if (candidates.Length == 0)
             return null;
 
-        var query = await EmbedAsync(inputs, ct).ConfigureAwait(false);
+        // The embedding service is an accelerator: when it fails the lookup is a plain miss.
+        var query = await TryEmbedAsync(inputs, ct).ConfigureAwait(false);
+        if (query is null)
+            return null;
         foreach (var (candidate, similarity) in candidates
             .Select(c => (c, Cosine(query, c.Vector)))
             .Where(t => t.Item2 >= _minSimilarity)
@@ -121,11 +128,19 @@ public sealed class SemanticCacheHook : IHook
         return null;
     }
 
-    async ValueTask<float[]> EmbedAsync(IReadOnlyDictionary<string, object?> inputs, CancellationToken ct)
+    // Null when the embedding call failed. The hook has no logger to report it to; cancellation still propagates.
+    async ValueTask<float[]?> TryEmbedAsync(IReadOnlyDictionary<string, object?> inputs, CancellationToken ct)
     {
-        var generated = await _embeddings!.GenerateAsync(
-            [SemanticCacheKey.Text(inputs)], cancellationToken: ct).ConfigureAwait(false);
-        return generated[0].Vector.ToArray();
+        try
+        {
+            var generated = await _embeddings!.GenerateAsync(
+                [SemanticCacheKey.Text(inputs)], cancellationToken: ct).ConfigureAwait(false);
+            return generated[0].Vector.ToArray();
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return null;
+        }
     }
 
     static double Cosine(float[] a, float[] b)
@@ -145,14 +160,16 @@ public sealed class SemanticCacheHook : IHook
     public async ValueTask OnAfterAsync(HookContext ctx, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(ctx);
-        if (IsReplaying(ctx)) return;
+        if (IsReplaying(ctx) || IsStreamed(ctx) || AfterHookFailed(ctx)) return;
         // Skip storing on hit-served calls so we don't churn LRU order on identical replays.
         if (ctx.Metadata.TryGetValue(HookMetadataKeys.SemanticCacheHit, out var hit) && hit is true)
             return;
         if (ctx.Outputs is null) return;
 
+        // The same lookup AuditHook uses: its own key first, then the model id the module published.
         var modelId = ctx.Metadata.TryGetValue(AuditMetadataKeys.ModelId, out var m) && m is string s
-            ? s : "unknown";
+            ? s
+            : ctx.Metadata.TryGetValue(HookMetadataKeys.ModelId, out var hm) && hm is string hs ? hs : "unknown";
         var prompt = ctx.Metadata.TryGetValue(HookMetadataKeys.PromptTokens, out var p) && p is long pl
             ? pl : 0L;
         var completion = ctx.Metadata.TryGetValue(HookMetadataKeys.CompletionTokens, out var c) && c is long cl
@@ -164,7 +181,9 @@ public sealed class SemanticCacheHook : IHook
 
         if (_embeddings is not null)
         {
-            var vector = await EmbedAsync(ctx.Inputs, ct).ConfigureAwait(false);
+            var vector = await TryEmbedAsync(ctx.Inputs, ct).ConfigureAwait(false);
+            if (vector is null)
+                return; // the exact entry is stored; it just has no vector
             lock (_gate)
             {
                 _index.RemoveAll(i => i.Key == key);
@@ -178,6 +197,12 @@ public sealed class SemanticCacheHook : IHook
     /// <inheritdoc/>
     public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct)
         => ValueTask.CompletedTask;
+
+    static bool AfterHookFailed(HookContext ctx)
+        => ctx.Metadata.TryGetValue(HookMetadataKeys.AfterHookFailed, out var v) && v is true;
+
+    static bool IsStreamed(HookContext ctx)
+        => ctx.Metadata.TryGetValue(HookMetadataKeys.Streamed, out var v) && v is true;
 
     static bool IsReplaying(HookContext ctx)
         => ctx.Metadata.TryGetValue(HookMetadataKeys.AuditReplaying, out var v) && v is true;

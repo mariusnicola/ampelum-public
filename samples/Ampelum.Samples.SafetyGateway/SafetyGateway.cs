@@ -238,7 +238,7 @@ public sealed class SafetyGateway : IAsyncDisposable
         return scan.SanitizedContent;
     }
 
-    // The after-hooks stop at the moderation hook, so a blocked reply never reaches the audit hook; this entry records it.
+    // The audit hook still records the call, with blank outputs (ModerationHook clears them before it throws); this entry says why.
     async Task RecordBlockedAsync(ModerationException ex, CancellationToken ct) =>
         await _notes.RecordAsync(SafetyNotes.ReplyBlocked, new Dictionary<string, object?>
         {

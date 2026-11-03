@@ -144,8 +144,9 @@ public sealed class SemanticCacheHookTests
         hit.Outputs.ShouldNotBeNull();
         hit.Outputs!["A"].ShouldBe("Paris");
         hit.Metadata[AuditMetadataKeys.ModelId].ShouldBe("gpt");
-        hit.Metadata[HookMetadataKeys.PromptTokens].ShouldBe(11L);
-        hit.Metadata[HookMetadataKeys.CompletionTokens].ShouldBe(22L);
+        // The hit itself costs nothing.
+        hit.Metadata[HookMetadataKeys.PromptTokens].ShouldBe(0L);
+        hit.Metadata[HookMetadataKeys.CompletionTokens].ShouldBe(0L);
         hit.Metadata[HookMetadataKeys.SemanticCacheHit].ShouldBe(true);
     }
 
@@ -275,7 +276,7 @@ public sealed class SemanticCacheHookTests
         await auditHook.OnAfterAsync(miss, ct);
 
         // -- Cache hit: SemanticCacheHook.OnBefore restores metadata + outputs; AuditHook.OnAfter
-        // should now produce a chain entry with the SAME (Inputs, Outputs, ModelId, tokens).
+        // should now produce a chain entry with the same inputs, outputs and model id, and zero tokens.
         var hit = Context();
         await hook.OnBeforeAsync(hit, ct);
         await auditHook.OnAfterAsync(hit, ct);
@@ -286,8 +287,10 @@ public sealed class SemanticCacheHookTests
         entries[0].Inputs.ShouldBe(entries[1].Inputs);
         entries[0].Outputs.ShouldBe(entries[1].Outputs);
         entries[0].ModelId.ShouldBe(entries[1].ModelId);
-        entries[0].PromptTokens.ShouldBe(entries[1].PromptTokens);
-        entries[0].CompletionTokens.ShouldBe(entries[1].CompletionTokens);
+        entries[0].PromptTokens.ShouldBe(11L);
+        entries[0].CompletionTokens.ShouldBe(22L);
+        entries[1].PromptTokens.ShouldBe(0L);
+        entries[1].CompletionTokens.ShouldBe(0L);
         entries[0].ModuleName.ShouldBe(entries[1].ModuleName);
     }
 }

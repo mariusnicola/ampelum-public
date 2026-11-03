@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 
 namespace SignalGrid.Ampelum.Hooks.Internal;
 
@@ -47,10 +48,28 @@ internal sealed class HookPipeline
         }
     }
 
+    /// <summary>
+    /// Runs every after hook in descending order even when one throws, so a lower-order hook such as the
+    /// audit hook still sees the call. One failure is rethrown as it is; several are rethrown together
+    /// as an <see cref="AggregateException"/> in the order they happened.
+    /// </summary>
     public async ValueTask RunAfterAsync(HookContext ctx, CancellationToken ct)
     {
+        List<Exception>? failures = null;
         for (var i = 0; i < _descending.Length; i++)
-            await _descending[i].OnAfterAsync(ctx, ct).ConfigureAwait(false);
+        {
+            try { await _descending[i].OnAfterAsync(ctx, ct).ConfigureAwait(false); }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                (failures ??= []).Add(ex);
+                // Tells the hooks still to run (the semantic cache) that this call's outputs must not be kept.
+                ctx.Set(HookMetadataKeys.AfterHookFailed, true);
+            }
+        }
+        if (failures is null) return;
+        if (failures.Count == 1)
+            ExceptionDispatchInfo.Capture(failures[0]).Throw();
+        throw new AggregateException(failures);
     }
 
     public async ValueTask RunErrorAsync(HookContext ctx, Exception error, CancellationToken ct)

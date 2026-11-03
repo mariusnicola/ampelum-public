@@ -46,6 +46,58 @@ public sealed class AuditReplayServiceTests
         return new AuditReplayService(new FixedLookup(entry), registry, ctx, NullLogger<AuditReplayService>.Instance);
     }
 
+    [Signature("Wider signature: an optional second input.")]
+    public sealed record WideSig : ISignature
+    {
+        [Input] public required string Q { get; init; }
+        [Input] public string? Context { get; init; }
+        [Output] public string B { get; init; } = "";
+    }
+
+    static AuditReplayService NarrowAndWide(AuditEntry entry, AmpelumContext ctx)
+    {
+        var registry = new SignalGrid.Ampelum.Host.ModuleRegistry.ModuleRegistry();
+        registry.Register(new ModuleSlot("Wide",
+            new PredictComposedAdapter<WideSig>(new Predict<WideSig>(ctx)), TestData.SimpleDescriptor("Wide")));
+        registry.Register(Slot("Narrow", ctx));
+        return new AuditReplayService(new FixedLookup(entry), registry, ctx, NullLogger<AuditReplayService>.Instance);
+    }
+
+    [Fact]
+    public async Task Replay_refuses_an_entry_with_an_input_the_signature_does_not_have()
+    {
+        var (entry, ctx) = await AuditedCallAsync();
+        var withExtra = entry with { Inputs = new Dictionary<string, object?> { ["Q"] = "q", ["Unknown"] = "x" } };
+
+        var ex = await Should.ThrowAsync<KeyNotFoundException>(() =>
+            Service(withExtra, ctx, "Answer").ReplayAsync("t", TestContext.Current.CancellationToken).AsTask());
+
+        ex.Message.ShouldStartWith("module_not_found:");
+    }
+
+    [Fact]
+    public async Task Replay_prefers_the_module_whose_inputs_match_the_recorded_names_exactly()
+    {
+        var (entry, ctx) = await AuditedCallAsync();
+
+        var response = await NarrowAndWide(entry, ctx).ReplayAsync("t", TestContext.Current.CancellationToken);
+
+        // Both accept {Q}; the narrow one has exactly those inputs, and its output field is A.
+        response.Outputs.ContainsKey("A").ShouldBeTrue();
+        response.Outputs.ContainsKey("B").ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task Replay_uses_the_wider_module_when_only_it_accepts_the_recorded_inputs()
+    {
+        var (entry, ctx) = await AuditedCallAsync();
+        var wide = entry with { Inputs = new Dictionary<string, object?> { ["Q"] = "q", ["Context"] = "c" } };
+
+        var response = await NarrowAndWide(wide, ctx).ReplayAsync("t", TestContext.Current.CancellationToken);
+
+        response.Outputs.ContainsKey("B").ShouldBeTrue();
+    }
+
     [Fact]
     public async Task Replay_finds_a_module_served_under_another_name()
     {

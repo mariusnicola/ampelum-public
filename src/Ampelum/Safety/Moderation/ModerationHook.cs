@@ -53,9 +53,20 @@ public sealed class ModerationHook : IHook
             ctx.Set(TransportErrorKey, ex.GetType().Name);
             return;
         }
+        catch
+        {
+            // The reply was not cleared and is not released: the lower-order after hooks (audit) must not see it.
+            ctx.Outputs = new Dictionary<string, object?>();
+            throw;
+        }
         ctx.Set(FlaggedKey, result.Flagged);
         ctx.Set(CategoriesKey, string.Join(",", result.Categories));
-        if (result.Flagged) throw new ModerationException(result.Categories);
+        if (result.Flagged)
+        {
+            // The after hooks all run even when this one throws; the withheld text must not reach them.
+            ctx.Outputs = new Dictionary<string, object?>();
+            throw new ModerationException(result.Categories);
+        }
     }
 
     /// <inheritdoc/>

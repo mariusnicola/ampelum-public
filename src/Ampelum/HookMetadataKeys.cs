@@ -71,6 +71,16 @@ public static class HookMetadataKeys
     /// <c>Predict</c> reports the module name <c>Predict</c>.</summary>
     public const string SignatureType = "SignalGrid.Ampelum.signature_type";
 
+    /// <summary>Value type: <see langword="bool"/>. Set to <see langword="true"/> by the hook pipeline as soon as an
+    /// after hook throws, before the remaining (lower-order) after hooks run. A hook that stores the call's outputs,
+    /// such as the semantic cache, must not store them: the call failed and its reply was blocked.</summary>
+    public const string AfterHookFailed = "SignalGrid.Ampelum.after_hook_failed";
+
+    /// <summary>Value type: <see langword="bool"/>. Set to <see langword="true"/> by <c>StreamingChatSession</c> on
+    /// the context of a streamed turn. The semantic cache neither serves from nor stores into the cache for it,
+    /// because the tokens already reached the caller before any cached answer could be used.</summary>
+    public const string Streamed = "SignalGrid.Ampelum.streamed";
+
     /// <summary>Value type: <see langword="double"/>. Cosine similarity between the query
     /// embedding and the cached entry that satisfied the lookup (PSQ-2, v0.9g).</summary>
     public const string SemanticCacheSimilarity = "SignalGrid.Ampelum.semantic_cache_similarity";
