@@ -232,7 +232,7 @@ Workflows
 - The code indexer's `ExtractCalls` covers only Method or Function symbols, and its method pattern misses plain return types, so in practice the index holds type declarations and imports.
 - `ISynthesisInfrastructure` has no implementation in the library.
 - `SubAgentRunner` file tools accept absolute paths and `..` without a check, so they read and write outside the working directory. The runner does not run tool calls itself (wrap the client in `FunctionInvokingChatClient`), its prompt names `edit_file`, `build` and `run_tests`, which do not exist, a failed write still appears in `FilesChanged`, and `SubAgentTask.Tier` is ignored (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`).
-- `PostgresWorkflowPersistence` has no API to delete an execution's rows, and its constructor runs schema DDL on every instance, so it needs DDL rights (`src/Ampelum.Agent.Postgres/PostgresWorkflowPersistence.cs`, line 31).
+- `PostgresWorkflowPersistence` has no API to delete an execution's rows, and its constructor runs schema DDL on every instance, so it needs DDL rights (`src/Ampelum.Agent.Postgres/PostgresWorkflowPersistence.cs`, line 31). That DDL takes an exclusive table lock, and creating one while another process writes to the same tables can deadlock (PostgreSQL error 40P01, seen when two test assemblies shared one database).
 - `DefaultWorkflowSynthesizer.PromoteAsync` validates and writes a candidate. It does not call `WorkflowPromotionEvaluator`, and nothing in the repository produces the evaluations that class expects (`src/Ampelum.Agent.Synthesis/DefaultWorkflowSynthesizer.cs`, lines 115 to 136).
 
 MCP
