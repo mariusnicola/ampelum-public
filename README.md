@@ -250,6 +250,7 @@ Host
 
 - `rebuild-index --config <path>` ignores the path. `Program` passes the whole argument list, so the first argument is `rebuild-index` and the `--config` check never matches; the command always reads `appsettings.json` from the working directory (`src/SignalGrid.Ampelum.Host/Program.cs`, line 17, and `src/SignalGrid.Ampelum.Host/Tools/HostCli.cs`, line 20).
 
+- The optimize progress stream keeps no history. `OptimizerProgressBus.Publish` drops an event when no client is subscribed yet, so a client that connects after a run has started misses the earlier progress (`src/SignalGrid.Ampelum.Host/Optimize/OptimizerProgressBus.cs`).
 - `ProblemDetailsMiddleware` is internal and nothing registers it, so an unhandled endpoint exception is not mapped to a Host error code.
 - The Host optimize endpoint scores with a private `NoOpMetric` that returns 1.0, so it does not measure quality (`src/SignalGrid.Ampelum.Host/ModuleRegistry/PredictComposedAdapter.cs`).
 - `ChatAdapter.OnChunk` treats the closing `[[ ## completed ## ]]` marker as a field. The Host stream endpoint filters it out, but a direct `Predict.StreamAsync` caller sees an update named `completed`.
