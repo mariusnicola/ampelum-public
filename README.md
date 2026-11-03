@@ -147,6 +147,13 @@ dotnet run --project samples/Ampelum.Samples.AgentRuntime -c Release -- --fake
 dotnet test tests/Ampelum.Samples.AgentRuntime.Tests
 ```
 
+**Chat frontend** (`samples/Ampelum.Samples.ChatFrontend`). The backend of a customer chat widget. A conversation reply streams token by token through `StreamingChatSession`, and the typed fields of an answer stream through `ProgramStreamer`. A repeated question is answered by the semantic cache hook without a model call, a repeated identical prompt is stopped by `TokenCache`, and `RoutedChatClient` with `Failover` sends a call to the fallback model when the primary fails. Its tests pin what does not work: streaming does not fail over, moderation never sees a streamed reply, a cache hit skips the PII hook, and the "semantic" cache matches identical inputs only. The live path has never been run.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.ChatFrontend -c Release -- --fake
+dotnet test tests/Ampelum.Samples.ChatFrontend.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
@@ -253,6 +260,12 @@ Audit and safety
 - `FileTrustStore` keeps everything in memory, despite its name, and violations do not revoke trust.
 - Nothing in `src` sets `tools.requested`, so `ToolGateHook` does nothing unless the caller sets it.
 - `ModelRateTable.EstimateCost` ignores its model id.
+
+Caching
+
+- `SemanticCacheHook` is an exact match on a SHA-256 of the module name and the inputs; it uses no embeddings, so a reworded question misses (`src/Ampelum/Caching/Semantic/SemanticCacheKey.cs`).
+- The semantic cache key ignores the signature type, because `Predict` names every module `Predict`, so two signatures with the same input names share entries (`src/Ampelum/Predict.cs`).
+- Nothing in `src` calls `TokenCache`, and its key holds only the model id and the messages, so calls that differ in temperature or other options share an entry.
 
 Routing and tracing
 
