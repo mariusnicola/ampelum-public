@@ -60,6 +60,33 @@ public sealed class AuditHookReplayModeTests
     }
 
     [Fact]
+    public async Task Replay_OfAQuestionThePiiHookChanged_ServesTheRecordedOutputs()
+    {
+        var question = new Dictionary<string, object?> { ["q"] = "Mail me at jane.doe@example.com" };
+        var redactor = new SignalGrid.Ampelum.Safety.Pii.RegexPiiRedactor();
+
+        // Recording: the audit entry holds the redacted form of the question.
+        var sink = new InMemoryAuditSink();
+        var recording = new HookContext { ModuleName = "M", Inputs = question };
+        await new SignalGrid.Ampelum.Safety.Pii.PiiRedactionHook(redactor)
+            .OnBeforeAsync(recording, TestContext.Current.CancellationToken);
+        recording.Outputs = new Dictionary<string, object?> { ["a"] = "recorded" };
+        await new AuditHook(sink).OnAfterAsync(recording, TestContext.Current.CancellationToken);
+
+        // Replay: the before pass runs in hook order until a hook supplies the outputs.
+        var replaying = new HookContext { ModuleName = "M", Inputs = question };
+        IHook[] hooks = [new AuditHook(sink, replayMode: true), new SignalGrid.Ampelum.Safety.Pii.PiiRedactionHook(redactor)];
+        foreach (var hook in hooks.OrderBy(h => h.Order))
+        {
+            await hook.OnBeforeAsync(replaying, TestContext.Current.CancellationToken);
+            if (replaying.Outputs is not null) break;
+        }
+
+        replaying.Outputs.ShouldNotBeNull();
+        replaying.Outputs!["a"].ShouldBe("recorded");
+    }
+
+    [Fact]
     public async Task Replay_NoMatch_ThrowsAuditReplayMissingException()
     {
         var sink = new InMemoryAuditSink();

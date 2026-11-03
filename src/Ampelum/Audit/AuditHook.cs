@@ -5,7 +5,7 @@ namespace SignalGrid.Ampelum.Audit;
 
 /// <summary>
 /// Hook that records each forward call as an <see cref="AuditEntry"/> into an <see cref="IAuditSink"/>.
-/// Joins the v0.6a hook pipeline at <c>Order=10</c>. Spec Â§4.3.
+/// Joins the v0.6a hook pipeline at <c>Order=10</c> (<c>Order=51</c> in replay mode, after the PII hook). Spec Â§4.3.
 /// In replay mode (PSQ-5), <c>OnBefore</c> serves recorded outputs by
 /// <c>(ModuleName, hash(canonical Inputs))</c> and short-circuits the LM call.
 /// </summary>
@@ -35,14 +35,18 @@ public sealed class AuditHook : IHook
     }
 
     /// <inheritdoc/>
-    public int Order => 10;
+    public int Order => _replayMode ? ReplayOrder : 10;
+
+    // Replay looks the recorded entry up by the inputs that were persisted, which can be the redacted
+    // form, so the lookup must run after PiiRedactionHook (50) has published it.
+    const int ReplayOrder = 51;
 
     /// <inheritdoc/>
     public async ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct)
     {
         if (!_replayMode) return;
         var index = await EnsureIndexAsync(ct);
-        var key = MakeKey(ctx.ModuleName, ctx.Inputs);
+        var key = MakeKey(ctx.ModuleName, PersistedInputs(ctx));
         AuditEntry entry;
         lock (_replayGate)
         {
@@ -60,10 +64,7 @@ public sealed class AuditHook : IHook
         // PII invariant (v0.9c): if PiiRedactionHook (Order=50) ran first, it published
         // a redacted Inputs projection under "pii.redacted_inputs". Hash + persist the
         // redacted form. See docs/security/threat-model-v1.md Â§6.
-        var inputs = ctx.Metadata.TryGetValue("pii.redacted_inputs", out var ri)
-            && ri is IReadOnlyDictionary<string, object?> redactedInputs
-                ? redactedInputs
-                : ctx.Inputs;
+        var inputs = PersistedInputs(ctx);
         var outputs = ctx.Outputs ?? new Dictionary<string, object?>();
         var modelId = ctx.Metadata.TryGetValue(AuditMetadataKeys.ModelId, out var mid) && mid is string s ? s : "unknown";
         var pt = ctx.Metadata.TryGetValue(AuditMetadataKeys.PromptTokens, out var p) && p is long pl ? pl : 0L;
@@ -118,6 +119,12 @@ public sealed class AuditHook : IHook
     /// <inheritdoc/>
     public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct)
         => ValueTask.CompletedTask;
+
+    static IReadOnlyDictionary<string, object?> PersistedInputs(HookContext ctx) =>
+        ctx.Metadata.TryGetValue("pii.redacted_inputs", out var ri)
+            && ri is IReadOnlyDictionary<string, object?> redactedInputs
+                ? redactedInputs
+                : ctx.Inputs;
 
     async ValueTask<byte[]> LastEntryHashAsync(CancellationToken ct)
     {

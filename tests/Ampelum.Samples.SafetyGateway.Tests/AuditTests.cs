@@ -85,6 +85,23 @@ public sealed class AuditTests
     }
 
     [Fact]
+    public async Task Replay_OfAQuestionThePiiHookChanged_AnswersFromTheFile()
+    {
+        using var folder = new TempFolder();
+        await using (var first = await Harness.StartAsync(folder: folder))
+        {
+            FakeScript.EnqueueAnswer(first.Chat, FakeScript.LeaveAnswer, 100, 10);
+            await first.Gateway.AskAsync(DemoQuestions.Leave, Ct);
+        }
+
+        await using var replay = await Harness.StartAsync(folder: folder, replay: true);
+        var replayed = await replay.Gateway.AskAsync(DemoQuestions.Leave, Ct);
+
+        replayed.Text.ShouldBe(FakeScript.LeaveAnswer);
+        replay.Chat.RecordedCalls.ShouldBeEmpty();
+    }
+
+    [Fact]
     public async Task Replay_OfAQuestionThatWasNeverAsked_Fails()
     {
         using var folder = new TempFolder();

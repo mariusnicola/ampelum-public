@@ -294,7 +294,6 @@ Written but not called by shipped code
 
 Audit and safety
 
-- Replay of a question `PiiRedactionHook` changed fails with `AuditReplayMissingException`: entries are written from redacted inputs and the key is built from the original ones.
 - `AuditHook` records model id `unknown` and 0 tokens for `Predict` calls, because it reads a different metadata key from the one they set.
 - `SemanticCacheHook` stops the before-pass on a hit, so `PiiRedactionHook` never runs and the audit entry holds the original text.
 - `StreamingChatSession` sends text to the caller before the after hooks run and never sets outputs, so `ModerationHook` does not check streamed replies.
