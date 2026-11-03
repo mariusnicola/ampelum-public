@@ -231,7 +231,7 @@ public sealed class SupportDeskPipelineTests
     }
 
     [Fact]
-    public async Task ReplyAskingForAPassword_IsBlockedByContentPolicyAndNotAudited()
+    public async Task ReplyAskingForAPassword_IsBlockedByContentPolicy_AndAuditedWithoutItsText()
     {
         var chat = ScriptUntilReply();
         FakeScript.EnqueueReply(chat, "To continue, please send us your password.");
@@ -242,7 +242,12 @@ public sealed class SupportDeskPipelineTests
             () => desk.HandleAsync(SupportDeskData.SampleTicket, TestContext.Current.CancellationToken));
 
         error.RuleId.ShouldBe("NO_SECRET_REQUEST");
-        audit.NextSequence.ShouldBe(4);
+        audit.NextSequence.ShouldBe(5);
+        var entries = new List<AuditEntry>();
+        await foreach (var entry in audit.EnumerateAsync(TestContext.Current.CancellationToken))
+            entries.Add(entry);
+        entries[^1].Outputs.ShouldBeEmpty();
+        entries.SelectMany(e => e.Outputs.Values).OfType<string>().ShouldNotContain(s => s.Contains("password"));
         (await AuditChainVerifier.VerifyAsync(audit, TestContext.Current.CancellationToken)).IsValid.ShouldBeTrue();
     }
 }
