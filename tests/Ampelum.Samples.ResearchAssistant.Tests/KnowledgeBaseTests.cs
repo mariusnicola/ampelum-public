@@ -42,6 +42,18 @@ public sealed class KnowledgeBaseTests
     }
 
     [Fact]
+    public async Task CrlfText_SplitsIntoTheSameChunksAsLfText()
+    {
+        var lf = "# Title\n\n" + string.Join("\n\n", Enumerable.Range(0, 6).Select(i => $"Paragraph {i} about solar panels and their yield."));
+        var options = new ResearchOptions { ChunkSize = 120, ChunkOverlap = 0 };
+        using var fromLf = await BuildFromAsync(new() { ["doc"] = lf }, options);
+        using var fromCrlf = await BuildFromAsync(new() { ["doc"] = lf.Replace("\n", "\r\n") }, options);
+
+        fromLf.Chunks.Count.ShouldBeGreaterThan(1);
+        fromCrlf.Chunks.Select(c => (c.Id, c.Text)).ShouldBe(fromLf.Chunks.Select(c => (c.Id, c.Text)));
+    }
+
+    [Fact]
     public async Task SmallerChunkSize_ProducesMoreChunks()
     {
         var text = "# Title\n\n" + string.Join("\n\n", Enumerable.Range(0, 6).Select(i => $"Paragraph {i} about solar panels and their yield."));

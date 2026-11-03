@@ -522,9 +522,8 @@ public sealed class DurableWorkflowRuntimeTests
     public async Task RunAsync_MultipleIndependentReadyNodes_ExecutesThemConcurrentlyNotSerially()
     {
         // Two independent roots (no DependsOn between them) are both ready in the very first dispatch
-        // pass. Each handler sleeps for `delay`; if the runtime still dispatched one ready node at a time
-        // (the pre-fix behavior), total wall-clock would be ~2x delay. Concurrent dispatch keeps it near 1x.
-        var delay = TimeSpan.FromMilliseconds(200);
+        // pass. Each handler waits until both are inside; a runtime that dispatched one ready node at a
+        // time would never let the second in, and the wait would time out.
         WorkflowStepDefinition[] steps =
         [
             new WorkflowStepDefinition("root-a", "test", []),
@@ -534,8 +533,8 @@ public sealed class DurableWorkflowRuntimeTests
         var concurrentInsideWindow = 0;
         var maxObservedConcurrency = 0;
         var gate = new object();
+        var bothIn = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
         var result = await new DurableWorkflowRuntime(new InMemoryWorkflowStateStore(), new InMemoryWorkflowRuntimeAuditSink()).RunAsync(
             request,
             async (_, ct) =>
@@ -544,22 +543,19 @@ public sealed class DurableWorkflowRuntimeTests
                 {
                     concurrentInsideWindow++;
                     maxObservedConcurrency = Math.Max(maxObservedConcurrency, concurrentInsideWindow);
+                    if (concurrentInsideWindow == 2) bothIn.TrySetResult();
                 }
-                await Task.Delay(delay, ct);
+                await bothIn.Task.WaitAsync(TimeSpan.FromSeconds(10), ct);
                 lock (gate) { concurrentInsideWindow--; }
                 return DurableWorkflowNodeResult.Success();
             },
             TestContext.Current.CancellationToken);
-        stopwatch.Stop();
 
         result.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
         result.Nodes["root-a"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
         result.Nodes["root-b"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
         // Direct interleaving evidence: both handlers were in flight at the same instant.
         maxObservedConcurrency.ShouldBe(2);
-        // Timing evidence: two 200ms sleeps completed in well under 2x (400ms) -- allow generous slack for
-        // CI scheduling noise while still failing a regression to strictly serial dispatch.
-        stopwatch.Elapsed.ShouldBeLessThan(TimeSpan.FromMilliseconds(delay.TotalMilliseconds * 1.5));
     }
 
     [Fact]

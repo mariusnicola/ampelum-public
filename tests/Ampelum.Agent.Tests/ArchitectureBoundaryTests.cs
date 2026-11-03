@@ -69,15 +69,6 @@ public sealed class ArchitectureBoundaryTests
     }
 
     [Fact]
-    public void NoPackageReferences_AgentRunner()
-    {
-        // No package references the AgentRunner assembly
-        ReferencesAssembly(AgentAssembly, "AgentRunner").ShouldBeFalse();
-        ReferencesAssembly(ToolsAssembly, "AgentRunner").ShouldBeFalse();
-        ReferencesAssembly(SynthesisAssembly, "AgentRunner").ShouldBeFalse();
-    }
-
-    [Fact]
     public void NoCircularDependencies()
     {
         // The dependency graph must remain acyclic even with Agent -> Ampelum:

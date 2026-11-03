@@ -66,8 +66,8 @@ public class PhaseCheckpointWorkspaceTests
     [Fact]
     public void WorkspaceId_ToString_ReturnsValue()
     {
-        var id = WorkspaceId.New("ampelum-v2");
-        id.ToString().ShouldBe("ampelum-v2");
+        var id = WorkspaceId.New("ampelum-workspace");
+        id.ToString().ShouldBe("ampelum-workspace");
     }
 
     [Fact]

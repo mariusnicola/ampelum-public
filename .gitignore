@@ -27,7 +27,6 @@ nul
 ~$*.pptx
 ~$*.docx
 ~$*.xlsx
-ToolsAgentRunner/
 package-lock.json
 tests/ConsumerSmoke.Tests/.packages-p5*/
 .playwright-mcp/

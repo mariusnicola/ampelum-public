@@ -88,8 +88,9 @@ public sealed class KnowledgeBase : IDisposable
             await foreach (var doc in loader.LoadAsync(stream, new DocumentLoadContext { SourceUri = name }, ct))
             {
                 var title = ((IReadOnlyList<string>)doc.Metadata["headings"]!).FirstOrDefault() ?? name;
+                // A file checked out with CRLF must split into the same chunks as one with LF.
                 var split = splitter.Split(
-                    doc.Text,
+                    doc.Text.Replace("\r\n", "\n"),
                     new SplitterContext { ChunkSize = options.ChunkSize, ChunkOverlap = options.ChunkOverlap, SourceDocumentId = name });
                 var n = 0;
                 foreach (var chunk in split)
