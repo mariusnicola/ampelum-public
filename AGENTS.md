@@ -55,7 +55,7 @@ The README's [Use cases](README.md#use-cases) section lists every sample with it
 - Hosting behind HTTP: `samples/Ampelum.Samples.AgentService`
 - Safety hooks and what they miss: `samples/Ampelum.Samples.SafetyGateway`
 - Composing modules, agents and GEPA tuning: `samples/Ampelum.Samples.ComposedPrograms`
-- Planned workflow that stops for approval and resumes: `samples/Ampelum.Samples.AgentRuntime`
+- Planned workflow that stops for approval and resumes, then a coding sub-agent: `samples/Ampelum.Samples.AgentRuntime`
 - Streaming, caching and failover for a chat backend: `samples/Ampelum.Samples.ChatFrontend`
 - Task-sized examples: `docs/recipes/`
 - Concepts and layers: `docs/architecture.md`

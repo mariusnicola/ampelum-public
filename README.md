@@ -140,7 +140,7 @@ dotnet run --project samples/Ampelum.Samples.ComposedPrograms -c Release -- --fa
 dotnet test tests/Ampelum.Samples.ComposedPrograms.Tests
 ```
 
-**Agent runtime** (`samples/Ampelum.Samples.AgentRuntime`). A long task over a small demo project: triage three backlog issues, edit the report, stop for approval, then post. The model plans a workflow in YAML that uses fan out, join, loop, approval, wait and tool steps. The run pauses at the approval step and a second runtime, with new objects on the same state folder, resumes it without repeating a step or a model call. Along the way it shows the event log, memory that keeps the goal across the restart, skill selection, model tiers, a budget that defers issues, a tool that needs a grant, conventions and code facts. Both runtimes live in one OS process, and the pause comes from the sample's approval handler because the runtime gives `Approval` no pause of its own. The live path has never been run.
+**Agent runtime** (`samples/Ampelum.Samples.AgentRuntime`). A long task over a small demo project: triage three backlog issues, edit the report, stop for approval, then post. The model plans a workflow in YAML that uses fan out, join, loop, approval, wait and tool steps. The run pauses at the approval step and a second runtime, with new objects on the same state folder, resumes it without repeating a step or a model call. Along the way it shows the event log, memory that keeps the goal across the restart, skill selection, model tiers, a budget that defers issues, a tool that needs a grant, conventions and code facts. Both runtimes live in one OS process, and the pause comes from the sample's approval handler because the runtime gives `Approval` no pause of its own. After the report is posted, a coding sub-agent built on `SubAgentRunner` fixes one issue in the temp copy of the project with the runner's file tools and ends on `DONE:`, and the sample reads the edited file back instead of trusting the claim. The runner has no shell, but its file tools are not confined to the working directory; the tests pin each escape. The live path has never been run.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.AgentRuntime -c Release -- --fake
@@ -224,6 +224,7 @@ Workflows
 - `JsonFileProjectRegistry` stores label, root and escalation policy only; the blast radius and allowed tools are derived again on load.
 - The code indexer's `ExtractCalls` covers only Method or Function symbols, and its method pattern misses plain return types, so in practice the index holds type declarations and imports.
 - `ISynthesisInfrastructure` has no implementation in the library.
+- `SubAgentRunner` file tools accept absolute paths and `..` without a check, so they read and write outside the working directory. The runner does not run tool calls itself (wrap the client in `FunctionInvokingChatClient`), its prompt names `edit_file`, `build` and `run_tests`, which do not exist, a failed write still appears in `FilesChanged`, and `SubAgentTask.Tier` is ignored (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`).
 - `DefaultWorkflowSynthesizer.PromoteAsync` validates and writes a candidate. It does not call `WorkflowPromotionEvaluator`, and nothing in the repository produces the evaluations that class expects (`src/Ampelum.Agent.Synthesis/DefaultWorkflowSynthesizer.cs`, lines 115 to 136).
 
 MCP

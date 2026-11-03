@@ -10,7 +10,8 @@ public sealed record ScenarioResult(
     DurableRunId RunId,
     string ExecutionId,
     DurableRunSnapshot PausedSnapshot,
-    TriageOutcome Outcome);
+    TriageOutcome Outcome,
+    FixOutcome? Fix = null);
 
 /// <summary>
 /// The whole story in one place. A first runtime plans the run, assesses the backlog and stops at the approval step.
@@ -28,7 +29,8 @@ public static class TriageScenario
         ModelTiers tiers,
         TextWriter? log = null,
         TriagePolicy? policy = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        IChatClient? fixer = null)
     {
         var root = DemoProject.Extract(Path.Combine(workDirectory, "project"));
         var state = Path.Combine(workDirectory, "state");
@@ -55,7 +57,14 @@ public static class TriageScenario
             await second.ApproveAsync(runId, "Maintainer approved the report", ct).ConfigureAwait(false);
             var outcome = await second.FinishAsync(runId, executionId, ct).ConfigureAwait(false);
             Print(log, outcome);
-            return new ScenarioResult(plan, runId, executionId, paused, outcome);
+
+            FixOutcome? fix = null;
+            if (fixer is not null && outcome.ReportPath is not null)
+            {
+                fix = await IssueFixer.FixAsync(root, IssueFixer.WithToolInvocation(fixer), ct: ct).ConfigureAwait(false);
+                log?.WriteLine($"Sub-agent fix of #102: {(fix.Passed ? "[OK]" : "[FAILED]")} {fix.Detail}. Sub-agent summary: {fix.Run.Outcome}");
+            }
+            return new ScenarioResult(plan, runId, executionId, paused, outcome, fix);
         }
     }
 

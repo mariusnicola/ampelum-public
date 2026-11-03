@@ -61,7 +61,7 @@ public sealed class CodeFacts : IDisposable
     /// <summary>Collects the facts for one issue from the files the scope allows.</summary>
     public async Task<IssueFacts> GatherAsync(TriageIssue issue, CancellationToken ct = default)
     {
-        var words = issue.Title.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var words = issue.Title.Split([' ', '.'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(w => w.Length >= MinWordLength)
             .ToArray();
 

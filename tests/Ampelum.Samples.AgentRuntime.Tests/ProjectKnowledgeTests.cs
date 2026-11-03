@@ -85,9 +85,9 @@ public sealed class ProjectKnowledgeTests : IDisposable
     {
         using var facts = Facts();
 
-        var pricing = await facts.GatherAsync(Issue(102, "Pricing rounds the order discount one cent too low"), TestContext.Current.CancellationToken);
+        var pricing = await facts.GatherAsync(Issue(102, "Pricing.ApplyDiscount never rounds"), TestContext.Current.CancellationToken);
 
-        pricing.Symbols.ShouldBe(["Class OrderService in src/OrderService.cs", "Class Pricing in src/Pricing.cs"]);
+        pricing.Symbols.ShouldBe(["Class Pricing in src/Pricing.cs"]);
         pricing.Violations.ShouldNotContain(v => v.Contains("Pricing.cs", StringComparison.Ordinal));
     }
 

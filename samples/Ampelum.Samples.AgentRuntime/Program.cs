@@ -23,8 +23,10 @@ var directory = Path.Combine(Path.GetTempPath(), "ampelum-agent-runtime", Guid.N
 Directory.CreateDirectory(directory);
 try
 {
-    var result = await TriageScenario.RunAsync(directory, chat, tiers, Console.Out);
-    return result.Outcome.Status == WorkflowExecutionStatus.Succeeded && result.Outcome.ReportPath is not null ? 0 : 1;
+    // The fix runs on the capable tier's model, outside the triage budget; its turn limit bounds it.
+    IChatClient fixer = fake ? new FakeFixerModel(FakeFixerModel.PricingFix()) : new PinnedModelClient(chat, tiers.Capable);
+    var result = await TriageScenario.RunAsync(directory, chat, tiers, Console.Out, fixer: fixer);
+    return result.Outcome.Status == WorkflowExecutionStatus.Succeeded && result.Outcome.ReportPath is not null && result.Fix?.Passed == true ? 0 : 1;
 }
 finally
 {
