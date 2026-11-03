@@ -154,6 +154,13 @@ dotnet run --project samples/Ampelum.Samples.ChatFrontend -c Release -- --fake
 dotnet test tests/Ampelum.Samples.ChatFrontend.Tests
 ```
 
+**Document review** (`samples/Ampelum.Samples.DocumentReview`). A team that receives supplier contracts reads the PDFs with `PdfLoader`, ranks the clauses that matter for a question with the Cohere or Voyage reranker, and sends the ones the ranking is unsure about to a remote reviewer agent through `A2AClient`. The same run queues bulk overnight summaries through `OpenAIBatchSubmitter` and cancels a batch when a document is withdrawn. Under `--fake` one scripted HTTP handler per service plays the vendor, written from the library's own tests rather than vendor docs. The README lists the defects found on the way, among them that the A2A card verifier checks no capabilities and accepts a token issued to another agent. The live path has never been run.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.DocumentReview -c Release -- --fake
+dotnet test tests/Ampelum.Samples.DocumentReview.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
@@ -231,6 +238,13 @@ MCP
 
 - `HttpMcpTransport` calls `tools/list` once and does not follow the next-cursor field, so a server that paginates returns only its first page (`src/Ampelum.Agent/Mcp/McpModels.cs`, lines 111 to 127).
 - `McpServerAdapter` has no transport in `src`, so Ampelum can call MCP servers but cannot be served as one without your own transport.
+
+A2A, loaders and batch
+
+- `DefaultAgentCardVerifier.VerifyCapabilities` always returns no warnings, and `VerifyIdentityAsync` checks only signature and expiry, so a valid token issued to another agent is accepted (`src/Ampelum.Agent/A2A/A2AIntegration.cs`).
+- `A2AClient` does not check that the card's URL belongs to the host it came from, and `Dispose` disposes the `HttpClient` it was given (`src/Ampelum.Agent/A2A/A2AClient.cs`).
+- `PdfLoader` yields zero pages and no error for a corrupt file or a non-PDF (`src/Ampelum.Retrieval/Loaders/PdfLoader.cs`).
+- `OpenAIBatchSubmitter` maps the `cancelling` state to `Cancelled`, and `StreamResultsAsync` throws when the batch has no output file.
 
 Host
 
