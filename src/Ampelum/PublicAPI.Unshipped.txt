@@ -757,6 +757,7 @@ const Ampelum.HookMetadataKeys.RouterTargetName = "router.target.name" -> string
 const Ampelum.HookMetadataKeys.DeadlineUtc = "deadline.utc" -> string!
 const Ampelum.HookMetadataKeys.AuditReplaying = "ampelum.audit.replaying" -> string!
 const Ampelum.HookMetadataKeys.SemanticCacheHit = "ampelum.semantic_cache_hit" -> string!
+const Ampelum.HookMetadataKeys.SignatureType = "SignalGrid.Ampelum.signature_type" -> string!
 const Ampelum.HookMetadataKeys.SemanticCacheSimilarity = "ampelum.semantic_cache_similarity" -> string!
 const Ampelum.Audit.AuditMetadataKeys.EventTypeRouterFailover = "router.failover" -> string!
 const Ampelum.Audit.AuditMetadataKeys.EventTypeSemcacheHit = "semcache.hit" -> string!
@@ -859,7 +860,7 @@ Ampelum.Exceptions.DeadlineExceededException.DeadlineExceededException(System.Da
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.TryGet(string! key) -> Ampelum.Caching.Semantic.SemanticCacheEntry?
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.Set(string! key, Ampelum.Caching.Semantic.SemanticCacheEntry! entry) -> void
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook
-[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.SemanticCacheHook(Ampelum.Caching.Semantic.ISemanticCache! cache) -> void
+[AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.SemanticCacheHook(Ampelum.Caching.Semantic.ISemanticCache! cache, Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>? embeddings = null, double minSimilarity = 0.95) -> void
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.Order.get -> int
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.OnBeforeAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.OnAfterAsync(Ampelum.Hooks.HookContext! ctx, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask

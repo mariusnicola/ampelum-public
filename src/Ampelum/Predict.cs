@@ -142,6 +142,7 @@ public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContex
                 ModuleName = resolved.SubmoduleName ?? nameof(Predict),
                 Inputs = inputsDict,
             };
+            hookCtx.Set(HookMetadataKeys.SignatureType, typeof(TSig).FullName);
         }
 
         try
@@ -491,6 +492,7 @@ public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContex
                 ModuleName = resolved.SubmoduleName ?? nameof(Predict),
                 Inputs = inputsDict,
             };
+            hookCtx.Set(HookMetadataKeys.SignatureType, typeof(TSig).FullName);
         }
 
         var messages = resolved.Adapter.Format(_meta, inputsDict, demos);

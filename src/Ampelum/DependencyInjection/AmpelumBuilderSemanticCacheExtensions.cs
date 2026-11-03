@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using SignalGrid.Ampelum.Caching.Semantic;
 using SignalGrid.Ampelum.Hooks;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace SignalGrid.Ampelum.DependencyInjection;
@@ -16,6 +17,9 @@ public static class AmpelumBuilderSemanticCacheExtensions
     /// Registers an <see cref="InMemorySemanticCache"/> (capacity <paramref name="capacity"/>)
     /// and an <see cref="SemanticCacheHook"/> bound to it. Existing <see cref="ISemanticCache"/>
     /// registrations are preserved (TryAdd) so callers can pre-register a custom backing store.
+    /// When an <see cref="IEmbeddingGenerator{TInput,TEmbedding}"/> of strings is registered (for example with
+    /// <c>WithEmbeddingGenerator</c>), the hook also serves the most similar stored answer; without one it
+    /// matches identical inputs only.
     /// </summary>
     /// <param name="builder">The builder to configure.</param>
     /// <param name="capacity">Maximum entry count for the default in-memory store.</param>
@@ -25,7 +29,9 @@ public static class AmpelumBuilderSemanticCacheExtensions
         ArgumentNullException.ThrowIfNull(builder);
         builder.Services.AddSingleton<ISemanticCache>(_ => new InMemorySemanticCache(capacity));
         builder.Services.AddSingleton<IHook>(sp =>
-            new SemanticCacheHook(sp.GetRequiredService<ISemanticCache>()));
+            new SemanticCacheHook(
+                sp.GetRequiredService<ISemanticCache>(),
+                sp.GetService<IEmbeddingGenerator<string, Embedding<float>>>()));
         return builder;
     }
 }

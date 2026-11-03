@@ -104,7 +104,7 @@ public sealed class KnownLimitTests
     }
 
     [Fact]
-    public async Task KnownLimit_SemanticCacheMatchesIdenticalInputsOnly_ARewordedQuestionCallsTheModelAgain()
+    public async Task SemanticCacheWithoutAnEmbeddingGenerator_MatchesIdenticalInputsOnly_ARewordedQuestionCallsTheModelAgain()
     {
         using var h = new Harness();
         h.Primary.EnqueueOutputs(Harness.Reply("Yes."));
@@ -119,20 +119,20 @@ public sealed class KnownLimitTests
     }
 
     [Fact]
-    public async Task KnownLimit_SemanticCacheKeyIgnoresTheSignatureType_SoTwoSignaturesWithTheSameInputNamesShareAnEntry()
+    public async Task SemanticCacheKeyIncludesTheSignatureType_SoTwoSignaturesWithTheSameInputNamesDoNotShareAnEntry()
     {
         using var h = new Harness();
         h.Primary.EnqueueOutputs(Harness.Reply("A reply to the first signature."));
+        h.Primary.EnqueueOutputs(new OtherSignature { Question = "", Answer = "A reply to the second signature." });
         var predictOther = h.Backend.Context;
         var other = new SignalGrid.Ampelum.Predict<OtherSignature>(predictOther);
 
         await h.Backend.AskAsync("Same words", Ct);
         var shared = await other.ForwardAsync(new OtherSignature { Question = "Same words" }, ct: Ct);
 
-        // The second signature never reached the model; it was served the first one's cached outputs.
-        h.Primary.RecordedCalls.Count.ShouldBe(1);
-        shared.Value.Answer.ShouldBe("A reply to the first signature.");
-        h.Backend.CachedAnswers.ShouldBe(1);
+        h.Primary.RecordedCalls.Count.ShouldBe(2);
+        shared.Value.Answer.ShouldBe("A reply to the second signature.");
+        h.Backend.CachedAnswers.ShouldBe(2);
     }
 }
 

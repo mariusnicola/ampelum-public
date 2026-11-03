@@ -66,6 +66,11 @@ public static class HookMetadataKeys
     /// from the semantic cache (PSQ-2, v0.9g).</summary>
     public const string SemanticCacheHit = "SignalGrid.Ampelum.semantic_cache_hit";
 
+    /// <summary>Value type: <see langword="string"/>. Full name of the signature type of the module call that
+    /// owns the hook context; <c>Predict</c> sets it so a hook can tell two signatures apart, because every
+    /// <c>Predict</c> reports the module name <c>Predict</c>.</summary>
+    public const string SignatureType = "SignalGrid.Ampelum.signature_type";
+
     /// <summary>Value type: <see langword="double"/>. Cosine similarity between the query
     /// embedding and the cached entry that satisfied the lookup (PSQ-2, v0.9g).</summary>
     public const string SemanticCacheSimilarity = "SignalGrid.Ampelum.semantic_cache_similarity";

@@ -13,10 +13,19 @@ internal static class SemanticCacheKey
     const char UnitSep = (char)0x1F;
     const char RecordSep = (char)0x1E;
 
-    public static string Compute(string moduleName, IReadOnlyDictionary<string, object?> inputs)
+    /// <summary>The module name and signature type a cached entry belongs to; embeddings are only compared inside one scope.</summary>
+    public static string Scope(string moduleName, string? signatureType) =>
+        moduleName + UnitSep + signatureType;
+
+    /// <summary>The inputs as one string, sorted by name, for embedding.</summary>
+    public static string Text(IReadOnlyDictionary<string, object?> inputs) =>
+        string.Join(RecordSep, inputs.OrderBy(p => p.Key, StringComparer.Ordinal)
+            .Select(kv => kv.Key + UnitSep + (kv.Value is string s ? s : Format(kv.Value))));
+
+    public static string Compute(string moduleName, IReadOnlyDictionary<string, object?> inputs, string? signatureType = null)
     {
         var sb = new StringBuilder();
-        sb.Append(moduleName).Append(UnitSep);
+        sb.Append(Scope(moduleName, signatureType)).Append(UnitSep);
         foreach (var kv in inputs.OrderBy(p => p.Key, StringComparer.Ordinal))
         {
             sb.Append(kv.Key).Append(UnitSep);

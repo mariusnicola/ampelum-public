@@ -301,8 +301,7 @@ Audit and safety
 
 Caching
 
-- `SemanticCacheHook` is an exact match on a SHA-256 of the module name and the inputs; it uses no embeddings, so a reworded question misses (`src/Ampelum/Caching/Semantic/SemanticCacheKey.cs`).
-- The semantic cache key ignores the signature type, because `Predict` names every module `Predict`, so two signatures with the same input names share entries (`src/Ampelum/Predict.cs`).
+- `SemanticCacheHook` matches a reworded question only when an embedding generator is registered; without one it is an exact match on the module name, signature type and inputs. Its vectors are kept in the hook (4096 at most), not in the `ISemanticCache` store, and an embedding generator that throws fails the call.
 - Nothing in `src` calls `TokenCache`, and its key holds only the model id and the messages, so calls that differ in temperature or other options share an entry.
 
 Routing and tracing
