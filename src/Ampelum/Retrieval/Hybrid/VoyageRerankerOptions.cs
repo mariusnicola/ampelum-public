@@ -9,8 +9,8 @@ public sealed class VoyageRerankerOptions
     /// <summary>Voyage AI API key.</summary>
     public required string ApiKey { get; init; }
 
-    /// <summary>Voyage rerank model. Default "rerank-2".</summary>
-    public string Model { get; init; } = "rerank-2";
+    /// <summary>Voyage rerank model id. Required; the library has no default model.</summary>
+    public required string Model { get; init; }
 
     /// <summary>Voyage rerank endpoint. Default https://api.voyageai.com/v1/rerank.</summary>
     public Uri Endpoint { get; init; } = new("https://api.voyageai.com/v1/rerank");
