@@ -111,20 +111,4 @@ public sealed class KnownLimitTests
         (await store.QueryAsync(query, 1, filter, Ct)).Count.ShouldBe(1);
         (await restored.QueryAsync(query, 1, filter, Ct)).Count.ShouldBe(0);
     }
-
-    [Fact]
-    public async Task KnownLimit_the_gepa_result_carries_no_instruction_override_so_rebinding_drops_the_tuned_text()
-    {
-        var model = ReleaseScript.Create();
-        await using var pipeline = new ReleaseNotesPipeline(model, Rig.Source(), Rig.Options());
-        var tuned = (await pipeline.TuneAsync(new GepaOptions(), Ct)).Program;
-        await using var scope = pipeline.Services.CreateAsyncScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<AmpelumContext>();
-        var before = model.Calls.Count;
-
-        tuned.InstructionOverrides.ShouldBeEmpty();
-        await tuned.Bind(ctx).ForwardAsync(new DraftSig { Title = "t", Details = "d", Kind = "Fix", Impact = 2, Tone = "x" }, Ct);
-
-        model.Calls.Skip(before).Single().System.ShouldNotContain(DraftingRules.TunedInstruction);
-    }
 }

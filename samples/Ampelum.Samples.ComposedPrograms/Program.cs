@@ -2,9 +2,9 @@ using System.Globalization;
 using Ampelum.Samples.ComposedPrograms;
 using Ampelum.Samples.ComposedPrograms.Fake;
 using Ampelum.Samples.ComposedPrograms.Style;
+using Ampelum.Samples.ComposedPrograms.Tuning;
 using Ampelum.Samples.Shared;
 using Microsoft.Extensions.AI;
-using SignalGrid.Ampelum.Optimizers;
 
 // Numbers print the same on every machine.
 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
@@ -42,7 +42,7 @@ if (evaluate)
 
 if (tune)
 {
-    var tuned = await pipeline.TuneAsync(new GepaOptions());
+    var tuned = await pipeline.TuneAsync(PromptTuning.DefaultOptions);
     var scripted = fake ? ", scripted under --fake" : "";
     Console.WriteLine(
         $"Tuning:   ROUGE-L {tuned.BaselineRougeL:0.000} -> {tuned.TunedRougeL:0.000} (measured on the notes it learned from{scripted})");

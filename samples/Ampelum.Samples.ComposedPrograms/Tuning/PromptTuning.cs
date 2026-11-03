@@ -14,19 +14,47 @@ public sealed class PromptTuning(
 {
     readonly NoteMatch _metric = new();
 
+    /// <summary>
+    /// The library defaults, except that every minibatch is the whole trainset (there are only ten approved
+    /// notes), a merge is tried every second iteration, and the call budget fits ten such iterations.
+    /// </summary>
+    public static GepaOptions DefaultOptions { get; } = new() { MinibatchSize = 10, MergeEvery = 2, MaxMetricCalls = 400 };
+
     public static IReadOnlyList<Example> ToExamples(IReadOnlyList<LabeledExample<DraftSig>> labeled) =>
         labeled.Select(e => Example.From(e.Expected)).ToList();
 
     public DraftProgram Baseline() => DraftProgram.Unbound(context);
 
+    /// <summary>One drafting call per kind of change: the program GEPA tunes.</summary>
+    public KindRoutedProgram GepaBaseline() => KindRoutedProgram.Unbound(context);
+
     /// <summary>
-    /// GEPA asks the proposer for better instructions and keeps the best one it can measure on held-out
-    /// approved notes. The returned program already carries that instruction; binding it again would drop it.
+    /// GEPA runs the program on approved notes, shows the proposer what came out and what the approved note
+    /// says, and keeps the instructions that score best on held-out approved notes. The result holds the
+    /// instructions as overrides: bind it to get the tuned program.
     /// </summary>
-    public async Task<OptimizedProgram<DraftProgram>> GepaAsync(
-        IReadOnlyList<Example> trainset, GepaOptions gepa, CancellationToken ct = default) =>
-        await new GEPAOptimizer<DraftProgram>(proposer, context.Chat, gepa)
-            .CompileAsync(Baseline(), trainset, _metric, context, ct: ct).ConfigureAwait(false);
+    public async Task<OptimizedProgram<KindRoutedProgram>> GepaAsync(
+        IReadOnlyList<Example> trainset, GepaOptions gepa, CancellationToken ct = default,
+        IProgress<OptimizerProgress>? progress = null) =>
+        await new GEPAOptimizer<KindRoutedProgram>(RunAsync, proposer, gepa, valset: trainset)
+            .CompileAsync(GepaBaseline(), trainset, _metric, context, progress, ct).ConfigureAwait(false);
+
+    static async Task<Example> RunAsync(
+        KindRoutedProgram program, Example example, AmpelumContext runContext, CancellationToken ct)
+    {
+        var prediction = await program.ForwardAsync(AsInput(example), ct).ConfigureAwait(false);
+        return Example.From(prediction.Value);
+    }
+
+    static DraftSig AsInput(Example example) => new()
+    {
+        Title = Text(example.Inputs, nameof(DraftSig.Title)),
+        Details = Text(example.Inputs, nameof(DraftSig.Details)),
+        Kind = Text(example.Inputs, nameof(DraftSig.Kind)),
+        Impact = int.Parse(Text(example.Inputs, nameof(DraftSig.Impact)), System.Globalization.CultureInfo.InvariantCulture),
+        StyleNotes = Text(example.Inputs, nameof(DraftSig.StyleNotes)),
+        Tone = Text(example.Inputs, nameof(DraftSig.Tone)),
+    };
 
     /// <summary>K-nearest-neighbour few-shot: each draft gets the k approved notes whose changes read most alike.</summary>
     public async Task<KnnDrafter> KnnAsync(IReadOnlyList<Example> trainset, CancellationToken ct = default)

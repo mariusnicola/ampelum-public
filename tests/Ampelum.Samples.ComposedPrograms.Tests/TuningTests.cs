@@ -22,33 +22,109 @@ public sealed class TuningTests
         Tone = "plain, past tense, no marketing words",
     };
 
-    [Fact]
-    public async Task Gepa_asks_the_proposer_and_the_winner_writes_the_note_the_baseline_does_not()
+    static GepaOptions Options(int seed) => PromptTuning.DefaultOptions with { Seed = seed };
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    public async Task Gepa_asks_the_proposer_with_the_approved_note_and_the_winner_beats_the_baseline(int seed)
     {
         var model = ReleaseScript.Create();
         await using var pipeline = new ReleaseNotesPipeline(model, Rig.Source(), Rig.Options());
 
-        var result = await pipeline.TuneAsync(new GepaOptions(), Ct);
+        var result = await pipeline.TuneAsync(Options(seed), Ct);
 
-        model.Calls.ShouldContain(c => c.User.Contains("prompt engineer"));
+        var asks = model.Calls.Where(c => c.System.Contains("prompt engineer")).Select(c => c.User).ToList();
+        asks.ShouldContain(a => a.StartsWith("Module: feature"));
+        asks.ShouldContain(a => a.StartsWith("Module: fix"));
+        // The proposer is shown the approved note next to the note the program wrote, and the current instruction.
+        asks.ShouldAllBe(a => a.Contains("Feedback: The approved note reads \""));
+        asks.ShouldContain(a => a.Contains("Current instruction:\n" + Helpers.DraftPhrase));
         result.BaselineRougeL.ShouldBe(0.326, 0.001);
-        result.TunedRougeL.ShouldBe(0.540, 0.001);
-        result.TunedRougeL.ShouldBeGreaterThan(result.BaselineRougeL);
-        result.Program.Score.ShouldNotBeNull();
+        result.TunedRougeL.ShouldBeGreaterThan(result.BaselineRougeL + 0.05);
+        result.Program.Score!.Value.ShouldBeGreaterThan(0.0);
+        result.Program.InstructionOverrides.Count.ShouldBeGreaterThan(0);
+        result.Program.InstructionOverrides.Values.ShouldAllBe(v => v == DraftingRules.TunedInstruction);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    public async Task Gepa_keeps_several_candidates_on_the_frontier_and_merges_two_that_changed_different_submodules(int seed)
+    {
+        var model = ReleaseScript.Create();
+        await using var pipeline = new ReleaseNotesPipeline(model, Rig.Source(), Rig.Options());
+        var reports = new List<OptimizerProgress>();
+
+        await pipeline.TuneAsync(Options(seed), Ct, new SyncProgress(reports.Add));
+
+        reports.Select(r => r.Phase).Distinct().ShouldBe(["baseline", "iteration"]);
+        var last = reports.Last();
+        ((int)last.Extras["Merges"]!).ShouldBeGreaterThan(0);
+        ((int)last.Extras["Candidates"]!).ShouldBeGreaterThan(3);
+        ((int)last.Extras["FrontierSize"]!).ShouldBeGreaterThan(1);
+        last.Extras["RunnerErrors"].ShouldBe(0);
+        // A merge is tried at every second iteration, so the first one that joined the pool is at an even step.
+        (reports.First(r => (int)r.Extras["Merges"]! > 0).Step % 2).ShouldBe(0);
     }
 
     [Fact]
-    public async Task The_tuned_program_sends_the_tuned_instruction_and_the_baseline_does_not()
+    public async Task The_tuned_program_sends_the_tuned_instruction_for_a_tuned_kind_and_the_baseline_sends_none()
     {
         var model = ReleaseScript.Create();
         await using var pipeline = new ReleaseNotesPipeline(model, Rig.Source(), Rig.Options());
-        var tuned = (await pipeline.TuneAsync(new GepaOptions(), Ct)).Program.Program;
+        var tuned = (await pipeline.TuneAsync(Options(0), Ct)).Program;
+        await using var scope = pipeline.Services.CreateAsyncScope();
+        var ctx = scope.ServiceProvider.GetRequiredService<AmpelumContext>();
+        var baseline = pipeline.Tuning(ctx).GepaBaseline();
+
         var before = model.Calls.Count;
+        var note = (await tuned.Bind(ctx).ForwardAsync(Input(), Ct)).Value.Note;
+        var tunedCall = model.Calls.Skip(before).Single();
+        before = model.Calls.Count;
+        await baseline.ForwardAsync(Input(), Ct);
+        var baselineCall = model.Calls.Skip(before).Single();
 
-        var note = (await tuned.ForwardAsync(Input(), Ct)).Value.Note;
-
-        model.Calls.Skip(before).Single().System.ShouldContain(DraftingRules.TunedInstruction);
+        tuned.InstructionOverrides.ShouldContainKey(KindRoutedProgram.NameOf(ChangeKind.Fix));
+        tunedCall.System.ShouldContain(DraftingRules.TunedInstruction);
         note.ShouldBe("Fixed duplicate charge on retry.");
+        baselineCall.System.ShouldContain(Helpers.DraftPhrase);
+        baselineCall.System.ShouldNotContain(DraftingRules.TunedInstruction);
+    }
+
+    [Fact]
+    public async Task The_routed_program_exposes_one_named_submodule_per_kind_and_drafts_with_the_one_of_the_change()
+    {
+        var model = ReleaseScript.Create();
+        await using var pipeline = new ReleaseNotesPipeline(model, Rig.Source(), Rig.Options());
+        await using var scope = pipeline.Services.CreateAsyncScope();
+        var baseline = pipeline.Tuning(scope.ServiceProvider.GetRequiredService<AmpelumContext>()).GepaBaseline();
+
+        baseline.Submodules.Keys.ShouldBe(["feature", "fix", "breaking", "internal"], ignoreOrder: true);
+        baseline.Rebind(baseline.Submodules).ShouldBeOfType<KindRoutedProgram>().ShouldNotBeSameAs(baseline);
+        await Should.ThrowAsync<ArgumentException>(() =>
+            baseline.ForwardAsync(Input() with { Kind = "Unknown" }, Ct));
+    }
+
+    sealed class SyncProgress(Action<OptimizerProgress> cb) : IProgress<OptimizerProgress>
+    {
+        public void Report(OptimizerProgress value) => cb(value);
     }
 
     [Fact]

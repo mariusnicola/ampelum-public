@@ -20,8 +20,10 @@ release only. Three flags add stages, because each makes many model calls:
 
 - `--evaluate` scores the classifier and the plain drafting call against the approved notes with the
   metrics named in the options.
-- `--tune` runs GEPA on the approved notes and prints the ROUGE-L of the baseline and of the tuned
-  program.
+- `--tune` runs GEPA on the approved notes, on a program that has one drafting call per kind of change, and
+  prints the ROUGE-L of the baseline and of the tuned program. GEPA runs the program on the approved notes,
+  shows the proposer each note next to the approved one, and keeps a pool of instruction sets; two of them that
+  changed different calls are merged.
 - `--extras` runs the stages below. They pick their change rows by classification, so editing
   `data/changes.csv` does not break them; they stop with a message if no change is classified as Internal or Fix.
   - one draft of an internal change with the impact bar lowered, so it goes through Refine;
@@ -62,7 +64,7 @@ These are fixed in code, not options:
 - the number of paraphrases (3) and sub questions (2) in `StyleRetrieval`, and the rewrite and router prompts;
 - the panel roster and roles (`ReviewPanel`) and which notes are fact checked (breaking ones);
 - the signatures and their instructions, the judge instructions and the set of registered metrics;
-- the data file names, and the GEPA options, which are the library defaults.
+- the data file names, and the GEPA options (`PromptTuning.DefaultOptions`), which are the library defaults except a minibatch of all ten approved notes, a merge turn every second iteration and a call budget of 400.
 
 ## What `--fake` proves, and what it does not
 
@@ -77,8 +79,13 @@ the scripted model received.
 
 It does not prove anything about model quality. The notes, the classifications, the review verdict, the
 judge scores and the tuned instruction are written by the rules in `Fake/`, so they say nothing about
-what a real model writes. The tuning figure (ROUGE-L 0.326 to 0.540) is scripted under `--fake`, and it
-is measured on the same approved notes that GEPA trained on, so it is not a held-out result.
+what a real model writes. The tuning figure (ROUGE-L 0.326 to 0.540 for the default seed) is scripted under `--fake`, and it
+is measured on the same approved notes that GEPA trained and validated on, so it is not a held-out result.
+The scripted tuner has one good instruction for every call. A change of one kind only changes the notes of
+that kind, so candidates are best on different notes and a merge of two siblings is possible. Which parent
+GEPA draws is random for the seed, and a run in which every parent descends from the previous child never
+has two siblings: of seeds 0 to 99, six (11, 31, 42, 66, 74, 81) end without a merge, and the tests cover
+seeds 0 to 9. Whether a real model's proposals are merged depends on what it writes.
 
 The live path (a real model through `SampleConfig`) has not been run.
 
@@ -122,9 +129,9 @@ asserts both.
 | CsvDataset | `ChangeSource.cs:16`, `:18` |
 | EvalReport.Render | `Evaluation/ReleaseEvaluation.cs:46` |
 | TaskAgent | `Assistant/AnnouncementWriter.cs:25` |
-| Ensemble | `Tuning/PromptTuning.cs:50` |
-| GEPA | `Tuning/PromptTuning.cs:28` |
-| KnnFewShot | `Tuning/PromptTuning.cs:34` |
+| Ensemble | `Tuning/PromptTuning.cs:78` |
+| GEPA | `Tuning/PromptTuning.cs:39` |
+| KnnFewShot | `Tuning/PromptTuning.cs:62` |
 | Trace sinks (in memory, logging, batched, synchronous and queued registration) | `ReleaseNotesServices.cs:43`, `:45`; `Observability/ReleaseTracing.cs:45`, `:67` |
 | OtelLogsBridge, ExporterDiagnostics | `Observability/ReleaseTracing.cs:87`, `:37` |
 | SubagentOrchestrator | `ReleaseNotesPipeline.cs:93` |
@@ -162,6 +169,9 @@ The test asserts the flawed behaviour, so it fails once the library is fixed and
   uses its own `ScoredEmbeddingRetriever`.
 - A reloaded index hands metadata back as JSON elements, so a store side equality filter matches nothing.
   The sample filters on the returned documents instead.
-- The GEPA result carries no instruction overrides, so binding it again drops the tuned text. The sample
-  uses the returned program directly. A further suspicion, not proven: the optimizer's own model for
-  running the program is unused, so it may score expected output against itself. No test pins that.
+
+A bare `Predict` ignores an instruction override that `OptimizedProgram.Bind` gives it: `Bind` sets no
+submodule name for a program that is not an `IComposedModule`, and `Predict` only reads an override under its
+submodule name (`src/Ampelum/Optimizers/OptimizedProgram.cs`, lines 93 to 97, and `src/Ampelum/Predict.cs`,
+lines 150 to 156; checked with a throwaway test that bound an override under the name GEPA uses). GEPA's
+result for such a program therefore changes nothing. That is why the sample tunes a program with named submodules.

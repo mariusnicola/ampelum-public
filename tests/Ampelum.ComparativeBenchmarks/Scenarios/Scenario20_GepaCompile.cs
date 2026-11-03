@@ -39,7 +39,7 @@ public class Scenario20_GepaCompile
             NullLoggerFactory.Instance);
 
         _program = new Predict<QASig>(_ctx);
-        _optimizer = new GEPAOptimizer<Predict<QASig>>(_optimizerLlm, _programLlm);
+        _optimizer = new GEPAOptimizer<Predict<QASig>>(RunAsync, _optimizerLlm);
 
         _trainset = Enumerable.Range(0, 10)
             .Select(i => new Example(
@@ -74,13 +74,12 @@ public class Scenario20_GepaCompile
     public async Task<OptimizedProgram<Predict<QASig>>> GepaCompile_AggressiveSearch()
     {
         var aggressive = new GEPAOptimizer<Predict<QASig>>(
-            _optimizerLlm, _programLlm,
+            RunAsync, _optimizerLlm,
             new GepaOptions
             {
-                BootstrapCount = 6,
-                CandidateCount = 5,
-                MaxIterations = 3,
-                ImprovementThreshold = 0.01
+                MaxIterations = 20,
+                MinibatchSize = 5,
+                MergeEvery = 2
             });
 
         var result = await aggressive.CompileAsync(
@@ -90,6 +89,14 @@ public class Scenario20_GepaCompile
             _ctx,
             ct: CancellationToken.None);
         return result;
+    }
+
+    static async Task<Example> RunAsync(
+        Predict<QASig> program, Example example, AmpelumContext context, CancellationToken ct)
+    {
+        var prediction = await program.ForwardAsync(
+            new QASig((string)example.Inputs["Question"]!, ""), demos: null, ct);
+        return Example.From(prediction.Value);
     }
 
     sealed class ExactMatchMetric : IMetric

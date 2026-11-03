@@ -211,6 +211,7 @@ Optimizers
 
 - `BootstrapFewShot` accepts a metric but never calls it. Every successful trace becomes a demo candidate, whether or not it scores well (`src/Ampelum/Optimizers/BootstrapFewShot.cs`, lines 41 to 48).
 - `Ensemble` does not optimize anything. It wraps the programs you pass and a reducer you supply into an `EnsembleProgram` (`src/Ampelum/Optimizers/Ensemble.cs`).
+- `GEPAOptimizer` tunes instructions only; it learns no demos. A merge needs two frontier candidates that changed different submodules, so a program with one submodule never merges. The result is a set of instruction overrides, and a program that is not an `IComposedModule` (a bare `Predict`) ignores them, because `OptimizedProgram.Bind` sets no submodule name for it and `Predict` reads an override only under its submodule name (`src/Ampelum/Optimizers/OptimizedProgram.cs`, lines 93 to 97, and `src/Ampelum/Predict.cs`, lines 150 to 156). `MaxMetricCalls` is a hard cap: no run starts past it, and a candidate whose evaluation it cuts short is dropped, so the result is the best fully evaluated candidate. A cap smaller than one run of the validation set is rejected.
 
 Stubs and placeholders
 

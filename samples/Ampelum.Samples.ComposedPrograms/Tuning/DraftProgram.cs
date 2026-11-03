@@ -26,7 +26,7 @@ public sealed class DraftProgram : IComposedModule, IModule<DraftSig, DraftSig>
     public object Rebind(IReadOnlyDictionary<string, object> newSubmodules) =>
         new DraftProgram((Predict<DraftSig>)newSubmodules[DrafterName]);
 
-    /// <summary>GEPA finds this exact method by reflection to run the program.</summary>
+    /// <summary>Runs the drafting call.</summary>
     public Task<Prediction<DraftSig>> ForwardAsync(DraftSig inputs, CancellationToken ct = default) =>
         Drafter.ForwardAsync(inputs, ct: ct);
 

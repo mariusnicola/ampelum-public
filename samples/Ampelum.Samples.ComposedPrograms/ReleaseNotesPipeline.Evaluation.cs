@@ -9,7 +9,7 @@ using SignalGrid.Ampelum.Optimizers;
 namespace Ampelum.Samples.ComposedPrograms;
 
 /// <summary>Result of tuning the drafting call and measuring it on the approved notes.</summary>
-public sealed record TuningResult(double BaselineRougeL, double TunedRougeL, OptimizedProgram<DraftProgram> Program);
+public sealed record TuningResult(double BaselineRougeL, double TunedRougeL, OptimizedProgram<KindRoutedProgram> Program);
 
 public sealed partial class ReleaseNotesPipeline
 {
@@ -41,20 +41,21 @@ public sealed partial class ReleaseNotesPipeline
         _options);
 
     /// <summary>Runs GEPA on the approved notes and measures the baseline and the winner with ROUGE-L.</summary>
-    public async Task<TuningResult> TuneAsync(GepaOptions gepa, CancellationToken ct = default)
+    public async Task<TuningResult> TuneAsync(
+        GepaOptions gepa, CancellationToken ct = default, IProgress<OptimizerProgress>? progress = null)
     {
         await using var scope = _services.CreateAsyncScope();
         var ctx = scope.ServiceProvider.GetRequiredService<AmpelumContext>();
         var tuning = Tuning(ctx);
         var approved = await _source.LoadApprovedAsync(ct).ConfigureAwait(false);
 
-        var tuned = await tuning.GepaAsync(PromptTuning.ToExamples(approved), gepa, ct).ConfigureAwait(false);
-        var baseline = await MeanRougeLAsync(tuning.Baseline(), ct).ConfigureAwait(false);
-        var winner = await MeanRougeLAsync(tuned.Program, ct).ConfigureAwait(false);
+        var tuned = await tuning.GepaAsync(PromptTuning.ToExamples(approved), gepa, ct, progress).ConfigureAwait(false);
+        var baseline = await MeanRougeLAsync(tuning.GepaBaseline(), ct).ConfigureAwait(false);
+        var winner = await MeanRougeLAsync(tuned.Bind(ctx), ct).ConfigureAwait(false);
         return new TuningResult(baseline, winner, tuned);
     }
 
-    async Task<double> MeanRougeLAsync(DraftProgram program, CancellationToken ct)
+    async Task<double> MeanRougeLAsync(KindRoutedProgram program, CancellationToken ct)
     {
         var summary = await Evaluation.DraftAsync(program.ForwardAsync, [MetricNames.NoteRougeL], ct).ConfigureAwait(false);
         return summary.Mean(MetricNames.NoteRougeL);

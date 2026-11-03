@@ -1220,4 +1220,47 @@ const Ampelum.Audit.AuditMetadataKeys.TraceId = "ampelum.audit.trace_id" -> stri
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.VerifiedPredict<TSig>.VerifiedPredict(SignalGrid.Ampelum.Predict<TSig>! generator, SignalGrid.Ampelum.ICriticPolicy<TSig>! criticPolicy, SignalGrid.Ampelum.VerifiedPredictOptions? options = null) -> void
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Hooks.HookedLmCall
 [AMPELUM_V09_PREVIEW]const SignalGrid.Ampelum.Hooks.HookedLmCall.ResponseOutputKey = "response" -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.GEPAOptimizer<TProgram>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.GEPAOptimizer<TProgram>.CompileAsync(TProgram program, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>! trainset, SignalGrid.Ampelum.Optimizers.IMetric! metric, SignalGrid.Ampelum.AmpelumContext! context, System.IProgress<SignalGrid.Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.GEPAOptimizer<TProgram>.GEPAOptimizer(System.Func<TProgram, SignalGrid.Ampelum.Example!, SignalGrid.Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<SignalGrid.Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! reflectionClient, SignalGrid.Ampelum.Optimizers.GepaOptions? options = null, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>? valset = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.GEPAOptimizer<TProgram>.Options.get -> SignalGrid.Ampelum.Optimizers.GepaOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.<Clone>$() -> SignalGrid.Ampelum.Optimizers.FeedbackScore!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.Deconstruct(out double Score, out string! Feedback) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.Equals(SignalGrid.Ampelum.Optimizers.FeedbackScore? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.Feedback.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.Feedback.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.FeedbackScore(double Score, string! Feedback) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.Score.get -> double
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FeedbackScore.Score.init -> void
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.FeedbackScore.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.FeedbackScore.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.FeedbackScore.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Optimizers.FeedbackScore.operator !=(SignalGrid.Ampelum.Optimizers.FeedbackScore? left, SignalGrid.Ampelum.Optimizers.FeedbackScore? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Optimizers.FeedbackScore.operator ==(SignalGrid.Ampelum.Optimizers.FeedbackScore? left, SignalGrid.Ampelum.Optimizers.FeedbackScore? right) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.IFeedbackMetric
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.IFeedbackMetric.ScoreWithFeedback(object! actual, object! expected, SignalGrid.Ampelum.SignatureMetadata! signature) -> SignalGrid.Ampelum.Optimizers.FeedbackScore!
+SignalGrid.Ampelum.Optimizers.GepaOptions
+SignalGrid.Ampelum.Optimizers.GepaOptions.<Clone>$() -> SignalGrid.Ampelum.Optimizers.GepaOptions!
+SignalGrid.Ampelum.Optimizers.GepaOptions.Equals(SignalGrid.Ampelum.Optimizers.GepaOptions? other) -> bool
+SignalGrid.Ampelum.Optimizers.GepaOptions.GepaOptions() -> void
+override SignalGrid.Ampelum.Optimizers.GepaOptions.Equals(object? obj) -> bool
+override SignalGrid.Ampelum.Optimizers.GepaOptions.GetHashCode() -> int
+override SignalGrid.Ampelum.Optimizers.GepaOptions.ToString() -> string!
+static SignalGrid.Ampelum.Optimizers.GepaOptions.operator !=(SignalGrid.Ampelum.Optimizers.GepaOptions? left, SignalGrid.Ampelum.Optimizers.GepaOptions? right) -> bool
+static SignalGrid.Ampelum.Optimizers.GepaOptions.operator ==(SignalGrid.Ampelum.Optimizers.GepaOptions? left, SignalGrid.Ampelum.Optimizers.GepaOptions? right) -> bool
+SignalGrid.Ampelum.Optimizers.GepaOptions.MaxIterations.get -> int
+SignalGrid.Ampelum.Optimizers.GepaOptions.MaxIterations.init -> void
+SignalGrid.Ampelum.Optimizers.GepaOptions.ValidationHoldoutPercent.get -> int
+SignalGrid.Ampelum.Optimizers.GepaOptions.ValidationHoldoutPercent.init -> void
+SignalGrid.Ampelum.Optimizers.GepaOptions.MaxMetricCalls.get -> int
+SignalGrid.Ampelum.Optimizers.GepaOptions.MaxMetricCalls.init -> void
+SignalGrid.Ampelum.Optimizers.GepaOptions.MinibatchSize.get -> int
+SignalGrid.Ampelum.Optimizers.GepaOptions.MinibatchSize.init -> void
+SignalGrid.Ampelum.Optimizers.GepaOptions.UseMerge.get -> bool
+SignalGrid.Ampelum.Optimizers.GepaOptions.UseMerge.init -> void
+SignalGrid.Ampelum.Optimizers.GepaOptions.MergeEvery.get -> int
+SignalGrid.Ampelum.Optimizers.GepaOptions.MergeEvery.init -> void
+SignalGrid.Ampelum.Optimizers.GepaOptions.Seed.get -> int
+SignalGrid.Ampelum.Optimizers.GepaOptions.Seed.init -> void
 [AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Hooks.HookedLmCall.InvokeAsync(SignalGrid.Ampelum.AmpelumContext! context, string! moduleName, System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!

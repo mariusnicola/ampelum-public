@@ -1,41 +1,120 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging.Abstractions;
+using SignalGrid.Ampelum.Exceptions;
 using SignalGrid.Ampelum.Hooks;
 
 namespace SignalGrid.Ampelum.Optimizers;
 
+/// <summary>A score in [0, 1] for one example, with the text that explains it to the reflection model.</summary>
+/// <param name="Score">The score of the example.</param>
+/// <param name="Feedback">What was right or wrong about the actual outputs.</param>
+[Experimental("AMPELUM_V09_PREVIEW")]
+public sealed record FeedbackScore(double Score, string Feedback);
+
 /// <summary>
-/// GEPA (Generalized Efficient Prompt Adaptation) optimizer.
-/// DSPy 3.0's gradient-free prompt search ported to C#:
-/// Phase 1: Bootstrap quality-filtered demonstrations from the program's outputs.
-/// Phase 2: Meta-prompt search over instruction variants against a validation set.
-/// Phase 3: Feedback loop — accept improvements above threshold, diversify on stall.
-/// Every phase is instrumented with wall-clock timing and allocation counters.
+/// A metric that explains its score. Pass an instance that also implements <see cref="IMetric"/> to
+/// <see cref="GEPAOptimizer{TProgram}"/>; a plain <see cref="IMetric"/> works too, and then the feedback
+/// is built from the expected and the actual outputs.
 /// </summary>
-/// <typeparam name="TProgram">The user program type (typically a Predict or composed module).</typeparam>
+[Experimental("AMPELUM_V09_PREVIEW")]
+public interface IFeedbackMetric
+{
+    /// <summary>Scores <paramref name="actual"/> against <paramref name="expected"/> and says why.</summary>
+    /// <param name="actual">The outputs the program produced (a dictionary of output fields).</param>
+    /// <param name="expected">The expected outputs (a dictionary of output fields).</param>
+    /// <param name="signature">Placeholder metadata; the optimizer does not know the signature of a composed program.</param>
+    FeedbackScore ScoreWithFeedback(object actual, object expected, SignatureMetadata signature);
+}
+
+/// <summary>
+/// GEPA prompt optimizer (Agrawal et al. 2025, as in <c>dspy.GEPA</c>). It evolves a pool of candidates,
+/// each a set of instruction overrides, by reflecting on what the program did.
+/// <list type="number">
+///   <item><description>
+///     Pool: candidate 0 is the unchanged program. Every candidate is scored per example on the
+///     validation set (the <c>valset</c> argument, else a seeded split of the trainset) and keeps the ids
+///     of its parents.
+///   </description></item>
+///   <item><description>
+///     Parent: the Pareto frontier is the set of candidates that are best on at least one validation
+///     example. The parent is drawn from it with a seeded RNG, weighted by the number of examples the
+///     candidate is best on.
+///   </description></item>
+///   <item><description>
+///     Mutation: the submodule to change is picked round robin. The parent runs on a seeded minibatch of the
+///     trainset. The reflection model, called through <see cref="HookedLmCall"/> with a module name
+///     starting <c>GEPA.</c>, gets the current instruction and each example's inputs, outputs and feedback,
+///     and writes a new instruction. The child runs on the same minibatch; only if it scores higher than the
+///     parent does it run on the whole validation set and join the pool.
+///   </description></item>
+///   <item><description>
+///     Merge (when enabled): every <see cref="GepaOptions.MergeEvery"/> iterations two frontier candidates
+///     that share an ancestor, neither being the ancestor of the other, are combined. Per submodule the child
+///     takes the instruction of the side that changed it since the closest common ancestor (the side with the
+///     better validation mean when both did). It is gated like a mutation child, against the better parent.
+///   </description></item>
+/// </list>
+/// The search stops after <see cref="GepaOptions.MaxIterations"/> iterations or once
+/// <see cref="GepaOptions.MaxMetricCalls"/> metric calls are spent. No example run starts once the cap is
+/// reached, and a candidate whose evaluation was cut short is dropped, so the result is the best fully
+/// evaluated candidate. <c>CompileAsync</c> throws <see cref="ArgumentException"/> when the cap is smaller than
+/// one run of the validation set. The result is the candidate with the best mean
+/// validation score (the earliest on a tie), returned as instruction overrides: bind it with
+/// <see cref="OptimizedProgram{TProgram}.Bind"/>.
+/// A runner or metric exception on one example scores 0 for that example and is counted (activity tag
+/// <c>optimizer.runner_errors</c> and the <c>RunnerErrors</c> extra of every progress report); a NaN score counts
+/// as 0. Only cancellation of the token passed to <c>CompileAsync</c> propagates: a timeout inside the runner or
+/// the reflection call, which cancels that call but not the token, is an error like any other.
+/// A failing reflection call throws <see cref="OptimizerException"/>.
+/// The same seed with a deterministic model gives the same result.
+/// </summary>
+/// <typeparam name="TProgram">The user program type.</typeparam>
 [Experimental("AMPELUM_V09_PREVIEW")]
 public sealed class GEPAOptimizer<TProgram> : IOptimizer<TProgram>
 {
-    readonly IChatClient _optimizerLlm;
-    readonly IChatClient _programLlm;
-    readonly GepaOptions _gepaOptions;
+    const string SingleName = "__single__";
+    const int ParentSalt = 40;
+    const int MinibatchSalt = 1_000_000;
+    const int SplitSalt = 50;
 
-    /// <param name="optimizerLlm">Cheapest available model for meta-prompt generation.</param>
-    /// <param name="programLlm">Model used by the program being optimized (bootstrap + eval).</param>
-    public GEPAOptimizer(IChatClient optimizerLlm, IChatClient programLlm)
-        : this(optimizerLlm, programLlm, new GepaOptions()) { }
+    static readonly SignatureMetadata _placeholderMeta =
+        new(typeof(object), "", [], []);
 
-    /// <param name="optimizerLlm">Cheapest available model for meta-prompt generation.</param>
-    /// <param name="programLlm">Model used by the program being optimized.</param>
-    /// <param name="options">Bootstrap count, candidate count, thresholds.</param>
-    public GEPAOptimizer(IChatClient optimizerLlm, IChatClient programLlm, GepaOptions options)
+    readonly Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>> _programRunner;
+    readonly IChatClient _reflectionClient;
+    readonly GepaOptions _options;
+    readonly IReadOnlyList<Example>? _valset;
+
+    /// <summary>Construct a GEPA optimizer.</summary>
+    /// <param name="programRunner">Runs the program against an example, returning the produced outputs.</param>
+    /// <param name="reflectionClient">Chat client that rewrites an instruction from the records of a run.</param>
+    /// <param name="options">Budget, minibatch, merge and seed settings. Default: <see cref="GepaOptions"/> defaults.</param>
+    /// <param name="valset">Validation set. Default: a seeded split of the trainset passed to <c>CompileAsync</c>.</param>
+    public GEPAOptimizer(
+        Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>> programRunner,
+        IChatClient reflectionClient,
+        GepaOptions? options = null,
+        IReadOnlyList<Example>? valset = null)
     {
-        _optimizerLlm = optimizerLlm ?? throw new ArgumentNullException(nameof(optimizerLlm));
-        _programLlm = programLlm ?? throw new ArgumentNullException(nameof(programLlm));
-        _gepaOptions = options ?? throw new ArgumentNullException(nameof(options));
+        ArgumentNullException.ThrowIfNull(programRunner);
+        ArgumentNullException.ThrowIfNull(reflectionClient);
+        options ??= new GepaOptions();
+        ArgumentOutOfRangeException.ThrowIfNegative(options.MaxIterations);
+        ArgumentOutOfRangeException.ThrowIfNegative(options.MaxMetricCalls);
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.MinibatchSize, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.MergeEvery, 1);
+        if (valset is { Count: 0 })
+            throw new ArgumentException("Valset must contain at least one example.", nameof(valset));
+        _programRunner = programRunner;
+        _reflectionClient = reflectionClient;
+        _options = options;
+        _valset = valset;
     }
+
+    /// <summary>The settings this optimizer runs with.</summary>
+    public GepaOptions Options => _options;
 
     /// <inheritdoc/>
     public async Task<OptimizedProgram<TProgram>> CompileAsync(
@@ -46,437 +125,416 @@ public sealed class GEPAOptimizer<TProgram> : IOptimizer<TProgram>
         IProgress<OptimizerProgress>? progress = null,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(program);
+        ArgumentNullException.ThrowIfNull(trainset);
+        ArgumentNullException.ThrowIfNull(metric);
+        ArgumentNullException.ThrowIfNull(context);
         if (trainset.Count == 0)
             throw new ArgumentException("Trainset must contain at least one example.", nameof(trainset));
 
-        var totalSw = Stopwatch.StartNew();
-        long totalAllocStart = GC.GetAllocatedBytesForCurrentThread();
+        ct.ThrowIfCancellationRequested();
 
-        // Split train/validation
-        int validCount = Math.Max(1, trainset.Count * _gepaOptions.ValidationHoldoutPercent / 100);
-        int trainCount = trainset.Count - validCount;
-        var train = trainCount > 0 ? trainset.Take(trainCount).ToArray() : trainset.ToArray();
-        var valid = trainset.Skip(trainCount).ToArray();
+        using var activity = Diagnostics.Source.StartActivity("SignalGrid.Ampelum.optimizer.compile");
+        activity?.SetTag("optimizer.type", nameof(GEPAOptimizer<TProgram>));
+        activity?.SetTag("optimizer.trainset_size", trainset.Count);
 
-        // Phase 1 — Bootstrap
-        progress?.Report(new OptimizerProgress("bootstrap", 0, trainCount, 0));
-        (var demos, var bTimeMs, var bAlloc) = await BootstrapAsync(program, train, metric, context, ct);
-
-        double baselineScore = valid.Length > 0 ? await ScoreAsync(program, valid, metric, context, ct) : 0;
-        progress?.Report(new OptimizerProgress("bootstrap", trainCount, trainCount, baselineScore));
-
-        if (_gepaOptions.CandidateCount <= 0 || _gepaOptions.MaxIterations <= 0)
-        {
-            totalSw.Stop();
-            return BuildResult(program, demos, baselineScore, baselineScore, totalSw.Elapsed, totalAllocStart);
-        }
-
-        // Phase 2 — Meta-prompt search
-        IReadOnlyList<Example> bestDemos = demos;
-        TProgram bestProgram = program;
-        double bestScore = baselineScore;
-
-        for (int iter = 0; iter < _gepaOptions.MaxIterations && !ct.IsCancellationRequested; iter++)
-        {
-            progress?.Report(new OptimizerProgress("search", iter, _gepaOptions.MaxIterations, bestScore));
-
-            var candidates = await GenerateCandidatesAsync(bestDemos, _gepaOptions.CandidateCount, context, ct);
-            double? iterBest = null;
-
-            foreach (var (instruction, newDemos) in candidates)
-            {
-                var optimized = BuildOptimizedProgram(program, newDemos, instruction);
-                var bound = optimized.Bind(context);
-                double score = await ScoreAsync(bound, valid, metric, context, ct);
-
-                if (score > bestScore && score - bestScore >= _gepaOptions.ImprovementThreshold)
-                {
-                    bestScore = score;
-                    bestDemos = newDemos;
-                    bestProgram = bound;
-                    iterBest = score;
-                }
-            }
-
-            if (iterBest == null && iter + 1 < _gepaOptions.MaxIterations)
-            {
-                // Diversify — add lowest-scoring examples as critique demos
-                var crit = await CollectCritiqueAsync(bestProgram, bestDemos, valid, metric, context, ct);
-                bestDemos = bestDemos.Concat(crit).ToList();
-            }
-        }
-
-        totalSw.Stop();
-        return BuildResult(bestProgram, bestDemos, baselineScore, bestScore, totalSw.Elapsed, totalAllocStart);
-    }
-
-    async Task<(List<Example> demos, long elapsedMs, long allocated)> BootstrapAsync(
-        TProgram program, Example[] train, IMetric metric, AmpelumContext context, CancellationToken ct)
-    {
         var sw = Stopwatch.StartNew();
-        long allocStart = GC.GetAllocatedBytesForCurrentThread();
-        var demos = new List<Example>(_gepaOptions.BootstrapCount);
 
-        int count = Math.Min(_gepaOptions.BootstrapCount, train.Length);
-        double threshold = _gepaOptions.QualityThreshold;
-        var meta = FindSignatureMetadata(program);
+        var names = program is IComposedModule { Submodules.Count: > 0 } composed
+            ? composed.Submodules.Keys.ToList()
+            : new List<string> { SingleName };
+        var (train, valid) = Split(trainset);
+        if (_options.MaxMetricCalls < valid.Count)
+            throw new ArgumentException(
+                $"MaxMetricCalls ({_options.MaxMetricCalls}) must cover one run of the {valid.Count} validation examples.",
+                nameof(trainset));
 
-        for (int retry = 0; retry < 3 && demos.Count < 2 && count > 0; retry++)
-        {
-            demos.Clear();
-            var tasks = new Task<(Example ex, double? score)>[count];
-            for (int i = 0; i < count; i++)
-            {
-                var ex = train[i];
-                tasks[i] = Task.Run(async () =>
-                {
-                    var bound = program;
-                    double? score = null;
-                    try
-                    {
-                        // Run the program on the example inputs to get the actual prediction outputs.
-                        // Falls back to scoring ground truth when reflection-based invocation is unavailable.
-                        var predictions = await CallProgramAsync(bound, ex.Inputs!, context, ct);
-                        var scoreInputs = predictions ?? ex.Outputs!;
-                        score = metric.Score(scoreInputs, ex.Outputs!, meta);
-                    }
-                    catch { }
-                    return (ex, score);
-                }, ct);
-            }
-            await Task.WhenAll(tasks);
-            foreach (var t in tasks)
-            {
-                var (ex, s) = t.Result;
-                if (s >= threshold) demos.Add(ex);
-            }
-            if (demos.Count < 2) threshold = Math.Max(0.1, threshold - 0.1);
-        }
+        var run = new Run(this, program, metric, context, names, train, valid, progress);
+        var best = await run.SearchAsync(ct).ConfigureAwait(false);
+
         sw.Stop();
-        return (demos, sw.ElapsedMilliseconds, GC.GetAllocatedBytesForCurrentThread() - allocStart);
+        Diagnostics.OptimizerCompileDuration.Record(sw.Elapsed.TotalMilliseconds,
+            new KeyValuePair<string, object?>("optimizer.type", nameof(GEPAOptimizer<TProgram>)));
+        Diagnostics.OptimizerCompileExamples.Record(trainset.Count,
+            new KeyValuePair<string, object?>("optimizer.type", nameof(GEPAOptimizer<TProgram>)));
+        Diagnostics.OptimizerCompileScore.Record(best.Mean,
+            new KeyValuePair<string, object?>("optimizer.type", nameof(GEPAOptimizer<TProgram>)));
+
+        activity?.SetTag("optimizer.final_score", best.Mean);
+        activity?.SetTag("optimizer.runner_errors", run.Errors);
+        activity?.SetTag("optimizer.metric_calls", run.MetricCalls);
+
+        return new OptimizedProgram<TProgram>(
+            program, new Dictionary<string, IReadOnlyList<Example>>(), best.Instructions)
+        {
+            Score = best.Mean,
+            TrainsetSize = trainset.Count,
+        };
     }
 
-    async Task<double> ScoreAsync(
-        TProgram program, Example[] set, IMetric metric, AmpelumContext context, CancellationToken ct)
+    (IReadOnlyList<Example> Train, IReadOnlyList<Example> Valid) Split(IReadOnlyList<Example> trainset)
     {
-        if (set.Length == 0) return 0;
-        var meta = FindSignatureMetadata(program);
-        double sum = 0; int n = 0;
-        foreach (var ex in set)
-        {
-            try
-            {
-                var predictions = await CallProgramAsync(program, ex.Inputs!, context, ct);
-                var scoreInputs = predictions ?? ex.Outputs!;
-                sum += metric.Score(scoreInputs, ex.Outputs!, meta);
-                n++;
-            }
-            catch { }
-        }
-        return n > 0 ? sum / n : 0;
+        if (_valset is not null) return (trainset, _valset);
+        // One example cannot be split: it trains and validates.
+        if (trainset.Count == 1) return (trainset, trainset);
+
+        var shuffled = Shuffle(trainset, Derive(_options.Seed, SplitSalt));
+        int validCount = Math.Clamp(trainset.Count * _options.ValidationHoldoutPercent / 100, 1, trainset.Count - 1);
+        return (shuffled.Skip(validCount).ToList(), shuffled.Take(validCount).ToList());
     }
 
-    async Task<List<(string instruction, List<Example> demos)>> GenerateCandidatesAsync(
-        IReadOnlyList<Example> demos, int count, AmpelumContext context, CancellationToken ct)
+    // ---- frontier, parents, merge (internal so tests can drive them with hand-built tables) -----
+
+    /// <summary>
+    /// Per candidate, the number of validation examples it is best on. A candidate tied for best on an
+    /// example counts for it. A candidate with a weight above zero is on the Pareto frontier.
+    /// </summary>
+    internal static int[] FrontierWeights(IReadOnlyList<IReadOnlyList<double>> scores)
     {
-        string demoText = FormatDemos(demos);
-        var results = new List<(string, List<Example>)>(count);
-
-        for (int i = 0; i < count; i++)
+        var weights = new int[scores.Count];
+        for (int j = 0; j < scores[0].Count; j++)
         {
-            string prompt = i == 0
-                ? "You are a prompt engineer optimizing an LLM program.\n\n"
-                  + "Here are input/output examples demonstrating the program's current behavior:\n\n"
-                  + demoText + "\n\n"
-                  + "Write a BETTER instruction that would improve the program's output accuracy.\n"
-                  + "Respond with ONLY the new instruction text. No commentary, no markdown."
-                : "You are a prompt engineer. Write a variant with different phrasing.\n\n"
-                  + "Current examples:\n\n" + demoText + "\n\n"
-                  + "Respond with ONLY the new instruction text.";
-
-            var lmCtx = context with { Chat = _optimizerLlm };
-            var response = await HookedLmCall.InvokeAsync(
-                lmCtx, "GEPAOptimizer.GenerateCandidate", [new ChatMessage(ChatRole.User, prompt)], null, ct);
-            string inst = (response.Text ?? "").Trim();
-            if (inst.StartsWith("```")) inst = inst[(inst.IndexOf('\n') + 1)..];
-            if (inst.EndsWith("```")) inst = inst[..inst.LastIndexOf("```")].Trim();
-
-            results.Add((inst, demos.ToList()));
+            double best = scores.Max(s => s[j]);
+            for (int i = 0; i < scores.Count; i++)
+                if (scores[i][j] >= best) weights[i]++;
         }
-        return results;
+        return weights;
     }
 
-    async Task<List<Example>> CollectCritiqueAsync(
-        TProgram program, IReadOnlyList<Example> existing,
-        Example[] valid, IMetric metric, AmpelumContext context, CancellationToken ct)
+    /// <summary>Draws a candidate index with probability proportional to its weight.</summary>
+    internal static int PickParent(int[] weights, Random rng)
     {
-        var meta = FindSignatureMetadata(program);
-        var scored = new List<(Example ex, double score)>();
-        foreach (var ex in valid)
-        {
-            try
-            {
-                double s = metric.Score(ex.Inputs!, ex.Outputs!, meta);
-                scored.Add((ex, s));
-            }
-            catch { }
-        }
-        var result = new List<Example>(2);
-        foreach (var (ex, _) in scored.OrderBy(s => s.score).Take(2))
-        {
-            if (!existing.Any(e => SameExample(e, ex)))
-                result.Add(ex);
-        }
-        return result;
+        int pick = rng.Next(weights.Sum());
+        int index = 0;
+        for (; pick >= weights[index]; index++) pick -= weights[index];
+        return index;
     }
 
     /// <summary>
-    /// Calls the program's ForwardAsync method via reflection to get predictions.
-    /// Returns the output dictionary from the prediction, or null on failure.
+    /// Per submodule, the instruction of the side that changed it since <paramref name="ancestor"/>; the side with
+    /// the better validation mean when both did. A submodule neither side changed keeps the ancestor's instruction.
     /// </summary>
-    async Task<IReadOnlyDictionary<string, object?>?> CallProgramAsync(
-        TProgram program,
-        IReadOnlyDictionary<string, object?> inputs,
-        AmpelumContext context,
-        CancellationToken ct)
+    internal static Dictionary<string, string> MergeInstructions(
+        Candidate a, Candidate b, Candidate ancestor, IReadOnlyList<string> names)
     {
-        try
+        var merged = new Dictionary<string, string>();
+        foreach (var name in names)
         {
-            // Extract the signature type from the program
-            var programType = program!.GetType();
-            var signatureType = FindSignatureType(programType);
-            if (signatureType == null)
-                return null;
-
-            // Reconstruct the signature instance from the input dictionary
-            var signatureInstance = ReconstructSignature(signatureType, inputs);
-            if (signatureInstance == null)
-                return null;
-
-            // Find ForwardAsync(TSig inputs, CancellationToken ct) method
-            var forwardMethod = programType.GetMethod(
-                "ForwardAsync",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
-                null,
-                [signatureType, typeof(CancellationToken)],
-                null);
-
-            if (forwardMethod == null)
-            {
-                // Try without demos parameter
-                forwardMethod = programType.GetMethod(
-                    "ForwardAsync",
-                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
-                    null,
-                    [signatureType],
-                    null);
-            }
-
-            if (forwardMethod == null)
-                return null;
-
-            // Invoke ForwardAsync - result is Task<Prediction<TSig>>
-            object? taskResult = null;
-            if (forwardMethod.GetParameters().Length == 2)
-            {
-                taskResult = forwardMethod.Invoke(program, [signatureInstance, ct]);
-            }
-            else
-            {
-                taskResult = forwardMethod.Invoke(program, [signatureInstance]);
-            }
-
-            if (taskResult == null)
-                return null;
-
-            // Await the task and extract the Prediction<TSig>
-            dynamic prediction = await (dynamic)taskResult!;
-
-            // Extract Outputs from prediction.Trace
-            if (prediction?.Trace is not null)
-            {
-                return prediction.Trace.Outputs as IReadOnlyDictionary<string, object?>;
-            }
+            var origin = ancestor.Instructions.GetValueOrDefault(name);
+            var fromA = a.Instructions.GetValueOrDefault(name);
+            var fromB = b.Instructions.GetValueOrDefault(name);
+            var value = fromA != origin && fromB != origin ? (a.Mean >= b.Mean ? fromA : fromB)
+                : fromA != origin ? fromA
+                : fromB;
+            if (value is not null) merged[name] = value;
         }
-        catch { }
-
-        return null;
+        return merged;
     }
 
-    /// <summary>
-    /// Extracts the signature type from a program type (e.g., Predict&lt;TSig&gt; -> TSig).
-    /// </summary>
-    static Type? FindSignatureType(Type programType)
+    /// <summary>Ids of every candidate the given one descends from.</summary>
+    internal static HashSet<int> AncestorsOf(IReadOnlyList<Candidate> pool, Candidate candidate)
     {
-        if (programType.IsGenericType)
+        var found = new HashSet<int>();
+        var open = new Stack<int>(candidate.Parents);
+        while (open.Count > 0)
         {
-            var genArgs = programType.GetGenericArguments();
-            foreach (var arg in genArgs)
-            {
-                if (typeof(ISignature).IsAssignableFrom(arg))
-                    return arg;
-            }
+            int id = open.Pop();
+            if (!found.Add(id)) continue;
+            foreach (var parent in pool[id].Parents) open.Push(parent);
         }
-
-        // Check base types for generic signatures
-        foreach (var baseType in programType.GetInterfaces())
-        {
-            if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(IModule<,>))
-            {
-                var args = baseType.GetGenericArguments();
-                if (args.Length == 2 && typeof(ISignature).IsAssignableFrom(args[0]))
-                    return args[0];
-            }
-        }
-
-        return null;
+        return found;
     }
 
-    /// <summary>
-    /// Reconstructs a signature instance from an input dictionary by setting properties via reflection.
-    /// </summary>
-    static object? ReconstructSignature(Type signatureType, IReadOnlyDictionary<string, object?> inputs)
+    internal static string BuildReflectionPrompt(
+        string submodule, string instruction, IReadOnlyList<EvalRecord> records)
     {
-        try
-        {
-            // Create an instance of the signature type
-            var instance = Activator.CreateInstance(signatureType);
-            if (instance == null)
-                return null;
-
-            // Set input properties from the dictionary
-            foreach (var kv in inputs)
-            {
-                var prop = signatureType.GetProperty(kv.Key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-                if (prop != null && prop.CanWrite)
-                {
-                    prop.SetValue(instance, kv.Value);
-                }
-            }
-
-            return instance;
-        }
-        catch { }
-
-        return null;
-    }
-
-    static bool SameExample(Example a, Example b)
-    {
-        if (a.Inputs is null || b.Inputs is null) return a.Inputs is null && b.Inputs is null;
-        if (a.Inputs.Count != b.Inputs.Count) return false;
-        foreach (var kv in a.Inputs)
-            if (!b.Inputs.TryGetValue(kv.Key, out var v) || !Equals(kv.Value, v)) return false;
-        return true;
-    }
-
-    static string FormatDemos(IReadOnlyList<Example> demos)
-    {
-        if (demos.Count == 0) return "(no demonstrations)";
         var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < Math.Min(demos.Count, 4); i++)
+        sb.Append("Module: ").Append(submodule).Append('\n');
+        sb.Append("Current instruction:\n").Append(instruction).Append("\n\n");
+        sb.Append("Records from running the program:\n");
+        for (int i = 0; i < records.Count; i++)
         {
-            sb.Append("Example ").Append(i + 1).AppendLine(":");
-            sb.Append("  Input: ").AppendLine(Fmt(demos[i].Inputs));
-            sb.Append("  Output: ").AppendLine(Fmt(demos[i].Outputs));
-            sb.AppendLine();
+            var record = records[i];
+            sb.Append("Record ").Append(i + 1).Append(":\n");
+            sb.Append("Inputs: ").Append(RenderFields(record.Example.Inputs)).Append('\n');
+            sb.Append("Outputs: ").Append(record.Actual is null ? "(none)" : RenderFields(record.Actual)).Append('\n');
+            sb.Append("Score: ").Append(record.Score.ToString("0.###", CultureInfo.InvariantCulture)).Append('\n');
+            sb.Append("Feedback: ").Append(record.Feedback).Append("\n\n");
         }
+        sb.Append("Write a new instruction for this module that fixes what the feedback criticizes and keeps what works.");
         return sb.ToString();
     }
 
-    static string Fmt(object? o)
+    static string RenderFields(IReadOnlyDictionary<string, object?> fields) =>
+        string.Join(", ", fields.Select(kv => $"{kv.Key}={Convert.ToString(kv.Value, CultureInfo.InvariantCulture)}"));
+
+    static int Derive(int seed, int salt) => unchecked(seed * 7919 + salt);
+
+    static List<Example> Shuffle(IReadOnlyList<Example> list, int seed)
     {
-        if (o is null) return "(null)";
-        if (o is System.Collections.IDictionary d)
+        var copy = new List<Example>(list);
+        var rng = new Random(seed);
+        for (int i = copy.Count - 1; i > 0; i--)
         {
-            var parts = new List<string>();
-            foreach (System.Collections.DictionaryEntry kv in d)
-                parts.Add(string.Concat(kv.Key.ToString(), ": ", kv.Value));
-            return "{ " + string.Join(", ", parts) + " }";
+            int j = rng.Next(i + 1);
+            (copy[i], copy[j]) = (copy[j], copy[i]);
         }
-        return o.ToString() ?? "";
+        return copy;
     }
 
-    static SignatureMetadata FindSignatureMetadata(TProgram program)
+    /// <summary>One member of the candidate pool.</summary>
+    internal sealed class Candidate(
+        int id, IReadOnlyDictionary<string, string> instructions, IReadOnlyList<int> parents, double[] scores)
     {
-        // Try composed module first
-        if (program is IComposedModule composed && composed.Submodules.Count > 0)
-        {
-            var first = composed.Submodules.Values.First();
-            var sigType = first.GetType().GetGenericArguments().FirstOrDefault(t => typeof(ISignature).IsAssignableFrom(t));
-            if (sigType != null)
-                return SignatureMetadataCache.For(sigType);
-        }
-        // Try single Predict
-        var tType = typeof(TProgram);
-        if (tType.IsGenericType)
-        {
-            var genArgs = tType.GetGenericArguments();
-            if (genArgs.Length > 0 && typeof(ISignature).IsAssignableFrom(genArgs[0]))
-                return SignatureMetadataCache.For(genArgs[0]);
-        }
-        // Fallback — empty metadata
-        return new SignatureMetadata(typeof(object), "", Array.Empty<Field>(), Array.Empty<Field>());
+        public int Id { get; } = id;
+        /// <summary>Instruction overrides by submodule name; a submodule not listed keeps its own instruction.</summary>
+        public IReadOnlyDictionary<string, string> Instructions { get; } = instructions;
+        public IReadOnlyList<int> Parents { get; } = parents;
+        /// <summary>Score on each validation example, in validation order.</summary>
+        public double[] Scores { get; } = scores;
+        public double Mean => Scores.Average();
     }
 
-    OptimizedProgram<TProgram> BuildOptimizedProgram(
-        TProgram program, IReadOnlyList<Example> demos, string instructionOverride)
+    /// <summary>What running one example gave: the outputs (null when the run failed), the score and the feedback.</summary>
+    internal sealed record EvalRecord(
+        Example Example, IReadOnlyDictionary<string, object?>? Actual, double Score, string Feedback);
+
+    /// <summary>Raised when an example run would exceed <see cref="GepaOptions.MaxMetricCalls"/>.</summary>
+    sealed class BudgetExhausted : Exception;
+
+    sealed class Run(
+        GEPAOptimizer<TProgram> owner,
+        TProgram program,
+        IMetric metric,
+        AmpelumContext context,
+        List<string> names,
+        IReadOnlyList<Example> train,
+        IReadOnlyList<Example> valid,
+        IProgress<OptimizerProgress>? progress)
     {
-        var demosBySub = new Dictionary<string, IReadOnlyList<Example>>();
-        var overrides = new Dictionary<string, string>();
+        readonly GepaOptions _options = owner._options;
+        readonly List<Candidate> _pool = [];
+        readonly HashSet<(int, int)> _mergedPairs = [];
+        int _mutations;
+        int _merges;
 
-        if (program is IComposedModule composed)
+        public int Errors { get; private set; }
+        public int MetricCalls { get; private set; }
+
+        public async Task<Candidate> SearchAsync(CancellationToken ct)
         {
-            var name = composed.Submodules.Keys.FirstOrDefault() ?? "";
-            demosBySub[name] = demos;
-            overrides[name] = instructionOverride;
+            var empty = new Dictionary<string, string>();
+            var baseline = await EvaluateAsync(empty, valid, ct).ConfigureAwait(false);
+            _pool.Add(new Candidate(0, empty, [], baseline.Select(r => r.Score).ToArray()));
+            Report("baseline", 0);
+
+            var rng = new Random(Derive(_options.Seed, ParentSalt));
+            for (int iteration = 1; iteration <= _options.MaxIterations; iteration++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var minibatch = Shuffle(train, Derive(_options.Seed, MinibatchSalt + iteration))
+                    .Take(_options.MinibatchSize).ToList();
+                var weights = FrontierWeights(_pool.Select(c => (IReadOnlyList<double>)c.Scores).ToList());
+
+                try
+                {
+                    bool merged = _options.UseMerge
+                                  && iteration % _options.MergeEvery == 0
+                                  && await TryMergeAsync(weights, minibatch, rng, ct).ConfigureAwait(false);
+                    if (!merged)
+                        await MutateAsync(_pool[PickParent(weights, rng)], minibatch, ct).ConfigureAwait(false);
+                }
+                catch (BudgetExhausted)
+                {
+                    // The candidate being evaluated was never added to the pool, so only whole evaluations count.
+                    break;
+                }
+
+                Report("iteration", iteration);
+            }
+
+            return _pool.MaxBy(c => c.Mean)!;
         }
-        else
+
+        async Task MutateAsync(Candidate parent, List<Example> minibatch, CancellationToken ct)
         {
-            demosBySub[""] = demos;
-            overrides[""] = instructionOverride;
+            var submodule = names[_mutations++ % names.Count];
+            var parentRecords = await EvaluateAsync(parent.Instructions, minibatch, ct).ConfigureAwait(false);
+            var current = CurrentInstruction(submodule, parent.Instructions);
+
+            var proposal = await ReflectAsync(submodule, current, parentRecords, ct).ConfigureAwait(false);
+            if (proposal.Length == 0) return;
+
+            var instructions = new Dictionary<string, string>(parent.Instructions) { [submodule] = proposal };
+            var childRecords = await EvaluateAsync(instructions, minibatch, ct).ConfigureAwait(false);
+            if (childRecords.Average(r => r.Score) > parentRecords.Average(r => r.Score))
+                await AddAsync(instructions, [parent.Id], ct).ConfigureAwait(false);
         }
 
-        return new OptimizedProgram<TProgram>(program, demosBySub, overrides);
-    }
-
-    static OptimizedProgram<TProgram> BuildResult(
-        TProgram program, IReadOnlyList<Example> demos,
-        double baseline, double optimized, TimeSpan total, long allocStart)
-    {
-        var demosBySub = program is IComposedModule composed
-            ? composed.Submodules.Keys.ToDictionary(k => k, _ => demos)
-            : new Dictionary<string, IReadOnlyList<Example>> { ["*"] = demos };
-
-        double improvement = baseline > 0 ? (optimized - baseline) / baseline * 100.0 : optimized > 0 ? 100 : 0;
-        long allocated = GC.GetAllocatedBytesForCurrentThread() - allocStart;
-
-        return new OptimizedProgram<TProgram>(program, demosBySub, new Dictionary<string, string>())
+        async Task<bool> TryMergeAsync(int[] weights, List<Example> minibatch, Random rng, CancellationToken ct)
         {
-            Score = optimized,
-            TrainsetSize = demos.Count
-        };
+            var frontier = _pool.Where(c => weights[c.Id] > 0).ToList();
+            var pairs = new List<(Candidate A, Candidate B, Dictionary<string, string> Merged)>();
+            foreach (var a in frontier)
+            foreach (var b in frontier.Where(b => b.Id > a.Id))
+            {
+                var ancestorsA = AncestorsOf(_pool, a);
+                var ancestorsB = AncestorsOf(_pool, b);
+                if (ancestorsA.Contains(b.Id) || ancestorsB.Contains(a.Id) || _mergedPairs.Contains((a.Id, b.Id)))
+                    continue;
+
+                var ancestor = _pool[ancestorsA.Intersect(ancestorsB).Max()];
+                var merged = MergeInstructions(a, b, ancestor, names);
+                // A merge equal to one of its parents adds nothing.
+                if (!SameInstructions(merged, a.Instructions) && !SameInstructions(merged, b.Instructions))
+                    pairs.Add((a, b, merged));
+            }
+            if (pairs.Count == 0) return false;
+
+            var chosen = pairs[rng.Next(pairs.Count)];
+            _mergedPairs.Add((chosen.A.Id, chosen.B.Id));
+            var recordsA = await EvaluateAsync(chosen.A.Instructions, minibatch, ct).ConfigureAwait(false);
+            var recordsB = await EvaluateAsync(chosen.B.Instructions, minibatch, ct).ConfigureAwait(false);
+            var recordsChild = await EvaluateAsync(chosen.Merged, minibatch, ct).ConfigureAwait(false);
+            double bar = Math.Max(recordsA.Average(r => r.Score), recordsB.Average(r => r.Score));
+            if (recordsChild.Average(r => r.Score) > bar)
+            {
+                await AddAsync(chosen.Merged, [chosen.A.Id, chosen.B.Id], ct).ConfigureAwait(false);
+                _merges++;
+            }
+            return true;
+        }
+
+        async Task AddAsync(Dictionary<string, string> instructions, int[] parents, CancellationToken ct)
+        {
+            var records = await EvaluateAsync(instructions, valid, ct).ConfigureAwait(false);
+            _pool.Add(new Candidate(_pool.Count, instructions, parents, records.Select(r => r.Score).ToArray()));
+        }
+
+        static bool SameInstructions(Dictionary<string, string> a, IReadOnlyDictionary<string, string> b) =>
+            a.Count == b.Count && a.All(kv => b.TryGetValue(kv.Key, out var v) && v == kv.Value);
+
+        string CurrentInstruction(string submodule, IReadOnlyDictionary<string, string> overrides)
+        {
+            if (overrides.TryGetValue(submodule, out var overridden)) return overridden;
+            object module = program is IComposedModule composed && composed.Submodules.TryGetValue(submodule, out var sub)
+                ? sub
+                : program!;
+            var signature = module.GetType().GetGenericArguments().FirstOrDefault(typeof(ISignature).IsAssignableFrom);
+            return signature is null
+                ? "(the module's own instruction)"
+                : SignatureMetadataCache.For(signature).Instructions;
+        }
+
+        async Task<string> ReflectAsync(
+            string submodule, string current, IReadOnlyList<EvalRecord> records, CancellationToken ct)
+        {
+            var messages = new List<ChatMessage>
+            {
+                new(ChatRole.System,
+                    "You are a prompt engineer. You improve one instruction of a language model program from " +
+                    "records of its runs. Reply with the new instruction text only."),
+                new(ChatRole.User, BuildReflectionPrompt(submodule, current, records)),
+            };
+            try
+            {
+                var response = await HookedLmCall.InvokeAsync(
+                    context with { Chat = owner._reflectionClient },
+                    "GEPA.Reflect", messages, cancellationToken: ct).ConfigureAwait(false);
+                return response.Text?.Trim() ?? "";
+            }
+            catch (Exception ex) when (!ct.IsCancellationRequested)
+            {
+                // A timeout cancels the call without cancelling ct; it is a failure, not a stop.
+                throw new OptimizerException($"GEPA reflection failed for submodule '{submodule}'.", ex);
+            }
+        }
+
+        async Task<List<EvalRecord>> EvaluateAsync(
+            IReadOnlyDictionary<string, string> instructions, IReadOnlyList<Example> examples, CancellationToken ct)
+        {
+            var bound = new OptimizedProgram<TProgram>(
+                program, new Dictionary<string, IReadOnlyList<Example>>(), instructions).Bind(context);
+            var records = new List<EvalRecord>(examples.Count);
+            foreach (var example in examples)
+            {
+                ct.ThrowIfCancellationRequested();
+                if (MetricCalls >= _options.MaxMetricCalls) throw new BudgetExhausted();
+                MetricCalls++;
+                IReadOnlyDictionary<string, object?>? actual = null;
+                try
+                {
+                    actual = (await owner._programRunner(bound, example, context, ct).ConfigureAwait(false)).Outputs;
+                    var scored = metric is IFeedbackMetric explaining
+                        ? explaining.ScoreWithFeedback(actual, example.Outputs, _placeholderMeta)
+                        : PlainScore(actual, example);
+                    // NaN would break the frontier comparison and the weighted draw.
+                    records.Add(new EvalRecord(
+                        example, actual, double.IsNaN(scored.Score) ? 0.0 : scored.Score, scored.Feedback));
+                }
+                catch (Exception e) when (!ct.IsCancellationRequested)
+                {
+                    // A timeout cancels the call without cancelling ct; it scores 0 like any other failure.
+                    Errors++;
+                    records.Add(new EvalRecord(example, actual, 0.0, $"The run failed: {e.Message}"));
+                }
+            }
+            return records;
+        }
+
+        FeedbackScore PlainScore(IReadOnlyDictionary<string, object?> actual, Example example)
+        {
+            double score = metric.Score(actual, example.Outputs, _placeholderMeta);
+            return new FeedbackScore(
+                score,
+                $"Expected {RenderFields(example.Outputs)}, got {RenderFields(actual)}.");
+        }
+
+        void Report(string phase, int step)
+        {
+            var weights = FrontierWeights(_pool.Select(c => (IReadOnlyList<double>)c.Scores).ToList());
+            progress?.Report(new OptimizerProgress(
+                Phase: phase,
+                Step: step,
+                TotalSteps: _options.MaxIterations,
+                BestScore: _pool.Max(c => c.Mean),
+                Extras: new Dictionary<string, object?>
+                {
+                    ["RunnerErrors"] = Errors,
+                    ["MetricCalls"] = MetricCalls,
+                    ["Candidates"] = _pool.Count,
+                    ["FrontierSize"] = weights.Count(w => w > 0),
+                    ["Merges"] = _merges,
+                }));
+        }
     }
 }
 
-/// <summary>Configuration for GEPA optimization phases.</summary>
+/// <summary>Settings of <see cref="GEPAOptimizer{TProgram}"/>.</summary>
 public sealed record GepaOptions
 {
-    /// <summary>Number of examples to bootstrap as demonstrations. Default 4.</summary>
-    public int BootstrapCount { get; init; } = 4;
+    /// <summary>Maximum search iterations (a mutation or a merge each). Default 10.</summary>
+    public int MaxIterations { get; init; } = 10;
 
-    /// <summary>Number of instruction candidates per iteration. Default 3.</summary>
-    public int CandidateCount { get; init; } = 3;
+    /// <summary>
+    /// Maximum metric calls, one per example run, counting every run of the search. No run starts once the count
+    /// has reached it. It must be at least the size of the validation set. Default 200.
+    /// </summary>
+    public int MaxMetricCalls { get; init; } = 200;
 
-    /// <summary>Maximum meta-prompt search iterations. Default 3.</summary>
-    public int MaxIterations { get; init; } = 3;
+    /// <summary>Trainset examples in the minibatch a child is compared on. Default 3.</summary>
+    public int MinibatchSize { get; init; } = 3;
 
-    /// <summary>Minimum improvement ratio to accept a candidate. Default 0.05 (5%).</summary>
-    public double ImprovementThreshold { get; init; } = 0.05;
+    /// <summary>Whether to merge frontier candidates that share an ancestor. Default true.</summary>
+    public bool UseMerge { get; init; } = true;
 
-    /// <summary>Percentage of trainset held out for validation. Default 20.</summary>
+    /// <summary>A merge is tried at every this many iterations. Default 3.</summary>
+    public int MergeEvery { get; init; } = 3;
+
+    /// <summary>Percentage of the trainset held out for validation when no valset is given. Default 20.</summary>
     public int ValidationHoldoutPercent { get; init; } = 20;
 
-    /// <summary>Minimum quality score to include bootstrap demo. Default 0.5.</summary>
-    public double QualityThreshold { get; init; } = 0.5;
+    /// <summary>Seed for the split, the minibatches and every draw. Default 0.</summary>
+    public int Seed { get; init; }
 }
