@@ -11,7 +11,8 @@ public sealed record ScenarioResult(
     string ExecutionId,
     DurableRunSnapshot PausedSnapshot,
     TriageOutcome Outcome,
-    FixOutcome? Fix = null);
+    FixOutcome? Fix = null,
+    DurableRunSnapshot? InProcessResume = null);
 
 /// <summary>
 /// The whole story in one place. A first runtime plans the run, assesses the backlog and returns when the workflow runtime
@@ -40,9 +41,13 @@ public static class TriageScenario
 
         PlannedWorkflow plan;
         DurableRunId runId;
+        DurableRunSnapshot inProcess;
         await using (var first = new TriageProcess(root, state, chat, tiers, policy))
         {
-            plan = await first.PlanAsync(Goal, ct).ConfigureAwait(false);
+            inProcess = await first.PauseAndResumeInProcessAsync(Goal, ct).ConfigureAwait(false);
+            log?.WriteLine($"Pause and resume on one runtime instance: a separate run record ends {inProcess.State}, phase '{inProcess.CurrentPhase}'.");
+
+            plan =await first.PlanAsync(Goal, ct).ConfigureAwait(false);
             log?.WriteLine($"Plan: {plan.Definition.Name} v{plan.Version}, steps: {string.Join(" > ", plan.Definition.Steps.Select(s => $"{s.StepId}[{s.Kind}]"))}");
 
             runId = await first.StartRunAsync(Goal, ct).ConfigureAwait(false);
@@ -65,7 +70,7 @@ public static class TriageScenario
                 fix = await IssueFixer.FixAsync(root, IssueFixer.WithToolInvocation(fixer), ct: ct).ConfigureAwait(false);
                 log?.WriteLine($"Sub-agent fix of #102: {(fix.Passed ? "[OK]" : "[FAILED]")} {fix.Detail}. Sub-agent summary: {fix.Run.Outcome}");
             }
-            return new ScenarioResult(plan, runId, executionId, paused, outcome, fix);
+            return new ScenarioResult(plan, runId, executionId, paused, outcome, fix, inProcess);
         }
     }
 

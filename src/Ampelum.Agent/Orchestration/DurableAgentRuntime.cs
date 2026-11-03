@@ -84,6 +84,10 @@ public sealed class DurableAgentRuntime : IDurableAgentRuntime
             interrupt,
             ct).ConfigureAwait(false);
 
+        // Keep the in-memory machine in step with the stored state, so ResumeAsync on this instance can resolve it.
+        session.Machine.Escalate(new EscalationContext(
+            EscalationType.RequiresConfirmation, "resume", reason, DateTimeOffset.UtcNow, null));
+
         await EmitAsync(session, DurableRunEventKind.InterruptRequested, reason, ct).ConfigureAwait(false);
         await EmitAsync(session, DurableRunEventKind.CheckpointSaved, "Pause checkpoint saved", ct).ConfigureAwait(false);
         _logger.LogDebug("Paused Ampelum run {RunId}", runId.Value);

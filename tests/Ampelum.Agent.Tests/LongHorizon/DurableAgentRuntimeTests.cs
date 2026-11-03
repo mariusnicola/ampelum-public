@@ -139,6 +139,30 @@ public sealed class DurableAgentRuntimeTests : IDisposable
         events[2].Snapshot.PendingInterrupt.ShouldNotBeNull();
     }
 
+    [Fact]
+    public async Task Pause_ThenResume_OnTheSameInstance_ReturnsToRunning_AndCanPauseAgain()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var runtime = new DurableAgentRuntime(_stateStore, _eventStore);
+        var runId = await runtime.StartAsync(
+            new DurableIntent("proj-5", DurableWorkflowKind.CodeTask, "update the parser"),
+            DurableRunOptions.Default("ws-5"),
+            ct);
+
+        for (var round = 1; round <= 2; round++)
+        {
+            await runtime.PauseAsync(runId, $"approval {round}", ct);
+            var paused = await runtime.GetSnapshotAsync(runId, ct);
+            paused!.State.ShouldBe(WorkflowState.Suspended);
+
+            await runtime.ResumeAsync(runId, new DurableResumeInput(paused.PendingInterrupt!.ResumeToken, "approved", "execute"), ct);
+
+            var running = await runtime.GetSnapshotAsync(runId, ct);
+            running!.State.ShouldBe(WorkflowState.Running);
+            running.PendingInterrupt.ShouldBeNull();
+        }
+    }
+
     public void Dispose()
     {
         try

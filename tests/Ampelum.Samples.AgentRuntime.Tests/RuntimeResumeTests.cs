@@ -38,6 +38,31 @@ public sealed class RuntimeResumeTests : IDisposable
     }
 
     [Fact]
+    public async Task Scenario_PausesAndResumesARunOnTheSameRuntimeInstance()
+    {
+        var ct = TestContext.Current.CancellationToken;
+
+        var result = await TriageScenario.RunAsync(_workspace.Directory, new FakeTriageModel(), FakeTriageModel.Tiers, ct: ct);
+
+        var resumed = result.InProcessResume.ShouldNotBeNull();
+        resumed.RunId.ShouldNotBe(result.RunId);
+        resumed.State.ShouldBe(WorkflowState.Running);
+        resumed.PendingInterrupt.ShouldBeNull();
+        resumed.Reason.ShouldBe("Confirmed in the same process");
+        resumed.RecentEvents.Select(e => e.Kind).ShouldBe(
+        [
+            DurableRunEventKind.Started,
+            DurableRunEventKind.CheckpointSaved,
+            DurableRunEventKind.InterruptRequested,
+            DurableRunEventKind.CheckpointSaved,
+            DurableRunEventKind.Resumed,
+            DurableRunEventKind.CheckpointSaved,
+        ]);
+        // The restart step is unchanged: the main run still stops at the approval and a second process finishes it.
+        result.PausedSnapshot.State.ShouldBe(WorkflowState.Suspended);
+    }
+
+    [Fact]
     public async Task Resume_RepeatsNoFinishedStepAndMakesNoModelCall()
     {
         var ct = TestContext.Current.CancellationToken;

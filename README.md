@@ -246,7 +246,6 @@ Workflows
 - A rejected `Approval` step does not compensate inside `DecideAsync`. When completed steps still owe compensations the execution stays `Running` with the failure reason set, and `ResumeAsync` compensates, then fails it. When several steps finish in one batch and one fails, the others are recorded first, so a succeeded sibling is compensated; `CompletionOrder` inside one batch is the order of the workflow's step list.
 - `Wait` steps have no pause of their own; they run like any other step through your handler. `Approval` steps pause the execution (`AwaitingConfirmation`) until `DecideAsync` approves or rejects them, and a `RequireConfirmation` policy decision in `WorkflowToolStepHandler` pauses the step the same way. `WorkflowToolStepHandler` fails any step that is not a `Tool` step (`src/Ampelum.Agent/Orchestration/WorkflowToolStepHandler.cs`, line 61).
 - After a rejection the checkpoint is `Failed` at once, but the `execution.failed` audit line is appended in a separate write; a crash between the two loses only that audit line.
-- `DurableAgentRuntime.PauseAsync` followed by `ResumeAsync` on the same instance throws "Cannot resolve escalation from state Running". A fresh instance on the same state store resumes.
 - `SessionBudget` reports `IsExhausted` and `IsWarning`, but nothing in `src` enforces the budget.
 - `SkillRegistry.LoadAsync` does nothing.
 - `JsonFileProjectRegistry` stores label, root and escalation policy only; the blast radius and allowed tools are derived again on load.

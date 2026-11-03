@@ -110,6 +110,24 @@ public sealed class TriageProcess : IAsyncDisposable
     }
 
     /// <summary>
+    /// A pause answered while the process is still alive: starts a run record, pauses it and resumes it with the token
+    /// it issued, all on this one runtime instance. <see cref="RunUntilApprovalAsync"/> shows the other case, an
+    /// answer that arrives after the process ended.
+    /// </summary>
+    public async Task<DurableRunSnapshot> PauseAndResumeInProcessAsync(string goal, CancellationToken ct = default)
+    {
+        var runId = await StartRunAsync(goal, ct).ConfigureAwait(false);
+        await Runtime.PauseAsync(runId, "Confirm before continuing", ct).ConfigureAwait(false);
+        var paused = await Runtime.GetSnapshotAsync(runId, ct).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Run '{runId}' is gone.");
+        var pending = paused.PendingInterrupt
+            ?? throw new InvalidOperationException($"Run '{runId}' is not waiting for anyone.");
+        await Runtime.ResumeAsync(runId, new DurableResumeInput(pending.ResumeToken, "Confirmed in the same process", FirstPhase), ct).ConfigureAwait(false);
+        return await Runtime.GetSnapshotAsync(runId, ct).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Run '{runId}' is gone.");
+    }
+
+    /// <summary>
     /// Runs the workflow until the runtime parks the approval step and reports AwaitingConfirmation, then records the
     /// pause in the run record. The call returns and this process has nothing left to do, as when it ends while a
     /// person has not answered yet.
