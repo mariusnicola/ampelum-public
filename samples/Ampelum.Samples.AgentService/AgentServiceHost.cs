@@ -38,7 +38,7 @@ public static class AgentServiceHost
         app.MapAmpelumModule<AnswerSignature>(
             ModuleName,
             sp => sp.GetRequiredService<Predict<AnswerSignature>>(),
-            supportsStreaming: false);
+            supportsStreaming: true);
         app.MapAmpelumHostEndpoints();
         return app;
     }

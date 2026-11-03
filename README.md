@@ -112,11 +112,18 @@ dotnet run --project samples/Ampelum.Samples.VectorStoreSwap -c Release -- --fak
 dotnet test tests/Ampelum.Samples.VectorStoreSwap.Tests
 ```
 
-**Agent service** (`samples/Ampelum.Samples.AgentService`). Serve a program over HTTP with the Ampelum Host, call it from a client, read and verify its audit trail, give a ReAct agent MCP tools, and run an evaluation through the CLI as a process. Streaming is switched off because the Host stream endpoint fails, as Known limits says.
+**Agent service** (`samples/Ampelum.Samples.AgentService`). Serve a program over HTTP with the Ampelum Host, call it from a client, read and verify its audit trail, give a ReAct agent MCP tools, and run an evaluation through the CLI as a process.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.AgentService -c Release -- --fake
 dotnet test tests/Ampelum.Samples.AgentService.Tests
+```
+
+**Build-time tools** (`samples/Ampelum.Samples.BuildTimeTools`). The source generator and the ten analyzers working on a small project: generated signature metadata and accessors at runtime, and each rule with a snippet that fires and one that stays quiet. It needs no model and no key. Two rules are recorded with their flaws, and the sample README says which.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.BuildTimeTools -c Release
+dotnet test tests/Ampelum.Samples.BuildTimeTools.Tests
 ```
 
 ## What is in the repository
@@ -188,15 +195,48 @@ Workflows
 MCP
 
 - `HttpMcpTransport` calls `tools/list` once and does not follow the next-cursor field, so a server that paginates returns only its first page (`src/Ampelum.Agent/Mcp/McpModels.cs`, lines 111 to 127).
+- `McpServerAdapter` has no transport in `src`, so Ampelum can call MCP servers but cannot be served as one without your own transport.
 
 Host
 
-- The Host stream endpoint does not work. A normal call returns HTTP 200, an `error` frame and `done`, with no `partial` or `final` frame, because `StreamEndpoint` reads `Trace` on chunks where it is null. `final` can never be sent, because the endpoint reads `Trace` from the stream object. The Host tests read only the headers, so they pass.
 - `rebuild-index --config <path>` ignores the path. `Program` passes the whole argument list, so the first argument is `rebuild-index` and the `--config` check never matches; the command always reads `appsettings.json` from the working directory (`src/SignalGrid.Ampelum.Host/Program.cs`, line 17, and `src/SignalGrid.Ampelum.Host/Tools/HostCli.cs`, line 20).
+
+- `ProblemDetailsMiddleware` is internal and nothing registers it, so an unhandled endpoint exception is not mapped to a Host error code.
+- The Host optimize endpoint scores with a private `NoOpMetric` that returns 1.0, so it does not measure quality (`src/SignalGrid.Ampelum.Host/ModuleRegistry/PredictComposedAdapter.cs`).
+- `ChatAdapter.OnChunk` treats the closing `[[ ## completed ## ]]` marker as a field. The Host stream endpoint filters it out, but a direct `Predict.StreamAsync` caller sees an update named `completed`.
+- A chunk that carries the last tokens and that marker together is not sent as a `partial`, so the last `partial` can lag the text. The `final` frame is always complete.
+
 
 Written but not called by shipped code
 
 - `ConfiguredModelRouter` with `ModelRoutingTable`, `WorkflowPromotionEvaluator`, `DurableAgentRuntime`, `CronPortfolioScheduler`, `IExecutionSandbox` with `ProcessSandbox`, `NullOptimizerRunner` in the Host, and the Host option `Host:Modules:RegistryFile`, which the code marks as reserved. They are public API and most have tests, but no other code in this repository uses them.
+
+- `PhoenixCredentials` is accepted by `AddPhoenixExporter` and nothing reads it. Delivery and its API key belong to the OTLP exporter the host configures.
+
+Routing and tracing
+
+- Streaming does not fail over. `RoutedChatClient` streams from the primary decision only (`src/Ampelum/Routing/RoutedChatClient.cs`).
+- The `AddLangFuseExporter`, `AddLangSmithExporter` and `AddPhoenixExporter` calls wrap the prior `ITraceSink`, and the exporter never disposes it, so a batched inner sink is not flushed by disposing the exporter.
+
+Retrieval and vector stores
+
+- `HybridRetriever` passes a fixed `k: 60` to reciprocal rank fusion, so a configured value has no effect (`src/Ampelum/Retrieval/Hybrid/HybridRetriever.cs`).
+- The pgvector backend interpolates the table name and the filter key into SQL. Filter values are parameters, so treat table names and filter keys as trusted input.
+- Qdrant replaces a non-UUID id with an MD5-derived UUID and returns that, so the original id is lost. Non-canonical UUID forms come back canonical.
+- `InMemoryVectorStore` returns documents with their indexed score, so scores read 0 through `EmbeddingRetriever`. pgvector returns metadata as `JsonElement`, the other adapters as strings.
+- `PineconeOptions.Environment` is required and unused.
+
+Tools
+
+- `IAgentTool` has no argument path. `InvokeAsync` takes only a cancellation token, so arguments must already be set on the tool instance.
+
+Build-time tools
+
+- AMP012 is inverted under the default order: it flags a controller calling a service, the normal direction.
+- The generator's per-signature output uses unqualified type names, so a signature in a namespace whose first segment is `Ampelum` fails to build with CS0234.
+- AMP013's message says `'member'` for local variables.
+- `tests/Ampelum.Analyzers.Tests/PackagingTests` needs a prior `dotnet pack`, so CI filters it out.
+
 
 Templates
 

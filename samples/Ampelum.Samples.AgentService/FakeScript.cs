@@ -43,9 +43,11 @@ public static class FakeScript
 {
     public const string ServiceAnswer = "Standard delivery takes 3 to 5 business days.";
 
-    /// <summary>One answer for the service module, in the wire format the module's adapter parses.</summary>
+    /// <summary>One answer for the service module, for a forward call and for a stream call, in the wire format the module's adapter parses.</summary>
     public static FakeChatClient ServiceModel(string answer = ServiceAnswer) =>
-        new FakeChatClient().EnqueueOutputs(new AnswerSignature { Question = "", Answer = answer });
+        new FakeChatClient()
+            .EnqueueOutputs(new AnswerSignature { Question = "", Answer = answer })
+            .EnqueueStreamingOutputs(new AnswerSignature { Question = "", Answer = answer });
 
     /// <summary>Two model turns: the tool call, then an answer built from the tool result the model was sent.</summary>
     public static ScriptedChatClient ToolModel(string orderId)

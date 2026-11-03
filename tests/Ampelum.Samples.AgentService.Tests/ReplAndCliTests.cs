@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Shouldly;
 using Xunit;
@@ -73,30 +74,63 @@ public sealed class ReplAndCliTests : IDisposable
     }
 
     [Fact]
-    public async Task CliEval_ThatOutlivesItsTimeout_IsStoppedAndReportedAsATimeout()
+    public async Task CliEval_RunsTheRealCliAndWritesItsReport()
     {
         var dataset = Path.Combine(_dir, "dataset.jsonl");
         await CliEval.WriteDatasetAsync(dataset, [new EvalRow("q", "a", "a")], Ct);
 
-        // A runtime cannot start and finish inside a millisecond, so the limit always fires first.
-        var failure = await Should.ThrowAsync<TimeoutException>(() => CliEval.RunAsync(
-            dataset, "exact", Path.Combine(_dir, "report"), Ct, TimeSpan.FromMilliseconds(1)));
+        var (exit, _) = await CliEval.RunAsync(dataset, "exact", Path.Combine(_dir, "report"), Ct);
 
-        failure.Message.ShouldContain("was stopped");
-        // A CLI left running would finish and write its report; a killed one never does.
-        File.Exists(Path.Combine(_dir, "report", "report.json")).ShouldBeFalse();
+        exit.ShouldBe(0);
+        File.Exists(Path.Combine(_dir, "report", "report.json")).ShouldBeTrue();
+    }
+
+    /// <summary>A child that cannot finish by itself, started directly with no shell.</summary>
+    static ProcessStartInfo NeverEndingChild()
+    {
+        var start = OperatingSystem.IsWindows()
+            ? new ProcessStartInfo("ping")
+            : new ProcessStartInfo("sleep");
+        foreach (var arg in OperatingSystem.IsWindows() ? new[] { "-n", "60", "127.0.0.1" } : ["60"])
+            start.ArgumentList.Add(arg);
+        return start;
+    }
+
+    /// <summary>The process is disposed when the run returns, so exit is observed through its event.</summary>
+    static Task<bool> WatchExit(Process process)
+    {
+        var exited = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        process.EnableRaisingEvents = true;
+        process.Exited += (_, _) => exited.TrySetResult(true);
+        return exited.Task;
     }
 
     [Fact]
-    public async Task CliEval_CancelledByTheCaller_IsStoppedAndThrowsCancellation()
+    public async Task RunProcess_ThatOutlivesItsLimit_IsKilledAndReportedAsATimeout()
     {
-        var dataset = Path.Combine(_dir, "dataset.jsonl");
-        await CliEval.WriteDatasetAsync(dataset, [new EvalRow("q", "a", "a")], Ct);
-        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(Ct);
-        cancel.Cancel();
+        Task<bool>? exited = null;
 
-        await Should.ThrowAsync<OperationCanceledException>(() => CliEval.RunAsync(
-            dataset, "exact", Path.Combine(_dir, "report"), cancel.Token));
-        File.Exists(Path.Combine(_dir, "report", "report.json")).ShouldBeFalse();
+        var failure = await Should.ThrowAsync<TimeoutException>(
+            CliEval.RunProcessAsync(NeverEndingChild(), TimeSpan.FromMilliseconds(200), Ct, p => exited = WatchExit(p))
+                .WaitAsync(TimeSpan.FromSeconds(30), Ct));
+
+        failure.Message.ShouldContain("was stopped");
+        (await exited!.WaitAsync(TimeSpan.FromSeconds(30), Ct)).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task RunProcess_CancelledByTheCaller_IsKilledAndThrowsCancellation()
+    {
+        Task<bool>? exited = null;
+        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+
+        var run = CliEval.RunProcessAsync(NeverEndingChild(), TimeSpan.FromSeconds(60), cancel.Token, p =>
+        {
+            exited = WatchExit(p);
+            cancel.Cancel();
+        });
+
+        await Should.ThrowAsync<OperationCanceledException>(run.WaitAsync(TimeSpan.FromSeconds(30), Ct));
+        (await exited!.WaitAsync(TimeSpan.FromSeconds(30), Ct)).ShouldBeTrue();
     }
 }

@@ -37,6 +37,23 @@ try
     var audit = await client.ListAuditAsync();
     var verify = await client.VerifyAuditAsync();
     Console.WriteLine($"Audit:   {audit.Entries.Count} entries, chain ok = {verify.Ok}");
+
+    // The stream endpoint sends the answer as partial frames, then one final frame with the outputs, then done.
+    var frames = await client.StreamAsync(AgentServiceHost.ModuleName, Question);
+    foreach (var frame in frames)
+    {
+        var line = frame.Event switch
+        {
+            "partial" => $"{frame.Data.GetProperty("field").GetString()} = {frame.Data.GetProperty("value").GetString()?.Trim()}",
+            "final" => frame.Data.GetProperty("outputs").GetProperty("Answer").GetString(),
+            _ => "",
+        };
+        Console.WriteLine($"Stream:  {frame.Event} {line}".TrimEnd());
+    }
+    var streamOk = frames.Count >= 2
+        && frames[^2].Event == "final"
+        && frames[^1].Event == "done"
+        && frames.All(f => f.Event != "error");
     await app.StopAsync();
 
     // 2. A ReAct agent whose tool comes from an MCP tool source.
@@ -66,7 +83,7 @@ try
         Console.WriteLine("CLI:     skipped, no reference answer exists for a live model");
     }
 
-    return verify.Ok && replErr.Length == 0 && cliExit == 0 ? 0 : 1;
+    return verify.Ok && streamOk && replErr.Length == 0 && cliExit == 0 ? 0 : 1;
 }
 finally
 {

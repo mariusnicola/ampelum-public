@@ -162,55 +162,14 @@ internal static class StreamEndpoint
 
         try
         {
-            dynamic predict = ((dynamic)slot.Current).Inner;
-            IAsyncEnumerable<dynamic> stream = predict.StreamAsync((dynamic)typedSig, null, ct);
-
-            int eventId = 0;
-            await foreach (var chunk in stream.WithCancellation(ct))
-            {
-                var outputs = (IReadOnlyDictionary<string, object?>)chunk.Trace.Outputs;
-                var boxedOutputs = JsonElementUnboxer.Box(outputs);
-
-                var partialPayload = new SsePartialPayload(traceId, "output", JsonSerializer.Serialize(boxedOutputs));
-                var jsonPayload = JsonSerializer.Serialize(partialPayload, AmpelumHostJsonContext.Default.SsePartialPayload);
-                await sseWriter.WriteEventAsync(SseEvents.Partial, jsonPayload, eventId++, ct);
-            }
-
-            // Final event: emit full outputs
-            var lastChunk = stream as dynamic;
-            var finalOutputs = (IReadOnlyDictionary<string, object?>)lastChunk.Trace.Outputs;
-            var boxedFinalOutputs = JsonElementUnboxer.Box(finalOutputs);
-
-            var usage = lastChunk.Trace.Usage ?? new Microsoft.Extensions.AI.UsageDetails();
-            var modelId = "unknown";
-            if (lastChunk.Trace.Metadata.TryGetValue("model_id", out object? modelIdObj))
-            {
-                if (modelIdObj is string modelIdStr)
-                    modelId = modelIdStr;
-            }
-
-            var finalPayload = new SseFinalPayload(
-                traceId,
-                boxedFinalOutputs,
-                new UsageInfo(
-                    PromptTokens: usage.InputTokenCount ?? 0,
-                    CompletionTokens: usage.OutputTokenCount ?? 0,
-                    CostCents: 0m,
-                    DurationMs: lastChunk.Trace.Duration.TotalMilliseconds),
-                modelId,
-                null);
-
-            var finalJson = JsonSerializer.Serialize(finalPayload, AmpelumHostJsonContext.Default.SseFinalPayload);
-            await sseWriter.WriteEventAsync(SseEvents.Final, finalJson, eventId++, ct);
-
-            // Done event
-            var donePayload = new SseDonePayload(traceId);
-            var doneJson = JsonSerializer.Serialize(donePayload, AmpelumHostJsonContext.Default.SseDonePayload);
-            await sseWriter.WriteEventAsync(SseEvents.Done, doneJson, eventId++, ct);
+            var run = typeof(StreamEndpoint)
+                .GetMethod(nameof(RunStreamAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                .MakeGenericMethod(sigType);
+            await (Task)run.Invoke(null, new object[] { slot.Current, typedSig!, sseWriter, traceId, ct })!;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
-            // Client disconnected
+            // Client disconnected. Any other cancellation, such as a model timeout, is a failure and reaches the error frame below.
         }
         catch (Exception ex)
         {
@@ -236,5 +195,60 @@ internal static class StreamEndpoint
         {
             await sseWriter.DisposeAsync();
         }
+    }
+
+    // The signature type is only known at runtime, so the typed loop lives in a generic method
+    // reached through one reflection call instead of dynamic dispatch.
+    static async Task RunStreamAsync<TSig>(
+        PredictComposedAdapter<TSig> adapter,
+        TSig inputs,
+        SseWriter sseWriter,
+        string traceId,
+        CancellationToken ct) where TSig : ISignature
+    {
+        int eventId = 0;
+        var outputNames = SignatureMetadataCache.For<TSig>().Outputs.Select(o => o.Name).ToHashSet(StringComparer.Ordinal);
+        TraceRecord? finalTrace = null;
+        await foreach (var update in adapter.Inner.StreamAsync(inputs, null, ct).WithCancellation(ct))
+        {
+            if (update.IsFinal)
+            {
+                finalTrace = update.Trace;
+                continue;
+            }
+
+            // The adapter also reports markers that are not outputs, such as the terminator, and an empty name before the first marker.
+            if (!outputNames.Contains(update.FieldName))
+                continue;
+
+            var partialPayload = new SsePartialPayload(traceId, update.FieldName, update.PartialText);
+            var partialJson = JsonSerializer.Serialize(partialPayload, AmpelumHostJsonContext.Default.SsePartialPayload);
+            await sseWriter.WriteEventAsync(SseEvents.Partial, partialJson, eventId++, ct);
+        }
+
+        // StreamAsync throws on failure, so ending without a final update would be a bug.
+        if (finalTrace is null)
+            throw new InvalidOperationException("The stream ended without a final update.");
+
+        var usage = finalTrace.Usage;
+        var modelId = finalTrace.Metadata.TryGetValue("model_id", out var modelIdObj) && modelIdObj is string modelIdStr
+            ? modelIdStr
+            : "unknown";
+
+        var finalPayload = new SseFinalPayload(
+            traceId,
+            JsonElementUnboxer.Box(finalTrace.Outputs),
+            new UsageInfo(
+                PromptTokens: usage?.InputTokenCount ?? 0,
+                CompletionTokens: usage?.OutputTokenCount ?? 0,
+                CostCents: 0m,
+                DurationMs: finalTrace.Duration.TotalMilliseconds),
+            modelId,
+            null);
+        var finalJson = JsonSerializer.Serialize(finalPayload, AmpelumHostJsonContext.Default.SseFinalPayload);
+        await sseWriter.WriteEventAsync(SseEvents.Final, finalJson, eventId++, ct);
+
+        var doneJson = JsonSerializer.Serialize(new SseDonePayload(traceId), AmpelumHostJsonContext.Default.SseDonePayload);
+        await sseWriter.WriteEventAsync(SseEvents.Done, doneJson, eventId, ct);
     }
 }

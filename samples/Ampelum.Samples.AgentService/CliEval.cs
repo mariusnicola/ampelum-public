@@ -32,11 +32,7 @@ public static class CliEval
     public static async Task<(int ExitCode, string Output)> RunAsync(
         string dataset, string metric, string outputDir, CancellationToken ct = default, TimeSpan? timeout = null)
     {
-        var start = new ProcessStartInfo(DotnetHostPath())
-        {
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
+        var start = new ProcessStartInfo(DotnetHostPath());
         foreach (var arg in new[]
                  {
                      CliAssemblyPath, "eval",
@@ -47,8 +43,25 @@ public static class CliEval
                  })
             start.ArgumentList.Add(arg);
 
-        var limit = timeout ?? DefaultTimeout;
-        using var process = Process.Start(start) ?? throw new InvalidOperationException("The CLI process did not start.");
+        return await RunProcessAsync(start, timeout ?? DefaultTimeout, ct);
+    }
+
+    /// <summary>
+    /// Starts the process, waits for it, and kills it with its children when <paramref name="limit"/> passes
+    /// or <paramref name="ct"/> is cancelled. Only the process started here is stopped.
+    /// </summary>
+    /// <param name="start">What to run; output redirection is set here.</param>
+    /// <param name="limit">How long the process may run.</param>
+    /// <param name="ct">Caller cancellation.</param>
+    /// <param name="started">Receives the process right after it starts, so a caller can inspect it.</param>
+    /// <exception cref="TimeoutException">The process did not finish within <paramref name="limit"/>.</exception>
+    internal static async Task<(int ExitCode, string Output)> RunProcessAsync(
+        ProcessStartInfo start, TimeSpan limit, CancellationToken ct, Action<Process>? started = null)
+    {
+        start.RedirectStandardOutput = true;
+        start.RedirectStandardError = true;
+        using var process = Process.Start(start) ?? throw new InvalidOperationException("The process did not start.");
+        started?.Invoke(process);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
         linked.CancelAfter(limit);
         var stdout = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
@@ -63,7 +76,7 @@ public static class CliEval
             await process.WaitForExitAsync(CancellationToken.None);
             if (ct.IsCancellationRequested)
                 throw;
-            throw new TimeoutException($"The CLI did not finish within {limit.TotalSeconds:0.###} seconds and was stopped.");
+            throw new TimeoutException($"The process did not finish within {limit.TotalSeconds:0.###} seconds and was stopped.");
         }
         return (process.ExitCode, await stdout + await stderr);
     }

@@ -60,6 +60,12 @@ public sealed class ServiceFixture : IAsyncLifetime
         return this;
     }
 
+    public ServiceFixture EnqueueStreamingAnswer(string answer)
+    {
+        Model.EnqueueStreamingOutputs(new AnswerSignature { Question = "", Answer = answer });
+        return this;
+    }
+
     /// <summary>All text the model was sent in one call.</summary>
     public string SentText(int call) =>
         string.Join("\n", Model.RecordedCalls[call].Messages.Select(m => m.Text));

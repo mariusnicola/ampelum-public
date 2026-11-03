@@ -107,17 +107,22 @@ public sealed class HostEndpointTests
     }
 
     [Fact]
-    public async Task Stream_IsRefusedWith422BecauseTheModuleIsNotMappedForStreaming()
+    public async Task Stream_SendsPartialFramesThenFinalWithTheAnswerThenDone()
     {
         await using var service = await StartAsync();
-        using var body = new StringContent("""{"inputs":{"Question":"x"}}""", Encoding.UTF8, "application/json");
+        service.EnqueueStreamingAnswer("Delivery takes 3 to 5 business days.");
 
-        using var response = await service.Http.PostAsync($"/modules/{AgentServiceHost.ModuleName}/stream", body, Ct);
+        var frames = await service.Client.StreamAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
 
-        response.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
-        var error = (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ErrorResponse, Ct))!;
-        error.Message.ShouldBe("Module does not support streaming.");
-        service.Model.RecordedCalls.ShouldBeEmpty();
+        var names = frames.Select(f => f.Event).ToList();
+        names[^2..].ShouldBe(["final", "done"]);
+        names[..^2].ShouldNotBeEmpty();
+        names[..^2].ShouldAllBe(n => n == "partial");
+        frames.Last(f => f.Event == "partial").Data.GetProperty("value").GetString()!.Trim()
+            .ShouldBe("Delivery takes 3 to 5 business days.");
+        frames[^2].Data.GetProperty("outputs").GetProperty("Answer").GetString()
+            .ShouldBe("Delivery takes 3 to 5 business days.");
+        service.SentText(0).ShouldContain("How long is delivery?");
     }
 
     [Fact]

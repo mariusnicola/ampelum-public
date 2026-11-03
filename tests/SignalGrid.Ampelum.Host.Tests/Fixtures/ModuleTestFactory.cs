@@ -24,6 +24,20 @@ internal sealed class ModuleTestFactory : IAsyncLifetime
     WebApplication? _app;
     HttpClient? _httpClient;
 
+    readonly IChatClient? _chatClientOverride;
+    readonly Action<IServiceCollection>? _configureServices;
+    readonly bool _supportsStreaming;
+
+    /// <param name="chatClientOverride">Replaces the FakeChatClient registration, for tests that need a client that fails.</param>
+    /// <param name="configureServices">Extra registrations, for tests that add a hook.</param>
+    /// <param name="supportsStreaming">Whether the Fake module is mapped as streaming.</param>
+    public ModuleTestFactory(IChatClient? chatClientOverride = null, Action<IServiceCollection>? configureServices = null, bool supportsStreaming = true)
+    {
+        _chatClientOverride = chatClientOverride;
+        _configureServices = configureServices;
+        _supportsStreaming = supportsStreaming;
+    }
+
     public FakeChatClient FakeChatClient { get; } = new();
     public HttpClient HttpClient => _httpClient ?? throw new InvalidOperationException("Not initialized.");
     public IServiceProvider Services => _app?.Services ?? throw new InvalidOperationException("Not initialized.");
@@ -42,10 +56,11 @@ internal sealed class ModuleTestFactory : IAsyncLifetime
             ["Host:Sse:KeepAliveSeconds"] = "1",
         });
 
-        builder.Services.AddSingleton<IChatClient>(FakeChatClient);
+        builder.Services.AddSingleton<IChatClient>(_chatClientOverride ?? FakeChatClient);
         builder.Services.AddAmpelum()
             .AddAuditHook();
         builder.Services.AddSingleton<IHook>(_ => new BudgetHook(null));
+        _configureServices?.Invoke(builder.Services);
         builder.Services.AddAmpelumHost();
         builder.Services.AddOpenApi();
         builder.Services.AddLogging();
@@ -54,7 +69,7 @@ internal sealed class ModuleTestFactory : IAsyncLifetime
         _app.UseMiddleware<ProblemDetailsMiddleware>();
         _app.MapAmpelumModule<FakeSig>("Fake",
             sp => sp.GetRequiredService<Predict<FakeSig>>(),
-            supportsStreaming: true);
+            supportsStreaming: _supportsStreaming);
         _app.MapAmpelumHostEndpoints();
 
         await _app.StartAsync();

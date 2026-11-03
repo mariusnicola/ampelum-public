@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.ServerSentEvents;
 using System.Text.Json;
 using SignalGrid.Ampelum.Host.Contracts;
 
@@ -12,6 +13,9 @@ public sealed class AgentServiceException(HttpStatusCode status, ErrorResponse? 
     public HttpStatusCode Status { get; } = status;
     public ErrorResponse? Error { get; } = error;
 }
+
+/// <summary>One frame of a stream response: the SSE event name and its JSON payload.</summary>
+public sealed record StreamFrame(string Event, JsonElement Data);
 
 /// <summary>Calls the Host's HTTP endpoints.</summary>
 public sealed class AgentServiceClient(HttpClient http)
@@ -32,6 +36,28 @@ public sealed class AgentServiceClient(HttpClient http)
         if (!response.IsSuccessStatusCode)
             throw await FailureAsync(response, ct);
         return (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ForwardResponse, ct))!;
+    }
+
+    /// <summary>
+    /// Calls <c>/modules/{module}/stream</c> and returns every frame the service sends, in order, to the end of the response.
+    /// A <c>partial</c> frame carries a field's text so far, <c>final</c> carries the outputs, <c>done</c> is last.
+    /// </summary>
+    public async Task<IReadOnlyList<StreamFrame>> StreamAsync(string module, string question, CancellationToken ct = default)
+    {
+        var inputs = new Dictionary<string, JsonElement> { ["Question"] = JsonSerializer.SerializeToElement(question) };
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"/modules/{module}/stream")
+        {
+            Content = JsonContent.Create(new ForwardRequest(inputs), AmpelumHostContractsJsonContext.Default.ForwardRequest),
+        };
+        using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (!response.IsSuccessStatusCode)
+            throw await FailureAsync(response, ct);
+
+        var frames = new List<StreamFrame>();
+        await using var body = await response.Content.ReadAsStreamAsync(ct);
+        await foreach (var item in SseParser.Create(body).EnumerateAsync(ct))
+            frames.Add(new StreamFrame(item.EventType, JsonDocument.Parse(item.Data).RootElement.Clone()));
+        return frames;
     }
 
     public async Task<AuditPage> ListAuditAsync(CancellationToken ct = default) =>

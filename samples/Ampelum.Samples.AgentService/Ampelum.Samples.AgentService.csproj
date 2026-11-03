@@ -17,4 +17,7 @@
     <ProjectReference Include="..\..\src\SignalGrid.Ampelum.Host\SignalGrid.Ampelum.Host.csproj" />
     <ProjectReference Include="..\..\src\SignalGrid.Ampelum.Host.Contracts\SignalGrid.Ampelum.Host.Contracts.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Samples.AgentService.Tests" />
+  </ItemGroup>
 </Project>
