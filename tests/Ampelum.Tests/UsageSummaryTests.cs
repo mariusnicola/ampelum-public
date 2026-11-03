@@ -48,3 +48,43 @@ public sealed class ChatCostSummaryTests
         rates.Estimate(1000, 500).ShouldBe(1000 * 0.000001m + 500 * 0.000003m);
     }
 }
+
+public sealed class ModelRateTablePerModelTests
+{
+    static readonly ModelRateTable Default = new(InputPerToken: 0.000001m, OutputPerToken: 0.000003m);
+
+    [Fact]
+    public void EstimateCost_UsesTheRatesOfTheNamedModel()
+    {
+        var table = Default with
+        {
+            PerModel = new Dictionary<string, ModelRateTable>
+            {
+                ["big"] = new(InputPerToken: 0.00001m, OutputPerToken: 0.00003m),
+            },
+        };
+
+        table.EstimateCost("big", 1000, 500).ShouldBe(1000 * 0.00001m + 500 * 0.00003m);
+        table.EstimateCost("small", 1000, 500).ShouldBe(1000 * 0.000001m + 500 * 0.000003m);
+    }
+
+    [Fact]
+    public void EstimateCost_WithNoPerModelRates_UsesTheDefaultPairForAnyModel()
+    {
+        Default.EstimateCost("anything", 1000, 500).ShouldBe(Default.Estimate(1000, 500));
+    }
+
+    [Fact]
+    public void EstimateCost_MatchesModelIdExactly()
+    {
+        var table = Default with
+        {
+            PerModel = new Dictionary<string, ModelRateTable>
+            {
+                ["big"] = new(InputPerToken: 1m, OutputPerToken: 1m),
+            },
+        };
+
+        table.EstimateCost("BIG", 1, 1).ShouldBe(Default.Estimate(1, 1));
+    }
+}

@@ -84,6 +84,34 @@ public sealed class StreamingChatSessionTests
         session.LastUsage!.EstimatedCostUsd.ShouldBe(expected);
     }
 
+    [Theory]
+    [InlineData("big", 0.00001, 0.00003)]
+    [InlineData("small", 0.0000001, 0.0000003)]
+    [InlineData("unlisted", 0.000001, 0.000003)]
+    [InlineData(null, 0.000001, 0.000003)]
+    public async Task SendAsync_WithPerModelRates_PricesTheTurnAtTheRatesOfTheModelThatAnswered(
+        string? modelId, double input, double output)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var rates = new ModelRateTable(InputPerToken: 0.000001m, OutputPerToken: 0.000003m)
+        {
+            PerModel = new Dictionary<string, ModelRateTable>
+            {
+                ["big"] = new(InputPerToken: 0.00001m, OutputPerToken: 0.00003m),
+                ["small"] = new(InputPerToken: 0.0000001m, OutputPerToken: 0.0000003m),
+            },
+        };
+        var chat = new UsageReportingClient(
+            chunks: ["response"],
+            usage: new UsageDetails { InputTokenCount = 1000, OutputTokenCount = 500 },
+            modelId: modelId);
+        var session = new StreamingChatSession(BaseCtx(chat), "Sys", rates: rates);
+
+        await foreach (var _ in session.SendAsync("query", ct)) { }
+
+        session.LastUsage!.EstimatedCostUsd.ShouldBe(1000 * (decimal)input + 500 * (decimal)output);
+    }
+
     // ── hooks ────────────────────────────────────────────────────────────────
 
     [Fact]
@@ -288,7 +316,7 @@ public sealed class StreamingChatSessionTests
         { ErrorFired = true; return default; }
     }
 
-    sealed class UsageReportingClient(string[] chunks, UsageDetails usage) : IChatClient
+    sealed class UsageReportingClient(string[] chunks, UsageDetails usage, string? modelId = null) : IChatClient
     {
         public ChatClientMetadata Metadata => new("test");
         public object? GetService(Type t, object? k) => null;
@@ -302,10 +330,10 @@ public sealed class StreamingChatSessionTests
             foreach (var c in chunks)
             {
                 await Task.Yield();
-                yield return new ChatResponseUpdate(ChatRole.Assistant, c);
+                yield return new ChatResponseUpdate(ChatRole.Assistant, c) { ModelId = modelId };
             }
             await Task.Yield();
-            yield return new ChatResponseUpdate { Contents = [new UsageContent(usage)] };
+            yield return new ChatResponseUpdate { Contents = [new UsageContent(usage)], ModelId = modelId };
         }
     }
 

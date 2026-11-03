@@ -342,7 +342,7 @@ public sealed class StreamingChatSession
                 ExceptionDispatchInfo.Capture(terminalError).Throw();
 
             var summary = new ChatCostSummary(totalInput, totalOutput,
-                _rates?.Estimate(totalInput, totalOutput));
+                _rates?.EstimateCost(lastModelId ?? string.Empty, totalInput, totalOutput));
             LastUsage = summary;
             SessionTotal += summary;
         }

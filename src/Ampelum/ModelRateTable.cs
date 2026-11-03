@@ -16,8 +16,14 @@ public record ModelRateTable(decimal InputPerToken, decimal OutputPerToken)
     public decimal Estimate(long inputTokens, long outputTokens) =>
         inputTokens * InputPerToken + outputTokens * OutputPerToken;
 
-    /// <summary>Estimates the total cost in USD for the given model and token counts.
-    /// The modelId parameter is accepted for API compatibility but unused in single-model instances.</summary>
+    /// <summary>Rates for named models, matched to the model id exactly (ordinal). A model not listed here is priced
+    /// with this table's own <see cref="InputPerToken"/> and <see cref="OutputPerToken"/>.</summary>
+    public IReadOnlyDictionary<string, ModelRateTable>? PerModel { get; init; }
+
+    /// <summary>Estimates the total cost in USD for the given model and token counts, using the rates listed for
+    /// <paramref name="modelId"/> in <see cref="PerModel"/>, or this table's own pair when the model is not listed.</summary>
     public decimal EstimateCost(string modelId, long inputTokens, long outputTokens) =>
-        Estimate(inputTokens, outputTokens);
+        PerModel is not null && PerModel.TryGetValue(modelId, out var rates)
+            ? rates.Estimate(inputTokens, outputTokens)
+            : Estimate(inputTokens, outputTokens);
 }

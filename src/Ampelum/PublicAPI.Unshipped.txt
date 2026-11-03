@@ -1138,6 +1138,8 @@ const Ampelum.Audit.AuditMetadataKeys.TraceId = "ampelum.audit.trace_id" -> stri
 [AMPELUM_V09_PREVIEW]Ampelum.Composition.Refine<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
 [AMPELUM_V09_PREVIEW]Ampelum.Composition.Parallel<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
 [AMPELUM_V09_PREVIEW]Ampelum.Composition.MultiChainComparison<TSig>.Ampelum.IModule<TSig, TSig>.ForwardAsync(TSig inputs, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Ampelum.Prediction<TSig>!>!
+[AMPELUM_V09_PREVIEW]Ampelum.ModelRateTable.PerModel.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Ampelum.ModelRateTable!>?
+[AMPELUM_V09_PREVIEW]Ampelum.ModelRateTable.PerModel.init -> void
 [AMPELUM_V09_PREVIEW]Ampelum.ModelRateTable.EstimateCost(string! modelId, long inputTokens, long outputTokens) -> decimal
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Detection.<Clone>$() -> SignalGrid.Ampelum.Detection!
