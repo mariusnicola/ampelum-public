@@ -1,0 +1,8 @@
+preset: minimal
+overrides:
+  maxFileLines: 12
+extraRules:
+  - rule: no-dynamic
+    severity: warning
+  - rule: no-bare-llm-prompts
+    severity: error

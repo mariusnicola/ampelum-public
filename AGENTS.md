@@ -54,6 +54,8 @@ The README's [Use cases](README.md#use-cases) section lists every sample with it
 - Comparing optimizers and exporting traces: `samples/Ampelum.Samples.TracedPipeline`
 - Hosting behind HTTP: `samples/Ampelum.Samples.AgentService`
 - Safety hooks and what they miss: `samples/Ampelum.Samples.SafetyGateway`
+- Composing modules, agents and GEPA tuning: `samples/Ampelum.Samples.ComposedPrograms`
+- Planned workflow that stops for approval and resumes: `samples/Ampelum.Samples.AgentRuntime`
 - Task-sized examples: `docs/recipes/`
 - Concepts and layers: `docs/architecture.md`
 - Settings: `docs/configuration.md`

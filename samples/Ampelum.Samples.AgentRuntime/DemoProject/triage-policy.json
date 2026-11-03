@@ -1,0 +1,12 @@
+{
+  "maxModelCalls": 10,
+  "maxTokens": 2000,
+  "readablePaths": ["src"],
+  "grantMinutes": 30,
+  "routing": {
+    "classify": "fast",
+    "analyse": "balanced",
+    "refine": "capable",
+    "plan": "capable"
+  }
+}

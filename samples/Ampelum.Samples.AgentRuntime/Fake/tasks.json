@@ -1,0 +1,5 @@
+[
+  { "id": "audit-101", "description": "Audit issue 101", "taskType": "audit", "dependsOn": [], "metadata": { "issue": 101 } },
+  { "id": "audit-102", "description": "Audit issue 102", "taskType": "audit", "dependsOn": [], "metadata": { "issue": 102 } },
+  { "id": "audit-103", "description": "Audit issue 103", "taskType": "audit", "dependsOn": [], "metadata": { "issue": 103 } }
+]

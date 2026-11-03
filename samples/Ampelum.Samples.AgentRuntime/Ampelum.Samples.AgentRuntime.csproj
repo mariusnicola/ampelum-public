@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Ampelum.Samples.AgentRuntime</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- The demo folder is data for the run, not code for this project. -->
+    <Compile Remove="DemoProject\**" />
+    <EmbeddedResource Include="DemoProject\**" LogicalName="DemoProject/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="skills.json" LogicalName="skills.json" />
+    <EmbeddedResource Include="brief-template.txt" LogicalName="brief-template.txt" />
+    
+    <EmbeddedResource Include="Fake\*.json;Fake\*.yml" LogicalName="fake/%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Ampelum.Samples.AgentRuntime.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ampelum.Samples.Shared\Ampelum.Samples.Shared.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent\Ampelum.Agent.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Yaml\Ampelum.Agent.Yaml.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Synthesis\Ampelum.Agent.Synthesis.csproj" />
+  </ItemGroup>
+</Project>

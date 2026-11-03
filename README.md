@@ -140,6 +140,13 @@ dotnet run --project samples/Ampelum.Samples.ComposedPrograms -c Release -- --fa
 dotnet test tests/Ampelum.Samples.ComposedPrograms.Tests
 ```
 
+**Agent runtime** (`samples/Ampelum.Samples.AgentRuntime`). A long task over a small demo project: triage three backlog issues, edit the report, stop for approval, then post. The model plans a workflow in YAML that uses fan out, join, loop, approval, wait and tool steps. The run pauses at the approval step and a second runtime, with new objects on the same state folder, resumes it without repeating a step or a model call. Along the way it shows the event log, memory that keeps the goal across the restart, skill selection, model tiers, a budget that defers issues, a tool that needs a grant, conventions and code facts. Both runtimes live in one OS process, and the pause comes from the sample's approval handler because the runtime gives `Approval` no pause of its own. The live path has never been run.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.AgentRuntime -c Release -- --fake
+dotnet test tests/Ampelum.Samples.AgentRuntime.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
@@ -204,6 +211,12 @@ Workflows
 - The `WaitForSignal`, `Evaluate`, `EmitEvent` and `Compensate` step kinds are accepted by `WorkflowYamlCompiler`, but `DurableWorkflowRuntime` rejects a definition that contains one, with an `ArgumentException` (`src/Ampelum.Agent/Orchestration/DurableWorkflowRuntime.cs`: the set is at lines 591 to 597, the throw at lines 618 and 619).
 - `Approval` and `Wait` steps are not rejected, but nothing in the runtime or the compiler gives them pause behavior. They run like any other step through your handler, and `WorkflowToolStepHandler` fails any step that is not a `Tool` step (`src/Ampelum.Agent/Orchestration/WorkflowToolStepHandler.cs`, line 62).
 - A `WorkflowPolicyGate` decision of `RequireConfirmation` fails the step. There is no approve-then-resume path (same file, line 68).
+- `DurableAgentRuntime.PauseAsync` followed by `ResumeAsync` on the same instance throws "Cannot resolve escalation from state Running". A fresh instance on the same state store resumes.
+- `SessionBudget` reports `IsExhausted` and `IsWarning`, but nothing in `src` enforces the budget.
+- `SkillRegistry.LoadAsync` does nothing.
+- `JsonFileProjectRegistry` stores label, root and escalation policy only; the blast radius and allowed tools are derived again on load.
+- The code indexer's `ExtractCalls` covers only Method or Function symbols, and its method pattern misses plain return types, so in practice the index holds type declarations and imports.
+- `ISynthesisInfrastructure` has no implementation in the library.
 - `DefaultWorkflowSynthesizer.PromoteAsync` validates and writes a candidate. It does not call `WorkflowPromotionEvaluator`, and nothing in the repository produces the evaluations that class expects (`src/Ampelum.Agent.Synthesis/DefaultWorkflowSynthesizer.cs`, lines 115 to 136).
 
 MCP
@@ -223,7 +236,8 @@ Host
 
 Written but not called by shipped code
 
-- `ConfiguredModelRouter` with `ModelRoutingTable`, `WorkflowPromotionEvaluator`, `DurableAgentRuntime`, `CronPortfolioScheduler`, `IExecutionSandbox` with `ProcessSandbox`, `NullOptimizerRunner` in the Host, and the Host option `Host:Modules:RegistryFile`, which the code marks as reserved. They are public API and most have tests, but no other code in this repository uses them.
+- `WorkflowPromotionEvaluator`, `CronPortfolioScheduler`, `NullOptimizerRunner` in the Host, and the Host option `Host:Modules:RegistryFile`, which the code marks as reserved. They are public API and most have tests, but no other code in this repository uses them.
+- `ConfiguredModelRouter` with `ModelRoutingTable` and `DurableAgentRuntime` are used only by the agent runtime sample, and `IExecutionSandbox` with `ProcessSandbox` only by the safety gateway sample.
 
 - `PhoenixCredentials` is accepted by `AddPhoenixExporter` and nothing reads it. Delivery and its API key belong to the OTLP exporter the host configures.
 

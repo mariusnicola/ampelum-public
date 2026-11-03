@@ -1,0 +1,4 @@
+Issue #{{issue}}: {{title}}
+Skill guidance: {{skill}}
+Code facts:
+{{facts}}

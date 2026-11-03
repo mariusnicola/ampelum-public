@@ -1,0 +1,31 @@
+id: backlog-triage
+version: 1.0.0
+name: Backlog triage
+risk:
+  max_effect_class: additive
+steps:
+  # The runtime does not track workers as nodes: the step handler fans the work out itself.
+  - id: assess
+    kind: fan_out
+    workers:
+      - lane: backlog
+  - id: collect
+    kind: join
+    depends_on: [assess]
+  - id: refine
+    kind: loop
+    max_iterations: 2
+    depends_on: [collect]
+  - id: signoff
+    kind: approval
+    autonomy: require_approval
+    depends_on: [refine]
+  - id: settle
+    kind: wait
+    depends_on: [signoff]
+  - id: report
+    kind: tool
+    tool: post_report
+    depends_on: [settle]
+    effect: additive
+    tool_allow_list: [post_report]

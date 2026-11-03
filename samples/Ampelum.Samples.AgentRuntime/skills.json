@@ -1,0 +1,31 @@
+[
+  {
+    "name": "bug-triage",
+    "version": "1.0.0",
+    "description": "Localise a defect and name the likely cause",
+    "tags": ["bug"],
+    "systemPrompt": "You triage defects. Name the file and method most likely at fault."
+  },
+  {
+    "name": "pricing-review",
+    "version": "1.0.0",
+    "description": "Review money arithmetic and rounding",
+    "tags": ["bug", "pricing"],
+    "systemPrompt": "You review money arithmetic. Check rounding mode and decimal scale."
+  },
+  {
+    "name": "llm-hygiene",
+    "version": "1.0.0",
+    "description": "Review model call sites against the project conventions",
+    "tags": ["hygiene"],
+    "systemPrompt": "You review how code calls a language model. Prefer the project abstraction over raw calls."
+  },
+  {
+    "name": "release-notes",
+    "version": "1.0.0",
+    "description": "Draft release notes",
+    "tags": ["docs"],
+    "deprecated": true,
+    "systemPrompt": "You draft release notes."
+  }
+]

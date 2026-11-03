@@ -1,0 +1,17 @@
+{
+  "101": {
+    "severity": "high",
+    "cause": "OrderService.Total starts from a dynamic sum, so an empty cart skips the discount path.",
+    "nextStep": "Return zero for an empty cart and replace dynamic with decimal."
+  },
+  "102": {
+    "severity": "medium",
+    "cause": "Pricing.ApplyDiscount never rounds, so the order total carries more than two decimals.",
+    "nextStep": "Round the discounted amount to two decimals with away-from-zero rounding."
+  },
+  "103": {
+    "severity": "low",
+    "cause": "Notifier calls GetResponseAsync directly instead of going through the project abstraction.",
+    "nextStep": "Route the call through the shared model module."
+  }
+}
