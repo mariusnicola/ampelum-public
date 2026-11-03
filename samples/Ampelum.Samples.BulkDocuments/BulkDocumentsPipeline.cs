@@ -123,8 +123,8 @@ public sealed class BulkDocumentsPipeline : IDisposable
     }
 
     /// <summary>
-    /// The same summary as updates while the model writes. Streaming does not fail over: the router
-    /// picks one endpoint per request and the circuit breaker does not guard a stream already running.
+    /// The same summary as updates while the model writes. The router fails over to the next endpoint only
+    /// before the first update; the circuit breaker does not guard a stream already running.
     /// </summary>
     public async IAsyncEnumerable<PredictionUpdate<SummarySignature>> StreamSummaryAsync(
         Document document, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)

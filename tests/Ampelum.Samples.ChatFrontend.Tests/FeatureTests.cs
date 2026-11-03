@@ -25,6 +25,22 @@ public sealed class FeatureTests
     }
 
     [Fact]
+    public async Task Conversation_WhenThePrimaryIsDownBeforeTheFirstToken_StreamsTheReplyFromTheFallback()
+    {
+        var primary = new DownChatClient();
+        using var h = new Harness(primary: primary);
+        h.Fallback.EnqueueStreamingChunks("From ", "fallback");
+
+        var tokens = new List<string>();
+        await foreach (var token in h.Backend.OpenConversation().SendAsync("Hi", Ct))
+            tokens.Add(token);
+
+        tokens.ShouldBe(["From ", "fallback"]);
+        primary.Calls.ShouldBe(1);
+        h.Fallback.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Conversation_SendsTheSystemPromptAndEarlierTurnsWithEachMessage()
     {
         using var h = new Harness();

@@ -15,7 +15,7 @@ An unparseable reply is re-asked with the parse error by `RetryHook`.
 
 The response cache is exact match. The same prompt text and options hit. A document that differs by one character misses. There is no similarity matching.
 
-Streaming does not fail over. The router picks one endpoint per streamed request and does not try the next one.
+A streamed request fails over to the next endpoint only before its first update (`Stream_FailsOverToTheFallback_WhenThePrimaryCannotStream`). A stream that fails after an update was returned reaches the caller.
 
 The demo run keeps its cache in a temporary folder and deletes it at the end, so it shows a hit inside one run only. That the cache survives a new pipeline instance on disk is shown by the test `Cache_OnDisk_SurvivesANewPipelineInstance`.
 

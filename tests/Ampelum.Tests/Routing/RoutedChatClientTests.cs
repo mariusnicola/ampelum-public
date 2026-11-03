@@ -118,6 +118,102 @@ public sealed class RoutedChatClientTests
         pieces.ShouldContain("chunk-1");
     }
 
+    static async Task<List<string>> Stream(RoutedChatClient router, CancellationToken ct)
+    {
+        var pieces = new List<string>();
+        await foreach (var u in router.GetStreamingResponseAsync(Msgs(), null, ct))
+            pieces.Add(u.Text);
+        return pieces;
+    }
+
+    [Fact]
+    public async Task GetStreamingResponseAsync_PrimaryFailsBeforeAnyUpdate_FailsOverToFallback()
+    {
+        var down = new FakeChatClient(); // no streaming reply queued: the stream throws on its first read
+        var ok = new FakeChatClient().EnqueueStreamingChunks("from-", "fallback");
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", down), new ProviderEndpoint("b", ok)],
+            new Failover());
+
+        var pieces = await Stream(router, TestContext.Current.CancellationToken);
+
+        pieces.ShouldBe(["from-", "fallback"]);
+        down.RecordedCalls.Count.ShouldBe(1);
+        ok.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetStreamingResponseAsync_PrimaryFailsAfterAnUpdateWasSent_ThrowsAndNeverAsksTheFallback()
+    {
+        var partial = new FailingStreamClient("part-");
+        var ok = new FakeChatClient().EnqueueStreamingChunks("never");
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", partial), new ProviderEndpoint("b", ok)],
+            new Failover());
+        var pieces = new List<string>();
+
+        await Should.ThrowAsync<HttpRequestException>(async () =>
+        {
+            await foreach (var u in router.GetStreamingResponseAsync(Msgs(), null, TestContext.Current.CancellationToken))
+                pieces.Add(u.Text);
+        });
+
+        pieces.ShouldBe(["part-"]);
+        ok.RecordedCalls.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetStreamingResponseAsync_AllFail_RethrowsLastError()
+    {
+        var a = new FakeChatClient();
+        var b = new FakeChatClient();
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", a), new ProviderEndpoint("b", b)],
+            new Failover());
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(() =>
+            Stream(router, TestContext.Current.CancellationToken));
+
+        ex.Message.ShouldContain("no enqueued streaming chunks");
+        a.RecordedCalls.Count.ShouldBe(1);
+        b.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task GetStreamingResponseAsync_Cancelled_PropagatesAndNeverAsksTheFallback()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var first = new StreamingClient(["x"]);
+        var ok = new FakeChatClient().EnqueueStreamingChunks("never");
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", first), new ProviderEndpoint("b", ok)],
+            new Failover());
+
+        await Should.ThrowAsync<OperationCanceledException>(() => Stream(router, cts.Token));
+
+        ok.RecordedCalls.ShouldBeEmpty();
+    }
+
+    sealed class FailingStreamClient(string firstChunk) : IChatClient
+    {
+        public ChatClientMetadata Metadata { get; } = new(nameof(FailingStreamClient));
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            yield return new ChatResponseUpdate(ChatRole.Assistant, firstChunk);
+            await Task.Yield();
+            throw new HttpRequestException("dropped mid-stream");
+        }
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+    }
+
     [Fact]
     public void GetService_KnownTypes_AreResolved()
     {

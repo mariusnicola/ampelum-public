@@ -328,17 +328,17 @@ public sealed class BulkDocumentsPipelineTests
     }
 
     [Fact]
-    public async Task Stream_DoesNotFailOver_WhenThePrimaryCannotStream()
+    public async Task Stream_FailsOverToTheFallback_WhenThePrimaryCannotStream()
     {
         using var rig = new Rig();
-        // The primary has no streaming reply queued, so its stream fails; the fallback could answer.
-        FakeScript.EnqueueStreamedSummary(rig.Endpoints.Fallback, "never reached");
+        // The primary has no streaming reply queued, so its stream fails before the first update.
+        FakeScript.EnqueueStreamedSummary(rig.Endpoints.Fallback, "fallback answer");
 
-        await Should.ThrowAsync<Exception>(
-            async () => await Collect(rig.Pipeline.StreamSummaryAsync(Doc(1), TestContext.Current.CancellationToken)));
+        var updates = await Collect(rig.Pipeline.StreamSummaryAsync(Doc(1), TestContext.Current.CancellationToken));
 
+        updates[^1].Value!.Summary.ShouldBe("fallback answer");
         rig.Endpoints.Primary.RecordedCalls.Count.ShouldBe(1);
-        rig.Endpoints.Fallback.RecordedCalls.Count.ShouldBe(0);
+        rig.Endpoints.Fallback.RecordedCalls.Count.ShouldBe(1);
     }
 
     [Fact]

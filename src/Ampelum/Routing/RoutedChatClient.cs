@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.AI;
 
 namespace SignalGrid.Ampelum.Routing;
@@ -12,8 +13,9 @@ namespace SignalGrid.Ampelum.Routing;
 /// <para>The router is intentionally allocation-light: all endpoint state is held in
 /// an <see cref="IReadOnlyList{T}"/> supplied at construction; per-call work is the
 /// strategy lookup plus, on failure, walking the fallback chain.</para>
-/// <para>Streaming round-trips do NOT participate in failover for this batch (a partial
-/// stream cannot safely be retried mid-flight); they always run on the primary.</para>
+/// <para>A streamed call fails over only while no update has been returned yet: an endpoint whose stream
+/// throws before its first update is replaced by the next one in the chain. Once an update was returned,
+/// a later failure reaches the caller, because a partial stream cannot safely be retried.</para>
 /// </remarks>
 [Experimental("AMPELUM_V09_PREVIEW")]
 public sealed class RoutedChatClient : IChatClient
@@ -74,13 +76,51 @@ public sealed class RoutedChatClient : IChatClient
     }
 
     /// <inheritdoc cref="IChatClient"/>
-    public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+    public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
         IEnumerable<ChatMessage> messages,
         ChatOptions? options = null,
-        CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var decision = _strategy.Select(_endpoints);
-        return decision.Primary.Client.GetStreamingResponseAsync(messages, options, cancellationToken);
+        var attempts = new List<ProviderEndpoint>(1 + decision.Fallbacks.Count) { decision.Primary };
+        attempts.AddRange(decision.Fallbacks);
+        var buffered = messages as IList<ChatMessage> ?? [.. messages];
+
+        for (var i = 0; ; i++)
+        {
+            IAsyncEnumerator<ChatResponseUpdate>? stream = null;
+            bool hasFirst;
+            try
+            {
+                stream = attempts[i].Client.GetStreamingResponseAsync(buffered, options, cancellationToken)
+                    .GetAsyncEnumerator(cancellationToken);
+                hasFirst = await stream.MoveNextAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                if (stream is not null) await stream.DisposeAsync().ConfigureAwait(false);
+                // Nothing was sent yet, so the next endpoint can answer instead.
+                if (i < attempts.Count - 1 && !(ex is OperationCanceledException && cancellationToken.IsCancellationRequested))
+                    continue;
+                throw;
+            }
+
+            // From the first update on the caller has data, so a later failure is not retried.
+            try
+            {
+                if (hasFirst)
+                {
+                    yield return stream.Current;
+                    while (await stream.MoveNextAsync().ConfigureAwait(false))
+                        yield return stream.Current;
+                }
+            }
+            finally
+            {
+                await stream.DisposeAsync().ConfigureAwait(false);
+            }
+            yield break;
+        }
     }
 
     /// <inheritdoc cref="IChatClient"/>

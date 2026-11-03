@@ -307,7 +307,7 @@ Caching
 
 Routing and tracing
 
-- Streaming does not fail over. `RoutedChatClient` streams from the primary decision only (`src/Ampelum/Routing/RoutedChatClient.cs`).
+- A streamed call through `RoutedChatClient` fails over only before its first update. A stream that fails after an update was returned reaches the caller, because a partial stream is not retried.
 - The `AddLangFuseExporter`, `AddLangSmithExporter` and `AddPhoenixExporter` calls wrap the prior `ITraceSink`, and the exporter never disposes it, so a batched inner sink is not flushed by disposing the exporter.
 
 Retrieval and vector stores

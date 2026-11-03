@@ -14,26 +14,6 @@ public sealed class KnownLimitTests
     static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task KnownLimit_StreamingDoesNotFailOver_ThePrimaryErrorReachesTheCallerAndTheFallbackIsNeverAsked()
-    {
-        var primary = new DownChatClient();
-        using var h = new Harness(primary: primary);
-        h.Fallback.EnqueueStreamingChunks("Never", "sent");
-        h.Fallback.EnqueueText("A one-shot call would have been rescued.");
-
-        await Should.ThrowAsync<HttpRequestException>(async () =>
-        {
-            await foreach (var _ in h.Backend.OpenConversation().SendAsync("Hi", Ct)) { }
-        });
-
-        primary.Calls.ShouldBe(1);
-        h.Fallback.RecordedCalls.ShouldBeEmpty();
-
-        // The same outage on a one-shot call is rescued, so the gap is specific to streaming.
-        (await h.Backend.QuickReplyAsync("Hi?", Ct)).Endpoint.ShouldBe(ChatBackend.FallbackEndpoint);
-    }
-
-    [Fact]
     public async Task KnownLimit_ConversationSendsTextBeforeTheAfterHooks_SoModerationFailsTheTurnOnlyAfterTheFlaggedTextWasDelivered()
     {
         var moderator = new MarkerModerator();
