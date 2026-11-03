@@ -1,3 +1,4 @@
+using Npgsql;
 using SignalGrid.Ampelum.Agent.Contracts;
 using SignalGrid.Ampelum.Agent.Orchestration;
 using Shouldly;
@@ -6,12 +7,62 @@ using Xunit;
 namespace SignalGrid.Ampelum.Agent.Tests.Orchestration;
 
 [Collection("PostgresWorkflowPersistence")]
-public sealed class PostgresWorkflowPersistenceTests
+public sealed class PostgresWorkflowPersistenceTests : IAsyncDisposable
 {
+    // Every execution id a test writes starts with one of these; the rows are removed after each test because the
+    // persistence has no delete API.
+    private readonly List<string> _prefixes = [];
+
+    [Fact]
+    public async Task Constructor_ExistingSchemaWhileAWriterHoldsACheckpointRow_DoesNotWaitForTheWriter()
+    {
+        CreateStore();
+        var executionId = Track("postgres-ctor-" + Guid.NewGuid().ToString("N"));
+        await using var writer = new NpgsqlConnection(ConnectionString());
+        await writer.OpenAsync(TestContext.Current.CancellationToken);
+        await using var transaction = await writer.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        await using (var insert = new NpgsqlCommand(
+            "INSERT INTO ampelum_workflow_checkpoints (execution_id, snapshot_json, version, updated_at_utc) VALUES (@id, '{}'::jsonb, 0, now());",
+            writer, transaction))
+        {
+            insert.Parameters.AddWithValue("id", executionId);
+            await insert.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+        }
+
+        var construction = Task.Run(CreateStore, TestContext.Current.CancellationToken);
+
+        await construction.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+        await transaction.RollbackAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task Constructor_CheckpointTableWithoutVersionColumn_AddsTheColumnAndCreatesTheMissingTables()
+    {
+        var schema = "ampelum_test_" + Guid.NewGuid().ToString("N");
+        var scoped = new NpgsqlConnectionStringBuilder(ConnectionString()) { SearchPath = schema }.ConnectionString;
+        await using var admin = new NpgsqlConnection(ConnectionString());
+        await admin.OpenAsync(TestContext.Current.CancellationToken);
+        await Execute(admin, $"CREATE SCHEMA {schema}; CREATE TABLE {schema}.ampelum_workflow_checkpoints (execution_id TEXT PRIMARY KEY, snapshot_json JSONB NOT NULL, updated_at_utc TIMESTAMPTZ NOT NULL);");
+        try
+        {
+            _ = new PostgresWorkflowPersistence(scoped);
+
+            await using var read = new NpgsqlCommand($"""
+                SELECT (SELECT count(*) FROM information_schema.columns WHERE table_schema = '{schema}' AND table_name = 'ampelum_workflow_checkpoints' AND column_name = 'version')
+                     + (SELECT count(*) FROM information_schema.tables WHERE table_schema = '{schema}' AND table_name = 'ampelum_workflow_runtime_audit');
+                """, admin);
+            (await read.ExecuteScalarAsync(TestContext.Current.CancellationToken)).ShouldBe(2L);
+        }
+        finally
+        {
+            await Execute(admin, $"DROP SCHEMA {schema} CASCADE;");
+        }
+    }
+
     [Fact]
     public async Task ResumeAsync_RecreatedPersistence_ExecutesOnlyRemainingNodeWithStableIdempotencyKey()
     {
-        var request = CreateRequest("postgres-restart-" + Guid.NewGuid().ToString("N"), stepCount: 2);
+        var request = CreateRequest(Track("postgres-restart-" + Guid.NewGuid().ToString("N")), stepCount: 2);
         var firstStore = CreateStore();
         var nodes = request.Workflow.Steps.ToDictionary(
             step => step.StepId,
@@ -43,7 +94,7 @@ public sealed class PostgresWorkflowPersistenceTests
     [Fact]
     public async Task RunAsync_TwoRecreatedPersistenceInstances_AtomicallyClaimOneNode()
     {
-        var request = CreateRequest("postgres-concurrent-" + Guid.NewGuid().ToString("N"), stepCount: 1);
+        var request = CreateRequest(Track("postgres-concurrent-" + Guid.NewGuid().ToString("N")), stepCount: 1);
         var first = CreateStore();
         var second = CreateStore();
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -75,7 +126,7 @@ public sealed class PostgresWorkflowPersistenceTests
     [Fact]
     public async Task Runtime_RetryCancellationAndFailure_AuditOrderSurvivesPersistenceReload()
     {
-        var prefix = "postgres-audit-" + Guid.NewGuid().ToString("N");
+        var prefix = Track("postgres-audit-" + Guid.NewGuid().ToString("N"));
         var first = CreateStore();
         var retryAttempts = 0;
         await new DurableWorkflowRuntime(first, first, maxAttempts: 2).RunAsync(
@@ -111,13 +162,40 @@ public sealed class PostgresWorkflowPersistenceTests
         retryAudit.Concat(cancellationAudit).Concat(failureAudit).Select(x => x.Sequence).Distinct().Count().ShouldBe(retryAudit.Count + cancellationAudit.Count + failureAudit.Count);
     }
 
-    private static PostgresWorkflowPersistence CreateStore()
+    public async ValueTask DisposeAsync()
+    {
+        if (_prefixes.Count == 0) return;
+        await using var connection = new NpgsqlConnection(ConnectionString());
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+        await using var command = new NpgsqlCommand("""
+            DELETE FROM ampelum_workflow_runtime_audit WHERE execution_id LIKE ANY(@patterns);
+            DELETE FROM ampelum_workflow_checkpoints WHERE execution_id LIKE ANY(@patterns);
+            """, connection);
+        command.Parameters.AddWithValue("patterns", _prefixes.Select(p => p + "%").ToArray());
+        await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+    }
+
+    private string Track(string prefix)
+    {
+        _prefixes.Add(prefix);
+        return prefix;
+    }
+
+    private static async Task Execute(NpgsqlConnection connection, string sql)
+    {
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync(TestContext.Current.CancellationToken);
+    }
+
+    private static string ConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("AMPELUM_TEST_POSTGRES");
         if (string.IsNullOrWhiteSpace(connectionString))
             throw new InvalidOperationException("Set AMPELUM_TEST_POSTGRES to an isolated PostgreSQL database before running Postgres workflow persistence tests.");
-        return new PostgresWorkflowPersistence(connectionString);
+        return connectionString;
     }
+
+    private static PostgresWorkflowPersistence CreateStore() => new(ConnectionString());
 
     private static WorkflowExecutionRequest CreateRequest(string executionId, int stepCount) => new(
         executionId,

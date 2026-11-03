@@ -133,10 +133,34 @@ public sealed class PostgresWorkflowPersistence : IWorkflowCheckpointTransaction
         return connection;
     }
 
+    // Arbitrary constant that names this provider's schema lock.
+    private const long SchemaLockKey = 0x416D70_57464C;
+
     private void EnsureSchema()
     {
         using var connection = new NpgsqlConnection(_connectionString);
         connection.Open();
+
+        // The DDL below locks both tables, the ALTER exclusively, even when nothing changes. Run against a
+        // database in use, it deadlocks with a writer that holds a checkpoint row and waits on the audit table,
+        // so it runs only when part of the schema is missing.
+        using (var check = new NpgsqlCommand("""
+            SELECT to_regclass('ampelum_workflow_runtime_audit') IS NOT NULL
+               AND to_regclass('ix_ampelum_workflow_runtime_audit_execution_sequence') IS NOT NULL
+               AND EXISTS (SELECT 1 FROM pg_attribute
+                           WHERE attrelid = to_regclass('ampelum_workflow_checkpoints')
+                             AND attname = 'version' AND NOT attisdropped);
+            """, connection))
+        {
+            if (check.ExecuteScalar() is true) return;
+        }
+
+        using var transaction = connection.BeginTransaction();
+        using (var gate = new NpgsqlCommand("SELECT pg_advisory_xact_lock(@key);", connection, transaction))
+        {
+            gate.Parameters.AddWithValue("key", SchemaLockKey);
+            gate.ExecuteNonQuery();
+        }
         using var command = new NpgsqlCommand("""
             CREATE TABLE IF NOT EXISTS ampelum_workflow_checkpoints (
                 execution_id TEXT PRIMARY KEY,
@@ -158,8 +182,9 @@ public sealed class PostgresWorkflowPersistence : IWorkflowCheckpointTransaction
             -- write against such a pre-existing database throws "column "version" does not exist" the moment
             -- this ships.
             ALTER TABLE ampelum_workflow_checkpoints ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 0;
-            """, connection);
+            """, connection, transaction);
         command.ExecuteNonQuery();
+        transaction.Commit();
     }
 
     private static async Task<bool> TryCreateAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, DurableWorkflowSnapshot snapshot, CancellationToken ct)
