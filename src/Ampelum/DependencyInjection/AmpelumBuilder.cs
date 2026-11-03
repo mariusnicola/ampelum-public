@@ -156,4 +156,20 @@ public sealed class AmpelumBuilder(IServiceCollection services)
             new Audit.BatchedAuditSink(sp.GetRequiredService<TInner>(), capacity));
         return this;
     }
+
+    /// <summary>
+    /// Opt-in registration of <see cref="Audit.BatchedAuditSink"/> wrapping the sink that
+    /// <paramref name="innerFactory"/> builds, for inner sinks the container cannot construct on its own
+    /// (for example <see cref="Audit.JsonFileAuditSink"/>, which needs a path). The wrapper is a singleton
+    /// and owns the inner sink: disposing the container drains the queue, then disposes the inner sink.
+    /// </summary>
+    /// <param name="innerFactory">Builds the inner audit sink that physically persists entries.</param>
+    /// <param name="capacity">Maximum queue depth before AppendAsync awaits drain. Defaults to 1000.</param>
+    /// <returns>This builder for chaining.</returns>
+    public AmpelumBuilder AddBatchedAuditSink(Func<IServiceProvider, Audit.IAuditSink> innerFactory, int capacity = 1000)
+    {
+        Services.RemoveAll<Audit.IAuditSink>();
+        Services.AddSingleton<Audit.IAuditSink>(sp => new Audit.BatchedAuditSink(innerFactory(sp), capacity));
+        return this;
+    }
 }

@@ -296,7 +296,6 @@ Audit and safety
 
 - `SemanticCacheHook` stops the before-pass on a hit, so `PiiRedactionHook` never runs and the audit entry holds the original text.
 - `StreamingChatSession` sends text to the caller before the after hooks run and never sets outputs, so `ModerationHook` does not check streamed replies.
-- `BatchedAuditSink` does not dispose the sink it wraps, and `AddBatchedAuditSink<T>` cannot wrap `JsonFileAuditSink`.
 - `FileTrustStore` keeps everything in memory, despite its name, and violations do not revoke trust.
 - Nothing in `src` sets `tools.requested`, so `ToolGateHook` does nothing unless the caller sets it.
 - `ModelRateTable.EstimateCost` ignores its model id.

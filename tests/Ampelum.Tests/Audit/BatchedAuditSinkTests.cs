@@ -83,6 +83,73 @@ public sealed class BatchedAuditSinkTests
     }
 
     [Fact]
+    public async Task DisposeAsync_DisposesAnAsyncDisposableInner_AfterDraining()
+    {
+        var inner = new DisposableAuditSink();
+        var batched = new BatchedAuditSink(inner);
+        await batched.AppendAsync(MakeEntry(0), TestContext.Current.CancellationToken);
+
+        await batched.DisposeAsync();
+
+        inner.Appended.ShouldBe(1);
+        inner.AsyncDisposed.ShouldBeTrue();
+        inner.AppendedAfterDispose.ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task DisposeAsync_DisposesASyncDisposableInner()
+    {
+        var inner = new SyncDisposableAuditSink();
+        var batched = new BatchedAuditSink(inner);
+
+        await batched.DisposeAsync();
+
+        inner.Disposed.ShouldBeTrue();
+    }
+
+    sealed class DisposableAuditSink : IAuditSink, IAsyncDisposable
+    {
+        public int Appended;
+        public bool AsyncDisposed;
+        public bool AppendedAfterDispose;
+        public long NextSequence => Appended;
+
+        public ValueTask AppendAsync(AuditEntry entry, CancellationToken ct)
+        {
+            if (AsyncDisposed) AppendedAfterDispose = true;
+            Appended++;
+            return ValueTask.CompletedTask;
+        }
+
+        public async IAsyncEnumerable<AuditEntry> EnumerateAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            AsyncDisposed = true;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    sealed class SyncDisposableAuditSink : IAuditSink, IDisposable
+    {
+        public bool Disposed;
+        public long NextSequence => 0;
+        public ValueTask AppendAsync(AuditEntry entry, CancellationToken ct) => ValueTask.CompletedTask;
+
+        public async IAsyncEnumerable<AuditEntry> EnumerateAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+
+        public void Dispose() => Disposed = true;
+    }
+
+    [Fact]
     public async Task NextSequence_AdvancesPerAppend()
     {
         var inner = new InMemoryAuditSink();

@@ -98,10 +98,17 @@ public sealed class BatchedAuditSink : IAuditSink, IAsyncDisposable
         }
     }
 
-    /// <summary>Completes the channel and waits for the drain loop to finish.</summary>
+    /// <summary>
+    /// Completes the channel, waits for the drain loop to finish, then disposes the inner sink
+    /// (this wrapper owns it).
+    /// </summary>
     public async ValueTask DisposeAsync()
     {
         _channel.Writer.TryComplete();
         await _drainLoop.ConfigureAwait(false);
+        if (_inner is IAsyncDisposable asyncInner)
+            await asyncInner.DisposeAsync().ConfigureAwait(false);
+        else if (_inner is IDisposable inner)
+            inner.Dispose();
     }
 }

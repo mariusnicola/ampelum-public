@@ -69,11 +69,7 @@ public sealed class SafetyGateway : IAsyncDisposable
 
         var builder = services.AddAmpelum().UseAdapter<JsonAdapter>();
         if (options.BatchAudit && !deps.ReplayAudit)
-        {
-            // The batched sink does not dispose the sink it wraps, so the container owns the file sink and closes it last.
-            services.AddSingleton(_ => new JsonFileAuditSink(options.AuditPath));
-            services.AddSingleton<IAuditSink>(sp => new BatchedAuditSink(sp.GetRequiredService<JsonFileAuditSink>()));
-        }
+            builder.AddBatchedAuditSink(_ => new JsonFileAuditSink(options.AuditPath));
         else
             builder.AddJsonFileAuditSink(options.AuditPath);
         builder.AddAuditHook(deps.ReplayAudit);
