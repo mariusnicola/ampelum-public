@@ -30,19 +30,35 @@ public sealed class ExpenseApprovalPipeline
     readonly IChatClient _chat;
     readonly IExpenseLedger _ledger;
     readonly WorkflowDefinition _definition;
-    readonly string _databasePath;
+    readonly Func<ExpenseStore> _openStore;
 
-    /// <summary>Creates the pipeline.</summary>
+    /// <summary>Creates the pipeline on a SQLite file.</summary>
     /// <param name="chat">Chat client used for extraction.</param>
     /// <param name="ledger">Receives the pay and flag-for-review side effects.</param>
     /// <param name="definition">Compiled workflow, normally from <see cref="LoadDefinition"/>.</param>
     /// <param name="databasePath">SQLite file that holds checkpoints and audit history.</param>
     public ExpenseApprovalPipeline(IChatClient chat, IExpenseLedger ledger, WorkflowDefinition definition, string databasePath)
+        : this(chat, ledger, definition, StoreFactory(databasePath))
+    {
+    }
+
+    /// <summary>Creates the pipeline on any store.</summary>
+    /// <param name="chat">Chat client used for extraction.</param>
+    /// <param name="ledger">Receives the pay and flag-for-review side effects.</param>
+    /// <param name="definition">Compiled workflow, normally from <see cref="LoadDefinition"/>.</param>
+    /// <param name="openStore">Called once per runtime; must return a new persistence object each time.</param>
+    public ExpenseApprovalPipeline(IChatClient chat, IExpenseLedger ledger, WorkflowDefinition definition, Func<ExpenseStore> openStore)
     {
         _chat = chat ?? throw new ArgumentNullException(nameof(chat));
         _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
         _definition = definition ?? throw new ArgumentNullException(nameof(definition));
-        _databasePath = databasePath ?? throw new ArgumentNullException(nameof(databasePath));
+        _openStore = openStore ?? throw new ArgumentNullException(nameof(openStore));
+    }
+
+    static Func<ExpenseStore> StoreFactory(string databasePath)
+    {
+        ArgumentNullException.ThrowIfNull(databasePath);
+        return () => ExpenseStore.Sqlite(databasePath);
     }
 
     /// <summary>Compiles the embedded workflow YAML.</summary>
@@ -58,9 +74,9 @@ public sealed class ExpenseApprovalPipeline
     }
 
     /// <summary>Runs the workflow, stops it after the first step, then resumes it on a new runtime and persistence.</summary>
-    public async Task<ExpenseApprovalResult> RunWithRestartAsync(string text, CancellationToken ct = default)
+    public async Task<ExpenseApprovalResult> RunWithRestartAsync(string text, CancellationToken ct = default, string? executionId = null)
     {
-        var executionId = Guid.NewGuid().ToString("N");
+        executionId ??= Guid.NewGuid().ToString("N");
         await using var stopped = await StartAndStopAsync(executionId, text, ct).ConfigureAwait(false);
         return await ResumeAsync(executionId, ct).ConfigureAwait(false);
     }
@@ -73,8 +89,8 @@ public sealed class ExpenseApprovalPipeline
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
-        var store = new SqliteWorkflowPersistence(_databasePath);
-        var runtime = new DurableWorkflowRuntime(store, store);
+        var store = _openStore();
+        var runtime = new DurableWorkflowRuntime(store.Persistence, store.Persistence);
         var request = new WorkflowExecutionRequest(
             executionId,
             _definition,
@@ -106,16 +122,16 @@ public sealed class ExpenseApprovalPipeline
     /// <summary>Resumes a stored execution on a new persistence and runtime and returns its outcome.</summary>
     public async Task<ExpenseApprovalResult> ResumeAsync(string executionId, CancellationToken ct = default)
     {
-        var store = new SqliteWorkflowPersistence(_databasePath);
+        var store = _openStore();
         var persisted = await store.LoadAsync(executionId, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No stored execution '{executionId}'.");
-        var runtime = new DurableWorkflowRuntime(store, store);
+        var runtime = new DurableWorkflowRuntime(store.Persistence, store.Persistence);
         var snapshot = await runtime.ResumeAsync(persisted.Request, CreateHandler(store, null), ct).ConfigureAwait(false);
         return await BuildResultAsync(store, snapshot, ct).ConfigureAwait(false);
     }
 
     Func<DurableWorkflowNodeContext, CancellationToken, Task<DurableWorkflowNodeResult>> CreateHandler(
-        SqliteWorkflowPersistence store,
+        ExpenseStore store,
         Func<WorkflowStepDefinition, Task>? beforeStep)
     {
         var dispatcher = CreateDispatcher(out var caller);
@@ -167,7 +183,7 @@ public sealed class ExpenseApprovalPipeline
         return new Expense(extraction.Vendor, amount, extraction.Category);
     }
 
-    static async Task<DurableWorkflowNodeResult> RouteAsync(SqliteWorkflowPersistence store, DurableWorkflowNodeContext context, CancellationToken ct)
+    static async Task<DurableWorkflowNodeResult> RouteAsync(ExpenseStore store, DurableWorkflowNodeContext context, CancellationToken ct)
     {
         var step = context.Step;
         if (step.Inputs is null || !step.Inputs.TryGetValue(LimitInput, out var rawLimit)
@@ -186,7 +202,7 @@ public sealed class ExpenseApprovalPipeline
             : new DurableWorkflowNodeResult(true, SelectedNextStepId: target.StepId);
     }
 
-    static async Task<Expense?> LoadExpenseAsync(SqliteWorkflowPersistence store, WorkflowExecutionRequest request, CancellationToken ct)
+    static async Task<Expense?> LoadExpenseAsync(ExpenseStore store, WorkflowExecutionRequest request, CancellationToken ct)
     {
         var extractStep = request.Workflow.Steps.First(s => s.Kind == WorkflowStepKind.Sequential);
         var snapshot = await store.LoadAsync(request.ExecutionId, ct).ConfigureAwait(false);
@@ -237,7 +253,7 @@ public sealed class ExpenseApprovalPipeline
         Reversibility = Reversibility.DurableWithUndo,
     };
 
-    static async Task<ExpenseApprovalResult> BuildResultAsync(SqliteWorkflowPersistence store, DurableWorkflowSnapshot snapshot, CancellationToken ct)
+    static async Task<ExpenseApprovalResult> BuildResultAsync(ExpenseStore store, DurableWorkflowSnapshot snapshot, CancellationToken ct)
     {
         var request = snapshot.Request;
         var executed = request.Workflow.Steps

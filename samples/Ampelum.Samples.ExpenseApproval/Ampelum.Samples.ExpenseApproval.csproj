@@ -3,6 +3,7 @@
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <RootNamespace>Ampelum.Samples.ExpenseApproval</RootNamespace>
+    <NoWarn>$(NoWarn);AMPELUM_V09_PREVIEW</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="expense-approval.yml" LogicalName="expense-approval.yml" />
@@ -15,6 +16,7 @@
     <ProjectReference Include="..\..\src\Ampelum\Ampelum.csproj" />
     <ProjectReference Include="..\..\src\Ampelum.Agent\Ampelum.Agent.csproj" />
     <ProjectReference Include="..\..\src\Ampelum.Agent.Yaml\Ampelum.Agent.Yaml.csproj" />
+    <ProjectReference Include="..\..\src\Ampelum.Agent.Postgres\Ampelum.Agent.Postgres.csproj" />
     <ProjectReference Include="..\..\src\Ampelum.Testing\Ampelum.Testing.csproj" />
   </ItemGroup>
 </Project>

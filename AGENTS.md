@@ -49,7 +49,7 @@ Never write a key or a model id into code. The library reads environment variabl
 The README's [Use cases](README.md#use-cases) section lists every sample with its run and test commands. Samples that call a model take `--fake`, which replays a scripted model and needs no key.
 
 - A ticket pipeline with lookups, budget and audit: `samples/Ampelum.Samples.SupportDesk`
-- Durable YAML workflow resumed by a new runtime: `samples/Ampelum.Samples.ExpenseApproval`
+- Durable YAML workflow resumed by a new runtime, on SQLite or PostgreSQL: `samples/Ampelum.Samples.ExpenseApproval`
 - Measuring and tuning a prompt: `samples/Ampelum.Samples.PromptTuning`
 - Comparing optimizers and exporting traces: `samples/Ampelum.Samples.TracedPipeline`
 - Hosting behind HTTP, audit replay, prompt versions, optimize, serving MCP, the CLI: `samples/Ampelum.Samples.AgentService`

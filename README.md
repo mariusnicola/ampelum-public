@@ -70,7 +70,7 @@ dotnet run --project samples/Ampelum.Samples.SupportDesk -c Release -- --fake
 dotnet test tests/Ampelum.Samples.SupportDesk.Tests/Ampelum.Samples.SupportDesk.Tests.csproj
 ```
 
-**Expense approval** (`samples/Ampelum.Samples.ExpenseApproval`). A durable workflow defined in YAML. A model extracts the expense, a branch step picks auto-pay or flag-for-review, tool calls go through the policy gate, and the run is stopped and then resumed by a new runtime on the same SQLite database.
+**Expense approval** (`samples/Ampelum.Samples.ExpenseApproval`). A durable workflow defined in YAML. A model extracts the expense, a branch step picks auto-pay or flag-for-review, tool calls go through the policy gate, and the run is stopped and then resumed by a new runtime from the stored checkpoint, so the finished extraction is not repeated. State lives in a SQLite file by default, or in PostgreSQL through `PostgresWorkflowPersistence` with `--postgres`; the PostgreSQL tests need a database and are left out of CI.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.ExpenseApproval -c Release -- --fake
@@ -232,6 +232,7 @@ Workflows
 - The code indexer's `ExtractCalls` covers only Method or Function symbols, and its method pattern misses plain return types, so in practice the index holds type declarations and imports.
 - `ISynthesisInfrastructure` has no implementation in the library.
 - `SubAgentRunner` file tools accept absolute paths and `..` without a check, so they read and write outside the working directory. The runner does not run tool calls itself (wrap the client in `FunctionInvokingChatClient`), its prompt names `edit_file`, `build` and `run_tests`, which do not exist, a failed write still appears in `FilesChanged`, and `SubAgentTask.Tier` is ignored (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`).
+- `PostgresWorkflowPersistence` has no API to delete an execution's rows, and its constructor runs schema DDL on every instance, so it needs DDL rights (`src/Ampelum.Agent.Postgres/PostgresWorkflowPersistence.cs`, line 31).
 - `DefaultWorkflowSynthesizer.PromoteAsync` validates and writes a candidate. It does not call `WorkflowPromotionEvaluator`, and nothing in the repository produces the evaluations that class expects (`src/Ampelum.Agent.Synthesis/DefaultWorkflowSynthesizer.cs`, lines 115 to 136).
 
 MCP

@@ -199,6 +199,41 @@ public sealed class ExpenseApprovalPipelineTests : IDisposable
         keys.PayKeys.ShouldBe([$"{result.ExecutionId}:pay"]);
     }
 
+    [Fact]
+    public void Create_PostgresFlagWithEmptySetting_FailsNamingTheSettingAndDoesNotFallBack()
+    {
+        var error = Should.Throw<InvalidOperationException>(() => ExpenseStore.Create(true, _ => "", DatabasePath));
+
+        error.Message.ShouldContain("WORKFLOW_POSTGRES");
+        File.Exists(DatabasePath).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task RunAsync_PostgresFlagWithEmptySetting_FailsNamingTheSettingAndWritesNothing()
+    {
+        var lines = new List<string>();
+
+        var error = await Should.ThrowAsync<InvalidOperationException>(() =>
+            ExpenseRun.RunAsync(["--fake", "--postgres"], _directory, lines.Add, _ => ""));
+
+        error.Message.ShouldContain("WORKFLOW_POSTGRES");
+        lines.ShouldBeEmpty();
+        File.Exists(Path.Combine(_directory, "workflows.db")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task RunAsync_FakeWithoutPostgresFlag_UsesTheSqliteFileAndReadsNoSetting()
+    {
+        Directory.CreateDirectory(_directory);
+
+        var outcome = await ExpenseRun.RunAsync(["--fake"], _directory, _ => { },
+            key => throw new InvalidOperationException($"unexpected read of {key}"));
+
+        outcome.ExitCode.ShouldBe(0);
+        outcome.ExecutionIds.Count.ShouldBe(2);
+        File.Exists(Path.Combine(_directory, "workflows.db")).ShouldBeTrue();
+    }
+
     sealed class KeyCapturingLedger : IExpenseLedger
     {
         public List<string> PayKeys { get; } = [];
