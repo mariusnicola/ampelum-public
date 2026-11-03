@@ -60,6 +60,9 @@ public class ToolDispatcher : IToolDispatcher
         _handlers[toolName] = handler;
     }
 
+    /// <summary>True when a handler is already registered under <paramref name="toolName"/>.</summary>
+    public bool HasHandler(string toolName) => _handlers.ContainsKey(toolName);
+
     public Task<ToolResult> InvokeAsync(string toolName, IReadOnlyDictionary<string, JsonElement> args, AgentIdentity caller, CancellationToken ct = default) =>
         InvokeAsync(toolName, args, caller, context: null, ct);
 

@@ -112,7 +112,7 @@ dotnet run --project samples/Ampelum.Samples.VectorStoreSwap -c Release -- --fak
 dotnet test tests/Ampelum.Samples.VectorStoreSwap.Tests
 ```
 
-**Agent service** (`samples/Ampelum.Samples.AgentService`). A program written once is served over HTTP by the Ampelum Host. The sample calls and streams it, reads and verifies its audit trail, looks entries up by trace id, replays a recorded call without the model, stores and promotes prompt versions, starts optimizer runs and follows their progress over SSE, and rebuilds the Host's index with the admin endpoint and with the Host's own command line. Its order tool is served as an MCP server on loopback, through a small transport the sample writes, and consumed back by a direct `tools/call` and by a ReAct agent. The CLI scores answers with `eval`, scaffolds a project with `new` and refuses to start `repl` without a key. Several of these Host features are plumbing with defects, and the sample's tests pin each one.
+**Agent service** (`samples/Ampelum.Samples.AgentService`). A program written once is served over HTTP by the Ampelum Host. The sample calls and streams it, reads and verifies its audit trail, looks entries up by trace id, replays a recorded call without the model, stores and promotes prompt versions, starts optimizer runs and follows their progress over SSE, and rebuilds the Host's index with the admin endpoint and with the Host's own command line. Its order tool is served as an MCP server on loopback, through a small transport the sample writes, and consumed back through `SdkMcpTransport` by a direct `tools/call` and by a ReAct agent; the governed path is shown over HTTP and over stdio, where the sample starts itself as the child-process server and a catastrophic or unannotated tool is blocked before the server gets the call. The CLI scores answers with `eval`, scaffolds a project with `new` and refuses to start `repl` without a key. Several of these Host features are plumbing with defects, and the sample's tests pin each one.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.AgentService -c Release -- --fake
@@ -173,6 +173,21 @@ dotnet test tests/Ampelum.Samples.DocumentReview.Tests
 | Observability | `Ampelum.Observability.LangFuse`, `Ampelum.Observability.LangSmith`, `Ampelum.Observability.Phoenix` |
 
 [docs/architecture.md](docs/architecture.md) explains how these fit together.
+
+## MCP
+
+There are two MCP packages and they do different jobs. `Ampelum.Mcp` turns the tools of an MCP server into `AIFunction`s with no governance: use it when you trust the server and only want its tools in a chat client. `Ampelum.Agent` is the governed path: use it when a tool call must pass policy, danger tier, confirmation and audit. `McpToolSource` lists a server's tools, `SdkMcpTransport` (built on the official `ModelContextProtocol.Core` client) talks to the server over stdio or HTTP, and `McpToolSource.RegisterHandlersAsync` makes the tools callable through `ToolDispatcher`, which decides before anything goes on the wire.
+
+```csharp
+await using var transport = SdkMcpTransport.CreateStdio(new McpStdioConnection("my-server", ["--stdio"]));
+// or: SdkMcpTransport.CreateHttp(new McpServerConnection("http://127.0.0.1:8080/mcp", TrustLevel.Unknown, apiKey));
+var source = new McpToolSource(new McpServerConnection("stdio://my-server", TrustLevel.Unknown), transport, verifier);
+var dispatcher = new ToolDispatcher(new ToolLoader([source]), new InMemoryTokenStore(), new PolicyEngine(), caller);
+await source.RegisterHandlersAsync(dispatcher);
+var result = await dispatcher.InvokeAsync("mcp/my-server/lookup_order", args, caller);
+```
+
+Without a verifier every discovered tool is capped to the most dangerous tier, so the dispatcher blocks it; a verifier that accepts a tool lets its declared `_meta.dangerTier` stand. Disposing the transport ends a stdio child process. `HttpMcpTransport` is superseded by `SdkMcpTransport` and stays only because it is public API.
 
 ## Documentation
 
@@ -243,7 +258,9 @@ Workflows
 
 MCP
 
-- `HttpMcpTransport` calls `tools/list` once and does not follow the next-cursor field, so a server that paginates returns only its first page (`src/Ampelum.Agent/Mcp/McpModels.cs`, lines 111 to 127).
+- `HttpMcpTransport` is superseded by `SdkMcpTransport` and kept only because it is public API. It sends bare JSON-RPC POSTs with no `initialize`, so it works against a hand-written server but not a standard one, and it calls `tools/list` once and does not follow the next-cursor field, so a server that paginates returns only its first page (`src/Ampelum.Agent/Mcp/McpModels.cs`, `ListToolsAsync`). `SdkMcpTransport` has neither limit.
+- `McpToolSource.SourcePrefix` is the host of the server address only, so two MCP servers on one host (for example `127.0.0.1` on ports 1 and 2) share the prefix `mcp/127-0-0-1` and their tool names collide. `RegisterHandlersAsync` throws, naming both addresses, instead of letting the second server take over the first one's handlers; connect each such server to its own `ToolDispatcher` and `ToolLoader`. Call `RegisterHandlersAsync` once per connection: a second call registers the same names again but does not remove the handler of a tool the server has since dropped.
+- `SdkMcpTransport` opens its connection on the first call, with the SDK's default initialization timeout, and passes no OAuth settings: only an optional bearer key is supported for HTTP.
 - `McpServerAdapter` has no transport in `src`, so Ampelum can call MCP servers but cannot be served as one without your own transport. The agent service sample writes a minimal JSON-RPC over HTTP one.
 
 A2A, loaders and batch

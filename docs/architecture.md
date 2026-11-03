@@ -67,7 +67,7 @@ The audit trail is a SHA-256 hash chain, so `AuditChainVerifier` can detect tamp
 
 `Ampelum.Agent` adds the pieces for long-running autonomous work: governed tool dispatch through `ToolDispatcher`, agent identity, skills, trust and modes, secret stores, A2A, and MCP. Generic contracts live in the dependency-free `Ampelum.Agent.Contracts`.
 
-There are two MCP paths on purpose. `Ampelum.Mcp` is a thin `AIFunction` bridge with no governance. The MCP integration in `Ampelum.Agent` goes through the governed runtime, behind `IMcpTransport`.
+There are two MCP paths on purpose. `Ampelum.Mcp` is a thin `AIFunction` bridge with no governance: use it to put a trusted server's tools into a chat client. The MCP integration in `Ampelum.Agent` is the governed path: use it when calls must pass policy, danger tier, confirmation and audit. On that path `McpToolSource` lists tools through `IMcpTransport`, `SdkMcpTransport` implements it on the official `ModelContextProtocol.Core` client for both stdio (the SDK starts and owns the child process) and HTTP, and `McpToolSource.RegisterHandlersAsync` registers each tool as a `ToolDispatcher` handler. A call therefore goes `ToolDispatcher.InvokeAsync` (policy, confirmation, audit), then the handler, then `tools/call`; a blocked tool never reaches the transport. `HttpMcpTransport` is the older hand-written transport, superseded and kept only as public API.
 
 ## Durable workflows
 

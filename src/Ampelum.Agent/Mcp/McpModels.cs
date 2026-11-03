@@ -65,9 +65,8 @@ public sealed class McpTransportException : Exception
 }
 
 /// <summary>Wire-level transport for the MCP protocol's `tools/list` and `tools/call`
-/// methods. Kept as a narrow, internally-owned abstraction (rather than a dependency on
-/// an external MCP SDK) so <see cref="McpToolSource"/> stays fully testable with a fake
-/// implementation and swappable for a real one without touching governance code.</summary>
+/// methods. Kept as a narrow abstraction so <see cref="McpToolSource"/> stays fully testable
+/// with a fake implementation; the real one is <see cref="SdkMcpTransport"/>.</summary>
 public interface IMcpTransport
 {
     /// <summary>Calls the MCP `tools/list` method and returns the server's tool definitions.</summary>
@@ -83,13 +82,12 @@ public interface IMcpTransport
         CancellationToken ct = default);
 }
 
-/// <summary>Real MCP transport: JSON-RPC 2.0 over the "streamable HTTP" transport
-/// described by the MCP specification (a single POST endpoint accepting a JSON-RPC
-/// envelope). Deliberately implemented against the BCL <see cref="HttpClient"/> and
-/// <see cref="System.Text.Json"/> only — this repo's central package versions do not
-/// currently wire the official ModelContextProtocol.Core SDK into Ampelum.Agent, so this
-/// type is the "real, working" transport within that constraint. Swapping in the official
-/// SDK later is a drop-in replacement of this class behind <see cref="IMcpTransport"/>.</summary>
+/// <summary><b>Superseded by <see cref="SdkMcpTransport"/>, which speaks the full protocol
+/// (initialize handshake, sessions, server-sent events, pagination) over HTTP and stdio on the
+/// official ModelContextProtocol.Core SDK. Use <see cref="SdkMcpTransport"/> for new code.</b>
+/// This class stays only because it is public API: it sends bare JSON-RPC POSTs with no
+/// handshake, which suits a hand-written server like the one in the agent service sample but
+/// not a standard MCP server.</summary>
 public sealed class HttpMcpTransport : IMcpTransport, IDisposable
 {
     private readonly HttpClient _http;
@@ -152,11 +150,16 @@ public sealed class HttpMcpTransport : IMcpTransport, IDisposable
     /// <c>requiresConfirmation</c> still defaults to <c>true</c> here — that default is safe
     /// standalone (it only ever demands MORE confirmation than a server-declared <c>false</c>
     /// would), unlike the danger-tier default which was silently downgrading governance.</summary>
-    private static (string DangerTier, bool RequiresConfirmation) ReadGovernanceAnnotations(JsonElement tool)
+    private static (string DangerTier, bool RequiresConfirmation) ReadGovernanceAnnotations(JsonElement tool) =>
+        ReadGovernanceMeta(tool.TryGetProperty("_meta", out var meta) ? meta : null);
+
+    /// <summary>Reads the governance annotations from a tool's <c>_meta</c> object; shared with
+    /// <see cref="SdkMcpTransport"/> so both transports apply the same rules.</summary>
+    internal static (string DangerTier, bool RequiresConfirmation) ReadGovernanceMeta(JsonElement? metaElement)
     {
         var dangerTier = string.Empty;
         var requiresConfirmation = true;
-        if (tool.TryGetProperty("_meta", out var meta) && meta.ValueKind == JsonValueKind.Object)
+        if (metaElement is { ValueKind: JsonValueKind.Object } meta)
         {
             if (meta.TryGetProperty("dangerTier", out var tierElement) && tierElement.ValueKind == JsonValueKind.String)
             {

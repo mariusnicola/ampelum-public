@@ -31,6 +31,10 @@ public sealed class McpToolSource : IMcpToolSource
     private readonly List<ToolManifest> _loadedManifests = [];
     private readonly Dictionary<string, ToolManifest> _discoveredManifests = new(StringComparer.Ordinal);
 
+    // Which source registered each handler name on a dispatcher, so a second server on the same host
+    // cannot silently take over the first one's handlers.
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ToolDispatcher, Dictionary<string, McpToolSource>> HandlerOwners = new();
+
     public string SourcePrefix { get; }
     public TrustLevel ConnectionTrust => _connection.AssignedTrust;
 
@@ -98,6 +102,58 @@ public sealed class McpToolSource : IMcpToolSource
         var manifest = _loadedManifests.FirstOrDefault(m => m.Name == toolName)
             ?? (_discoveredManifests.TryGetValue(toolName, out var discovered) ? discovered : null);
         return Task.FromResult(manifest);
+    }
+
+    /// <summary>Makes the tools of this source callable through <paramref name="dispatcher"/>: for every surveyed
+    /// tool it registers a handler under <c>SourcePrefix/name</c> (the name <see cref="ToolLoader"/> gives the
+    /// tool) that sends <c>tools/call</c> through the transport. The dispatcher runs policy, confirmation and audit
+    /// first and reaches the handler only for an allowed call, so a tool whose tier is blocked never gets a call
+    /// on the wire. Returns the registered names.
+    /// <para>Call it once per connection. A second call registers the same names again but does not remove a
+    /// handler for a tool the server has since dropped.</para>
+    /// <para><see cref="SourcePrefix"/> is the host of the server address only, so two servers on one host (for
+    /// example 127.0.0.1 on two ports) get the same prefix and the same tool names. The call refuses to replace a
+    /// handler that was registered by another source or by hand; give such servers separate dispatchers.</para></summary>
+    /// <exception cref="InvalidOperationException">The source has no transport, or a handler name is already taken.</exception>
+    public async Task<IReadOnlyList<string>> RegisterHandlersAsync(ToolDispatcher dispatcher, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dispatcher);
+        var transport = _transport ?? throw new InvalidOperationException("A manifest-only source has no transport to call.");
+        var surveys = await SurveyAsync(ct).ConfigureAwait(false);
+        var owners = HandlerOwners.GetOrCreateValue(dispatcher);
+        lock (owners)
+        {
+            foreach (var survey in surveys)
+            {
+                var taken = $"{SourcePrefix}/{survey.Name}";
+                if (owners.TryGetValue(taken, out var owner) && !ReferenceEquals(owner, this))
+                    throw new InvalidOperationException($"Handler '{taken}' is already registered by the source for '{owner._connection.ServerUri}'; this source is '{_connection.ServerUri}'.");
+                if (!owners.ContainsKey(taken) && dispatcher.HasHandler(taken))
+                    throw new InvalidOperationException($"Handler '{taken}' is already registered on the dispatcher; this source is '{_connection.ServerUri}'.");
+            }
+        }
+        var names = new List<string>();
+        foreach (var survey in surveys)
+        {
+            var remoteName = survey.Name;
+            var fullName = $"{SourcePrefix}/{remoteName}";
+            lock (owners) owners[fullName] = this;
+            dispatcher.RegisterHandler(fullName, async (args, token) =>
+            {
+                var started = DateTimeOffset.UtcNow;
+                var response = await transport.CallToolAsync(
+                    remoteName, args.ToDictionary(a => a.Key, a => (object?)a.Value, StringComparer.Ordinal), token).ConfigureAwait(false);
+                return new ToolResult(
+                    fullName,
+                    response.Success,
+                    response.Success ? McpContent.Text(response.Result) : null,
+                    response.Success ? null : response.Error ?? "Tool call failed.",
+                    started,
+                    DateTimeOffset.UtcNow - started);
+            });
+            names.Add(fullName);
+        }
+        return names;
     }
 
     /// <summary>Maps a wire-level MCP tool definition to the internal governance manifest.

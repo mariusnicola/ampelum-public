@@ -8,6 +8,10 @@ using SignalGrid.Ampelum.Agent;
 using SignalGrid.Ampelum.Host.Contracts;
 using SignalGrid.Ampelum.Testing;
 
+// The stdio MCP part starts this program again as its server.
+if (args.Contains(OrderMcpStdio.Flag))
+    return await OrderMcpStdio.RunAsync(CancellationToken.None);
+
 const string Question = "How long does standard delivery take?";
 const string OrderQuestion = "Where is order A-1001?";
 
@@ -127,7 +131,7 @@ try
     foreach (var survey in await ToolAgent.SurveyAsync(new OrderToolTransport(), OrderToolTransport.ServerUri))
         Console.WriteLine($"Survey:  {survey.Name} declared Safe, governed as {survey.DangerTier}, confirmation required = {survey.RequiresConfirmation}");
 
-    // The same tool served as an MCP server over JSON-RPC on loopback, and called back through the library's HTTP transport.
+    // The same tool served as an MCP server over JSON-RPC on loopback, and called back through the library's SDK transport.
     var mcpBuilder = WebApplication.CreateBuilder();
     mcpBuilder.WebHost.UseUrls("http://127.0.0.1:0");
     mcpBuilder.Logging.SetMinimumLevel(LogLevel.Warning);
@@ -135,8 +139,7 @@ try
     await using var mcpApp = mcpServer.Map(mcpBuilder.Build());
     await mcpApp.StartAsync();
     var mcpUrl = new Uri(new Uri(mcpApp.Urls.First()), OrderMcpServer.Route).ToString();
-    using var mcpHttp = new HttpClient();
-    using var transport = new HttpMcpTransport(new McpServerConnection(mcpUrl, TrustLevel.Unknown), mcpHttp);
+    await using var transport = SdkMcpTransport.CreateHttp(new McpServerConnection(mcpUrl, TrustLevel.Unknown));
     var served = await transport.ListToolsAsync();
     var direct = await transport.CallToolAsync(OrderMcpServer.ToolName, new Dictionary<string, object?> { ["orderId"] = "A-1001" });
     Console.WriteLine($"MCP:     {mcpUrl} tools/list = {string.Join(", ", served.Select(t => t.Name))}");
@@ -149,7 +152,58 @@ try
     var toolAudit = await mcpServer.Dispatcher.AuditLog.QueryAsync(OrderMcpServer.ToolName);
     var mcpOk = served.Count == 1 && direct.Success && servedAnswer == OrderData.Lookup("A-1001")
         && toolAudit.Count(e => e.EventType == "invocation.completed") == 2;
+
+    // The governed path over HTTP: with no verifier the cap blocks the tool and the server sees no call; with
+    // one that trusts the declared tier the call goes through the dispatcher and reaches the server.
+    var receivedBefore = mcpServer.ReceivedToolCalls.Count;
+    await using (var capped = await GovernedMcpClient.ConnectAsync(
+        SdkMcpTransport.CreateHttp(new McpServerConnection(mcpUrl, TrustLevel.Unknown)), mcpUrl, verifier: null))
+    {
+        var blocked = await capped.CallAsync(OrderMcpServer.ToolName, "A-1001");
+        Console.WriteLine($"MCP:     governed http, no verifier: success = {blocked.Success}, server saw {mcpServer.ReceivedToolCalls.Count - receivedBefore} calls");
+        mcpOk &= !blocked.Success && mcpServer.ReceivedToolCalls.Count == receivedBefore;
+    }
+    await using (var trusting = await GovernedMcpClient.ConnectAsync(
+        SdkMcpTransport.CreateHttp(new McpServerConnection(mcpUrl, TrustLevel.Unknown)), mcpUrl, new DeclaredTierVerifier()))
+    {
+        var allowed = await trusting.CallAsync(OrderMcpServer.ToolName, "A-1001");
+        Console.WriteLine($"MCP:     governed http, declared tier trusted: {allowed.Output}");
+        mcpOk &= allowed.Success && allowed.Output == OrderData.Lookup("A-1001")
+            && mcpServer.ReceivedToolCalls.Count == receivedBefore + 1;
+    }
+    // Close the session before the server stops, so Kestrel has no open request to wait for.
+    await transport.DisposeAsync();
     await mcpApp.StopAsync();
+
+    // The same governed path over stdio. The server is this program started again; the SDK starts the child
+    // and owns it, and disposing the transport ends it.
+    var stdioDir = Path.Combine(workDir, "mcp-stdio");
+    Directory.CreateDirectory(stdioDir);
+    var callLog = Path.Combine(stdioDir, "calls.log");
+    var pidFile = Path.Combine(stdioDir, "child.pid");
+    var stdioOk = false;
+    System.Diagnostics.Process child;
+    await using (var stdio = await GovernedMcpClient.ConnectAsync(
+        SdkMcpTransport.CreateStdio(OrderMcpStdio.Connection(callLog, pidFile)), OrderMcpStdio.ServerUri, new DeclaredTierVerifier()))
+    {
+        child = OrderMcpStdio.OpenChild(pidFile);
+        foreach (var survey in stdio.Tools)
+            Console.WriteLine($"MCP:     stdio {survey.Name} governed as {survey.DangerTier}, confirmation required = {survey.RequiresConfirmation}");
+        var safe = await stdio.CallAsync(OrderMcpStdio.SafeTool, "A-1001");
+        var purge = await stdio.CallAsync(OrderMcpStdio.CatastrophicTool, "A-1001");
+        var note = await stdio.CallAsync(OrderMcpStdio.UnannotatedTool, "A-1001");
+        Console.WriteLine($"MCP:     stdio {OrderMcpStdio.SafeTool} = {safe.Output}");
+        Console.WriteLine($"MCP:     stdio {OrderMcpStdio.CatastrophicTool} success = {purge.Success}, {OrderMcpStdio.UnannotatedTool} success = {note.Success}");
+        stdioOk = safe.Success && safe.Output == OrderData.Lookup("A-1001") && !purge.Success && !note.Success;
+    }
+    using (child)
+    {
+        var exited = child.WaitForExit(TimeSpan.FromSeconds(10));
+        var serverSaw = (await File.ReadAllLinesAsync(callLog)).ToArray();
+        Console.WriteLine($"MCP:     stdio server received [{string.Join(", ", serverSaw)}], child exited after dispose = {exited}");
+        stdioOk &= exited && serverSaw.SequenceEqual([OrderMcpStdio.SafeTool]);
+    }
+    mcpOk &= stdioOk;
 
     // 3. The REPL library, driven by a script instead of a keyboard.
     var (replOut, replErr) = await ReplSession.RunAsync(Model(() => FakeScript.ReplModel()), ReplSession.AskScript);

@@ -9,7 +9,8 @@ namespace Ampelum.Samples.AgentService;
 /// <summary>
 /// Serves the order tool as an MCP server. <see cref="McpServerAdapter"/> answers <c>tools/list</c> and
 /// <c>tools/call</c> in process but the library has no transport for it, so this class is the transport:
-/// JSON-RPC 2.0 over one HTTP POST route, the same wire shape <see cref="HttpMcpTransport"/> speaks.
+/// JSON-RPC 2.0 over one HTTP POST route, the wire shape both <see cref="HttpMcpTransport"/> and
+/// <see cref="SdkMcpTransport"/> speak (the second also needs <c>initialize</c>).
 /// Every call goes through <see cref="ToolDispatcher"/>, so policy and the tool audit log apply.
 /// </summary>
 public sealed class OrderMcpServer
@@ -46,8 +47,19 @@ public sealed class OrderMcpServer
         _adapter = new McpServerAdapter(new ManifestLoader(_manifests), Dispatcher, new McpServerOptions("orders"));
     }
 
+    readonly List<string> _received = [];
+
     /// <summary>The dispatcher behind <c>tools/call</c>; its audit log shows each call that reached a tool.</summary>
     public ToolDispatcher Dispatcher { get; }
+
+    /// <summary>Tool names of every <c>tools/call</c> the server received, whether or not the tool then ran.</summary>
+    public IReadOnlyList<string> ReceivedToolCalls
+    {
+        get
+        {
+            lock (_received) return [.. _received];
+        }
+    }
 
     /// <summary>Adds the MCP route to a web application. The caller picks the server (Kestrel or TestServer).</summary>
     public WebApplication Map(WebApplication app)
@@ -85,12 +97,27 @@ public sealed class OrderMcpServer
 
         switch (method)
         {
+            case "initialize":
+                // The SDK client opens every session with this; answering it with the version the client asked for
+                // and an empty tools capability is all it needs from a server that keeps no session.
+                var requested = parameters.ValueKind == JsonValueKind.Object && parameters.TryGetProperty("protocolVersion", out var version)
+                    ? version.GetString()
+                    : null;
+                return Result(id, new JsonObject
+                {
+                    ["protocolVersion"] = requested,
+                    ["capabilities"] = new JsonObject { ["tools"] = new JsonObject() },
+                    ["serverInfo"] = new JsonObject { ["name"] = "orders", ["version"] = "1.0.0" },
+                });
+            case "ping":
+                return Result(id, new JsonObject());
             case "tools/list":
                 return Result(id, new JsonObject { ["tools"] = await ListAsync(ct) });
             case "tools/call":
                 if (parameters.ValueKind != JsonValueKind.Object
                     || !parameters.TryGetProperty("name", out var name) || name.ValueKind != JsonValueKind.String)
                     return Error(id, -32602, "tools/call needs a tool name");
+                lock (_received) _received.Add(name.GetString()!);
                 return Result(id, await CallAsync(name.GetString()!, parameters, ct));
             default:
                 return Error(id, -32601, $"Method not found: {method}");
