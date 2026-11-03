@@ -126,6 +126,13 @@ dotnet run --project samples/Ampelum.Samples.BuildTimeTools -c Release
 dotnet test tests/Ampelum.Samples.BuildTimeTools.Tests
 ```
 
+**Safety gateway** (`samples/Ampelum.Samples.SafetyGateway`). An internal assistant whose calls pass PII redaction, moderation, a tool gate, a sanitizer for secrets, an audit trail that can be verified and replayed, usage and cost tracking, and a secret store. It shows limits as well as protections: redaction reaches the audit file only, and the sanitizer catches known key shapes, so its README lists what passes. The live path has never been run.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.SafetyGateway -c Release -- --fake
+dotnet test tests/Ampelum.Samples.SafetyGateway.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
@@ -212,6 +219,19 @@ Written but not called by shipped code
 - `ConfiguredModelRouter` with `ModelRoutingTable`, `WorkflowPromotionEvaluator`, `DurableAgentRuntime`, `CronPortfolioScheduler`, `IExecutionSandbox` with `ProcessSandbox`, `NullOptimizerRunner` in the Host, and the Host option `Host:Modules:RegistryFile`, which the code marks as reserved. They are public API and most have tests, but no other code in this repository uses them.
 
 - `PhoenixCredentials` is accepted by `AddPhoenixExporter` and nothing reads it. Delivery and its API key belong to the OTLP exporter the host configures.
+
+Audit and safety
+
+- `JsonFileAuditSink` returns `JsonElement` values that `AuditChainVerifier` rejects, so a file cannot be verified or replayed through its own sink.
+- `AuditHook` cannot continue an existing chain. It starts from the zero hash, so a second run on the same file breaks at sequence 1.
+- Replay of a question `PiiRedactionHook` changed fails with `AuditReplayMissingException`: entries are written from redacted inputs and the key is built from the original ones.
+- `AuditHook` records model id `unknown` and 0 tokens for `Predict` calls, because it reads a different metadata key from the one they set.
+- `SemanticCacheHook` stops the before-pass on a hit, so `PiiRedactionHook` never runs and the audit entry holds the original text.
+- `StreamingChatSession` sends text to the caller before the after hooks run and never sets outputs, so `ModerationHook` does not check streamed replies.
+- `BatchedAuditSink` does not dispose the sink it wraps, and `AddBatchedAuditSink<T>` cannot wrap `JsonFileAuditSink`.
+- `FileTrustStore` keeps everything in memory, despite its name, and violations do not revoke trust.
+- Nothing in `src` sets `tools.requested`, so `ToolGateHook` does nothing unless the caller sets it.
+- `ModelRateTable.EstimateCost` ignores its model id.
 
 Routing and tracing
 
