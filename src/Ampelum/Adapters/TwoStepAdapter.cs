@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json;
 using SignalGrid.Ampelum.Exceptions;
+using SignalGrid.Ampelum.Hooks;
 using Microsoft.Extensions.AI;
 
 namespace SignalGrid.Ampelum.Adapters;
@@ -45,7 +46,13 @@ public sealed class TwoStepAdapter : IAdapter
         ChatResponse extractResponse;
         try
         {
-            extractResponse = _extractionClient.GetResponseAsync(prompt).GetAwaiter().GetResult();
+            var ambient = AmpelumContext.Ambient;
+#pragma warning disable AMPELUM_V09_PREVIEW
+            extractResponse = ambient is null
+                ? _extractionClient.GetResponseAsync(prompt).GetAwaiter().GetResult()
+                : HookedLmCall.InvokeAsync(ambient with { Chat = _extractionClient }, "TwoStepAdapter.Extract", prompt)
+                    .GetAwaiter().GetResult();
+#pragma warning restore AMPELUM_V09_PREVIEW
         }
         catch (Exception ex)
         {

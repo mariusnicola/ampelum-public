@@ -155,6 +155,51 @@ public sealed class TwoStepAdapterTests
     }
 
     [Fact]
+    public async Task Predict_WithHooks_RunsTheHooksAroundTheExtractionCallToo()
+    {
+        var main = new FakeChatClient().EnqueueText("The capital of France is Paris.");
+        var extract = new FakeChatClient().EnqueueText("{\"Answer\": \"Paris\"}");
+        var hook = new ModuleSpy();
+        var ctx = new AmpelumContext(main, new TwoStepAdapter(extract), new InMemoryTraceSink(),
+            Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance) { Hooks = [hook] };
+
+        var result = await new Predict<QA>(ctx).ForwardAsync(new QA { Question = "Capital?" }, ct: TestContext.Current.CancellationToken);
+
+        result.Value.Answer.ShouldBe("Paris");
+        hook.Modules.ShouldContain("TwoStepAdapter.Extract");
+        hook.Modules.Count.ShouldBe(2);
+        extract.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public void Parse_UnderAmbientContextWithHooks_RunsTheHooks()
+    {
+        var extract = new FakeChatClient().EnqueueText("{\"Answer\": \"paris\"}");
+        var hook = new ModuleSpy();
+        var ctx = new AmpelumContext(new FakeChatClient(), new ChatAdapter(), new InMemoryTraceSink(),
+            Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance) { Hooks = [hook] };
+        var response = new ChatResponse(new ChatMessage(ChatRole.Assistant, "raw"));
+
+        using (AmpelumContext.Push(ctx))
+            new TwoStepAdapter(extract).Parse(Meta, response)["Answer"].ShouldBe("paris");
+
+        hook.Modules.ShouldBe(["TwoStepAdapter.Extract"]);
+    }
+
+    sealed class ModuleSpy : SignalGrid.Ampelum.Hooks.IHook
+    {
+        public int Order => 0;
+        public List<string> Modules { get; } = [];
+        public ValueTask OnBeforeAsync(SignalGrid.Ampelum.Hooks.HookContext ctx, CancellationToken ct)
+        {
+            Modules.Add(ctx.ModuleName);
+            return default;
+        }
+        public ValueTask OnAfterAsync(SignalGrid.Ampelum.Hooks.HookContext ctx, CancellationToken ct) => default;
+        public ValueTask OnErrorAsync(SignalGrid.Ampelum.Hooks.HookContext ctx, Exception error, CancellationToken ct) => default;
+    }
+
+    [Fact]
     public void Parse_NullResponseText_HandledGracefully()
     {
         var extract = new FakeChatClient().EnqueueText("{\"Answer\": \"result\"}");

@@ -279,7 +279,10 @@ public sealed class Predict<TSig> : IModule<TSig, TSig> where TSig : ISignature
                 AdapterParseException? parseFailure = null;
                 try
                 {
-                    outputs = resolved.Adapter.Parse(_meta, response);
+                    // An adapter that calls a model while parsing (TwoStepAdapter) reads the ambient context
+                    // to run this call's hooks around that call too.
+                    using (AmpelumContext.Push(resolved))
+                        outputs = resolved.Adapter.Parse(_meta, response);
                 }
                 catch (AdapterParseException ex)
                 {
