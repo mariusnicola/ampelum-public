@@ -15,7 +15,7 @@ namespace Ampelum.Samples.AgentService.Tests;
 /// The sample's Host on an in-memory TestServer, so a test makes real HTTP requests without a port.
 /// Storage goes to a directory owned by this instance.
 /// </summary>
-public sealed class ServiceFixture(bool replayModule = false, bool libraryAuditSink = false) : IAsyncLifetime
+public sealed class ServiceFixture(bool replayModule = false) : IAsyncLifetime
 {
     readonly string _storageDir = Path.Combine(Path.GetTempPath(), "ampelum-agent-service-tests-" + Guid.NewGuid().ToString("N"));
     WebApplication? _app;
@@ -50,11 +50,6 @@ public sealed class ServiceFixture(bool replayModule = false, bool libraryAuditS
     void ConfigureServices(IServiceCollection services)
     {
         ObserveProgressBus(services);
-        if (!libraryAuditSink)
-            return;
-        // The library's own file sink in place of the sample's, to show what it does to verify and replay.
-        services.RemoveAll<IAuditSink>();
-        services.AddSingleton<IAuditSink>(_ => new JsonFileAuditSink(Path.Combine(_storageDir, "audit.jsonl")));
     }
 
     void ObserveProgressBus(IServiceCollection services)

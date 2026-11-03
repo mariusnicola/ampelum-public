@@ -41,7 +41,7 @@ public sealed class AuditTests
 
         await File.WriteAllTextAsync(h.AuditPath, h.AuditText().Replace("Employees get 25 days.", "Employees get 99 days."), Ct);
 
-        var verdict = await AuditFile.VerifyAsync(h.AuditPath, Ct);
+        var verdict = await h.VerifyAuditFileAsync();
         verdict.IsValid.ShouldBeFalse();
         verdict.BreakAtSequence.ShouldBe(0L);
         verdict.Reason.ShouldContain("tampered");
@@ -60,7 +60,7 @@ public sealed class AuditTests
         var lines = h.AuditText().Split('\n', StringSplitOptions.RemoveEmptyEntries);
         await File.WriteAllTextAsync(h.AuditPath, lines[1] + "\n", Ct);
 
-        (await AuditFile.VerifyAsync(h.AuditPath, Ct)).IsValid.ShouldBeFalse();
+        (await h.VerifyAuditFileAsync()).IsValid.ShouldBeFalse();
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public sealed class AuditTests
 
         var entries = await h.AuditEntriesAsync();
         entries.Select(e => e.Outputs["Answer"]).ShouldBe(["Answer 0.", "Answer 1.", "Answer 2.", "Answer 3.", "Answer 4."]);
-        (await AuditFile.VerifyAsync(h.AuditPath, Ct)).IsValid.ShouldBeTrue();
+        (await h.VerifyAuditFileAsync()).IsValid.ShouldBeTrue();
     }
 
     [Fact]

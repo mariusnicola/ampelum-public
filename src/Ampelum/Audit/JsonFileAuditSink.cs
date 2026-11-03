@@ -58,8 +58,29 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
             _path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
         string? line;
         while ((line = await reader.ReadLineAsync(ct)) is not null)
-            yield return JsonSerializer.Deserialize(line, AuditEntryJson.Default.AuditEntry)!;
+        {
+            var entry = JsonSerializer.Deserialize(line, AuditEntryJson.Default.AuditEntry)!;
+            // The hasher accepts only plain CLR values, so the verifier and replay need them in that form.
+            yield return entry with { Inputs = Plain(entry.Inputs), Outputs = Plain(entry.Outputs) };
+        }
     }
+
+    static Dictionary<string, object?> Plain(IReadOnlyDictionary<string, object?> values) =>
+        values.ToDictionary(kv => kv.Key, kv => Plain(kv.Value), StringComparer.Ordinal);
+
+    static object? Plain(object? value) => value is not JsonElement element
+        ? value
+        : element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.TryGetInt64(out var whole) ? whole : element.GetDouble(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Array => element.EnumerateArray().Select(item => Plain(item)).ToList(),
+            JsonValueKind.Object => element.EnumerateObject()
+                .ToDictionary(p => p.Name, p => Plain(p.Value), StringComparer.Ordinal),
+            _ => null,
+        };
 
     /// <inheritdoc/>
     public async ValueTask DisposeAsync()

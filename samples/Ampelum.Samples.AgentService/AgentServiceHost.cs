@@ -45,12 +45,10 @@ public static class AgentServiceHost
 
         builder.Services.AddSingleton(chat);
         // The original sample used the in-memory sink the hook falls back to. It is swapped for a file-backed one
-        // because the Host builds its audit index (audit by trace id, replay) only from the audit file. The library's
-        // JsonFileAuditSink reads values back as JsonElement, which the chain hasher refuses, so both /audit/verify
-        // and replay throw with it; PlainValueAuditSink returns plain values and both work.
+        // because the Host builds its audit index (audit by trace id, replay) only from the audit file.
         builder.Services.AddAmpelum().AddAuditHook();
         builder.Services.RemoveAll<IAuditSink>();
-        builder.Services.AddSingleton<IAuditSink>(_ => new PlainValueAuditSink(auditFile));
+        builder.Services.AddSingleton<IAuditSink>(_ => new JsonFileAuditSink(auditFile));
         builder.Services.AddSingleton<IHook>(_ => new BudgetHook(null));
         builder.Services.AddAmpelumHost();
         builder.Services.AddOpenApi();

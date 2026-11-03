@@ -153,11 +153,18 @@ sealed class Harness : IAsyncDisposable
 
     public async Task<IReadOnlyList<AuditEntry>> AuditEntriesAsync()
     {
-        var sink = await AuditFile.LoadAsync(AuditPath, TestContext.Current.CancellationToken);
+        await using var sink = new JsonFileAuditSink(AuditPath);
         var entries = new List<AuditEntry>();
         await foreach (var entry in sink.EnumerateAsync(TestContext.Current.CancellationToken))
             entries.Add(entry);
         return entries;
+    }
+
+    /// <summary>Verifies the audit file on disk, whether or not the gateway still has it open.</summary>
+    public async Task<AuditChainVerificationResult> VerifyAuditFileAsync()
+    {
+        await using var sink = new JsonFileAuditSink(AuditPath);
+        return await AuditChainVerifier.VerifyAsync(sink, TestContext.Current.CancellationToken);
     }
 
     public async ValueTask DisposeAsync()

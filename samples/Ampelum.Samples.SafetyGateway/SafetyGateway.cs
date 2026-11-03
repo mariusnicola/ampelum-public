@@ -71,9 +71,7 @@ public sealed class SafetyGateway : IAsyncDisposable
             services.AddSingleton(deps.Trace);
 
         var builder = services.AddAmpelum().UseAdapter<JsonAdapter>();
-        if (deps.ReplayAudit)
-            services.AddSingleton<IAuditSink>(await AuditFile.LoadAsync(options.AuditPath, ct));
-        else if (options.BatchAudit)
+        if (options.BatchAudit && !deps.ReplayAudit)
         {
             // The batched sink does not dispose the sink it wraps, so the container owns the file sink and closes it last.
             services.AddSingleton(_ => new JsonFileAuditSink(options.AuditPath));
@@ -207,8 +205,11 @@ public sealed class SafetyGateway : IAsyncDisposable
     /// Checks the whole audit file; an edited, removed or reordered entry makes the chain invalid.
     /// With batched audit the file is complete only after the gateway is disposed.
     /// </summary>
-    public async Task<AuditChainVerificationResult> VerifyAuditAsync(CancellationToken ct = default) =>
-        await AuditFile.VerifyAsync(_deps.Options.AuditPath, ct);
+    public async Task<AuditChainVerificationResult> VerifyAuditAsync(CancellationToken ct = default)
+    {
+        await using var file = new JsonFileAuditSink(_deps.Options.AuditPath);
+        return await AuditChainVerifier.VerifyAsync(file, ct);
+    }
 
     async Task<(string Clean, IReadOnlyList<string> Flags)> ScreenQuestionAsync(string question, CancellationToken ct)
     {

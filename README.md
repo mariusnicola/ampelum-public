@@ -279,7 +279,6 @@ Host
 - The Host optimize endpoint scores with a private `NoOpMetric` that returns 1.0, so it does not measure quality (`src/SignalGrid.Ampelum.Host/ModuleRegistry/PredictComposedAdapter.cs`).
 - A promoted prompt version is never applied to forward, prompt demo examples read back with null fields, and `rebuild-index` drops prompt versions created through the endpoint.
 - Audit lookup by trace id returns 404 until the index is rebuilt. Replay looks the module up by the audited name `Predict`, so a module registered under another name cannot be replayed.
-- `/audit/verify` and replay reject entries read back by `JsonFileAuditSink`, because it returns `JsonElement` values the hasher refuses.
 - The Host `rebuild-index` command fails when the working directory holds an `appsettings.json`.
 - `/readyz` answers 503 when one SQLite open takes longer than 50 ms, which can happen on a cold start, so a client must poll it (`src/SignalGrid.Ampelum.Host/Persistence/HostSqliteConnectionFactory.cs`, line 39).
 - `ChatAdapter.OnChunk` treats the closing `[[ ## completed ## ]]` marker as a field. The Host stream endpoint filters it out, but a direct `Predict.StreamAsync` caller sees an update named `completed`.
@@ -295,7 +294,6 @@ Written but not called by shipped code
 
 Audit and safety
 
-- `JsonFileAuditSink` returns `JsonElement` values that `AuditChainVerifier` rejects, so a file cannot be verified or replayed through its own sink.
 - `AuditHook` cannot continue an existing chain. It starts from the zero hash, so a second run on the same file breaks at sequence 1.
 - Replay of a question `PiiRedactionHook` changed fails with `AuditReplayMissingException`: entries are written from redacted inputs and the key is built from the original ones.
 - `AuditHook` records model id `unknown` and 0 tokens for `Predict` calls, because it reads a different metadata key from the one they set.

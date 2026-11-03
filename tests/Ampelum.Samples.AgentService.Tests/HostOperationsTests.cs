@@ -211,61 +211,19 @@ public sealed class HostOperationsTests
         failure.Error.Message.ShouldContain(AgentServiceHost.ReplayModuleName);
     }
 
-    /// <summary>A Host with one audited call; the two sinks below open its live audit file for reading only.</summary>
-    async Task<(ServiceFixture Service, SignalGrid.Ampelum.Audit.JsonFileAuditSink Library, PlainValueAuditSink Sample)> AuditedCallAsync()
+    [Fact]
+    public async Task AuditFile_ReadsBackAsPlainValues()
     {
-        var service = await StartAsync();
+        await using var service = await StartAsync();
         service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
         await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
-        var auditFile = Path.Combine(service.StorageDir, "audit.jsonl");
-        return (service, new SignalGrid.Ampelum.Audit.JsonFileAuditSink(auditFile), new PlainValueAuditSink(auditFile));
-    }
+        // A second handle on the live audit file, for reading only.
+        await using var file = new SignalGrid.Ampelum.Audit.JsonFileAuditSink(Path.Combine(service.StorageDir, "audit.jsonl"));
 
-    [Fact]
-    public async Task KnownLimit_JsonFileAuditSinkReadsValuesBackAsJsonElement()
-    {
-        var (service, library, sample) = await AuditedCallAsync();
-        await using var _ = service;
-        await using var __ = library;
-        await using var ___ = sample;
+        var entry = await file.EnumerateAsync(Ct).FirstAsync(Ct);
 
-        var fromLibrary = await library.EnumerateAsync(Ct).FirstAsync(Ct);
-        var fromSample = await sample.EnumerateAsync(Ct).FirstAsync(Ct);
-
-        fromLibrary.Inputs["Question"].ShouldBeOfType<JsonElement>();
-        fromSample.Inputs["Question"].ShouldBe("How long is delivery?");
-        fromSample.Outputs["Answer"].ShouldBe("Delivery takes 3 to 5 business days.");
-        fromSample.EntryHash.ShouldBe(fromLibrary.EntryHash);
-    }
-
-    [Fact]
-    public async Task KnownLimit_VerifyThrowsWhenTheHostUsesTheLibraryFileSink()
-    {
-        await using var service = new ServiceFixture(libraryAuditSink: true);
-        await service.InitializeAsync();
-        service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
-        await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
-
-        // The test server hands the endpoint's exception to the caller; a real server would answer 500.
-        var failure = await Should.ThrowAsync<SignalGrid.Ampelum.Audit.AuditSerializationException>(
-            () => service.Client.VerifyAuditAsync(Ct));
-
-        failure.Message.ShouldContain(nameof(JsonElement));
-    }
-
-    [Fact]
-    public async Task KnownLimit_ReplayThrowsWhenTheHostUsesTheLibraryFileSink()
-    {
-        await using var service = new ServiceFixture(replayModule: true, libraryAuditSink: true);
-        await service.InitializeAsync();
-        service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
-        var original = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
-        await service.Client.RebuildIndexAsync(Ct);
-
-        var failure = await Should.ThrowAsync<SignalGrid.Ampelum.Audit.AuditSerializationException>(
-            () => service.Client.ReplayAsync(original.TraceId, Ct));
-
-        failure.Message.ShouldContain(nameof(JsonElement));
+        entry.Inputs["Question"].ShouldBe("How long is delivery?");
+        entry.Outputs["Answer"].ShouldBe("Delivery takes 3 to 5 business days.");
     }
 
     [Fact]
