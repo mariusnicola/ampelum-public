@@ -300,7 +300,11 @@ public sealed class StreamingChatSession
             if (hookPipeline is not null)
             {
                 if (terminalError is null)
+                {
+                    // The after hooks (moderation, PII redaction, audit) work on outputs, so they get the whole reply.
+                    hookCtx.Outputs = new Dictionary<string, object?> { ["text"] = fullResponse.ToString() };
                     await hookPipeline.RunAfterAsync(hookCtx, ct).ConfigureAwait(false);
+                }
                 else
                     await hookPipeline.RunErrorAsync(hookCtx, terminalError, CancellationToken.None)
                         .ConfigureAwait(false);

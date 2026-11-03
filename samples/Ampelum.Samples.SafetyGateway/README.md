@@ -65,7 +65,7 @@ The tests use `FakeChatClient` and `CapturingTraceSink` from `Ampelum.Testing`, 
 Each of these was seen by running the code, not only by reading it.
 
 - Replay works from the audit file for `AskAsync`, including a question the PII hook changed (`Replay_OfAQuestionThePiiHookChanged_AnswersFromTheFile`). A tool run cannot be replayed: a replayed model turn carries its text only, not its tool calls.
-- `StreamingChatSession` is not used. The before hooks do run, but the text is sent to the caller before the after hooks, and those hooks are given no outputs, so moderation has nothing to check and never calls the service.
+- `StreamingChatSession` is not used. Its text is sent to the caller before the after hooks run, so moderation, which does check the whole streamed reply, could only fail the turn after the text was delivered.
 - `FileTrustStore` keeps trust levels in memory only; nothing is written to its folder.
 - `ProcessSandbox` is not a sandbox. It runs a process with the caller's rights and refuses any policy that asks for isolation, which is how this sample uses it.
 - Nothing in the library fills `tools.requested`, so `ToolGateHook` does nothing until the caller publishes the tool names, as `ToolGovernance.CheckGateAsync` does.

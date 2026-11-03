@@ -34,26 +34,40 @@ public sealed class KnownLimitTests
     }
 
     [Fact]
-    public async Task KnownLimit_ConversationSendsTextBeforeTheAfterHooksAndGivesThemNoOutputs_SoModerationNeverSeesTheReply()
+    public async Task KnownLimit_ConversationSendsTextBeforeTheAfterHooks_SoModerationFailsTheTurnOnlyAfterTheFlaggedTextWasDelivered()
+    {
+        var moderator = new MarkerModerator();
+        using var h = new Harness([new ModerationHook(moderator)]);
+        h.Primary.EnqueueStreamingChunks("This reply is ", MarkerModerator.Marker, " text.");
+
+        var tokens = new List<string>();
+        await Should.ThrowAsync<ModerationException>(async () =>
+        {
+            await foreach (var token in h.Backend.OpenConversation().SendAsync("Hi", Ct))
+                tokens.Add(token);
+        });
+
+        // Moderation now sees the whole reply, but every token had already reached the caller.
+        moderator.Calls.ShouldBe(1);
+        string.Concat(tokens).ShouldContain(MarkerModerator.Marker);
+    }
+
+    [Fact]
+    public async Task Conversation_GivesTheAfterHooksTheWholeReply()
     {
         var delivered = 0;
         var spy = new AfterSpyHook(() => delivered);
         var moderator = new MarkerModerator();
         using var h = new Harness([new ModerationHook(moderator), spy]);
-        h.Primary.EnqueueStreamingChunks("This reply is ", MarkerModerator.Marker, " text.");
+        h.Primary.EnqueueStreamingChunks("A clean ", "reply.");
 
-        var tokens = new List<string>();
-        await foreach (var token in h.Backend.OpenConversation().SendAsync("Hi", Ct))
-        {
-            tokens.Add(token);
+        await foreach (var _ in h.Backend.OpenConversation().SendAsync("Hi", Ct))
             delivered++;
-        }
 
-        string.Concat(tokens).ShouldContain(MarkerModerator.Marker);
         spy.AfterRuns.ShouldBe(1);
-        spy.DeliveredWhenAfterRan.ShouldBe(3);
-        spy.OutputsWereNull.ShouldBe(true);
-        moderator.Calls.ShouldBe(0);
+        spy.DeliveredWhenAfterRan.ShouldBe(2);
+        spy.OutputsWereNull.ShouldBe(false);
+        moderator.Calls.ShouldBe(1);
     }
 
     [Fact]

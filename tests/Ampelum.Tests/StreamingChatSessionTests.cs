@@ -87,6 +87,36 @@ public sealed class StreamingChatSessionTests
     // ── hooks ────────────────────────────────────────────────────────────────
 
     [Fact]
+    public async Task SendAsync_GivesTheAfterHooksTheWholeReplyAsOutputs()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var chat = new FakeChatClient().EnqueueStreamingChunks("Hello, ", "streamed ", "world!");
+        var hook = new OutputsCapturingHook();
+        var session = new StreamingChatSession(BaseCtx(chat).WithHook(hook), "Sys");
+
+        await foreach (var _ in session.SendAsync("hi", ct)) { }
+
+        hook.Outputs.ShouldNotBeNull();
+        hook.Outputs!["text"].ShouldBe("Hello, streamed world!");
+    }
+
+    [Fact]
+    public async Task SendAsync_AfterHookThatRejectsTheReply_FailsTheTurnAfterTheTextWasSent()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var chat = new FakeChatClient().EnqueueStreamingChunks("bad ", "reply");
+        var session = new StreamingChatSession(BaseCtx(chat).WithHook(new RejectingAfterHook()), "Sys");
+        var tokens = new List<string>();
+
+        await Should.ThrowAsync<InvalidOperationException>(async () =>
+        {
+            await foreach (var t in session.SendAsync("hi", ct)) tokens.Add(t);
+        });
+
+        tokens.ShouldBe(["bad ", "reply"]);
+    }
+
+    [Fact]
     public async Task SendAsync_WithHooks_FiresOnBeforeAndOnAfter()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -227,6 +257,24 @@ public sealed class StreamingChatSessionTests
         public ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct) { BeforeCount++; return default; }
         public ValueTask OnAfterAsync(HookContext ctx, CancellationToken ct) { AfterCount++; return default; }
         public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct) { ErrorCount++; return default; }
+    }
+
+    sealed class OutputsCapturingHook : IHook
+    {
+        public IReadOnlyDictionary<string, object?>? Outputs;
+        public int Order => 0;
+        public ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct) => default;
+        public ValueTask OnAfterAsync(HookContext ctx, CancellationToken ct) { Outputs = ctx.Outputs; return default; }
+        public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct) => default;
+    }
+
+    sealed class RejectingAfterHook : IHook
+    {
+        public int Order => 0;
+        public ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct) => default;
+        public ValueTask OnAfterAsync(HookContext ctx, CancellationToken ct) =>
+            ctx.Outputs is null ? default : ValueTask.FromException(new InvalidOperationException("rejected"));
+        public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct) => default;
     }
 
     sealed class ThrowingBeforeHook : IHook

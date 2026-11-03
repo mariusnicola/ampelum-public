@@ -147,7 +147,7 @@ dotnet run --project samples/Ampelum.Samples.AgentRuntime -c Release -- --fake
 dotnet test tests/Ampelum.Samples.AgentRuntime.Tests
 ```
 
-**Chat frontend** (`samples/Ampelum.Samples.ChatFrontend`). The backend of a customer chat widget. A conversation reply streams token by token through `StreamingChatSession`, and the typed fields of an answer stream through `ProgramStreamer`. A repeated question is answered by the semantic cache hook without a model call, a repeated identical prompt is stopped by `TokenCache`, and `RoutedChatClient` with `Failover` sends a call to the fallback model when the primary fails. Its tests pin what does not work: streaming does not fail over, moderation never sees a streamed reply, a cache hit skips the PII hook, and the "semantic" cache matches identical inputs only. The live path has never been run.
+**Chat frontend** (`samples/Ampelum.Samples.ChatFrontend`). The backend of a customer chat widget. A conversation reply streams token by token through `StreamingChatSession`, and the typed fields of an answer stream through `ProgramStreamer`. A repeated question is answered by the semantic cache hook without a model call, a repeated identical prompt is stopped by `TokenCache`, and `RoutedChatClient` with `Failover` sends a call to the fallback model when the primary fails. Its tests pin what does not work: streaming does not fail over, moderation checks a streamed reply only after its text was delivered, and the "semantic" cache matches identical inputs only. The live path has never been run.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.ChatFrontend -c Release -- --fake
@@ -295,7 +295,7 @@ Written but not called by shipped code
 Audit and safety
 
 - All `AuditHook`s over one sink share one append gate that is not reentrant: a sink must not call back into an `AuditHook` on itself from `AppendAsync`, or the append waits for itself.
-- `StreamingChatSession` sends text to the caller before the after hooks run and never sets outputs, so `ModerationHook` does not check streamed replies.
+- `StreamingChatSession` sends each token to the caller before the after hooks run. The hooks get the whole reply as outputs (`text`), so `ModerationHook` checks it, but it can only fail the turn after the flagged text was delivered.
 - `FileTrustStore` keeps everything in memory, despite its name, and violations do not revoke trust.
 - Nothing in `src` sets `tools.requested`, so `ToolGateHook` does nothing unless the caller sets it.
 - `ModelRateTable.EstimateCost` ignores its model id.
