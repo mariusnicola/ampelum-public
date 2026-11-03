@@ -22,10 +22,64 @@ public sealed class SemanticCacheHookTests
         new Dictionary<string, object?> { ["A"] = a };
 
     [Fact]
-    public void Order_IsBeforeAuditHook()
+    public void Order_IsAfterPiiRedactionHook_SoThatHookStillRunsOnAHit()
     {
         var hook = new SemanticCacheHook(new InMemorySemanticCache());
-        hook.Order.ShouldBeLessThan(new AuditHook(new InMemoryAuditSink()).Order);
+        hook.Order.ShouldBeGreaterThan(new SignalGrid.Ampelum.Safety.Pii.PiiRedactionHook(new SignalGrid.Ampelum.Safety.Pii.RegexPiiRedactor()).Order);
+    }
+
+    // Runs the hooks the way the pipeline does: before in ascending order until one supplies outputs,
+    // then after in descending order.
+    static async Task RunAsync(IHook[] hooks, HookContext ctx, Func<HookContext, Task> callModel)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        foreach (var hook in hooks.OrderBy(h => h.Order))
+        {
+            await hook.OnBeforeAsync(ctx, ct);
+            if (ctx.Outputs is not null) break;
+        }
+        if (ctx.Outputs is null) await callModel(ctx);
+        foreach (var hook in hooks.OrderByDescending(h => h.Order))
+            await hook.OnAfterAsync(ctx, ct);
+    }
+
+    [Fact]
+    public async Task Hit_StillRunsThePiiHook_SoTheAuditEntryHoldsTheRedactedInputs()
+    {
+        var cache = new InMemorySemanticCache();
+        var sink = new InMemoryAuditSink();
+        IHook[] hooks =
+        [
+            new SemanticCacheHook(cache),
+            new AuditHook(sink),
+            new SignalGrid.Ampelum.Safety.Pii.PiiRedactionHook(new SignalGrid.Ampelum.Safety.Pii.RegexPiiRedactor()),
+        ];
+        var question = new Dictionary<string, object?> { ["Q"] = "Mail jane.doe@example.com please" };
+
+        await RunAsync(hooks, Context(inputs: question), ctx => { ctx.Outputs = Outputs("Sure."); return Task.CompletedTask; });
+        await RunAsync(hooks, Context(inputs: question), _ => throw new InvalidOperationException("The second call must be a cache hit."));
+
+        var entries = new List<AuditEntry>();
+        await foreach (var e in sink.EnumerateAsync(TestContext.Current.CancellationToken)) entries.Add(e);
+        entries.Count.ShouldBe(2);
+        entries[0].Inputs["Q"].ShouldBe("Mail <REDACTED:EMAIL> please");
+        entries[1].Inputs["Q"].ShouldBe("Mail <REDACTED:EMAIL> please");
+    }
+
+    [Fact]
+    public async Task Miss_StoresTheOutputsAsTheModelAnswered_NotTheRedactedCopy()
+    {
+        var cache = new InMemorySemanticCache();
+        IHook[] hooks =
+        [
+            new SemanticCacheHook(cache),
+            new SignalGrid.Ampelum.Safety.Pii.PiiRedactionHook(new SignalGrid.Ampelum.Safety.Pii.RegexPiiRedactor()),
+        ];
+        var question = new Dictionary<string, object?> { ["Q"] = "who?" };
+
+        await RunAsync(hooks, Context(inputs: question), ctx => { ctx.Outputs = Outputs("Ask jane.doe@example.com"); return Task.CompletedTask; });
+
+        cache.TryGet(SemanticCacheKey.Compute("Predict", question))!.Outputs["A"].ShouldBe("Ask jane.doe@example.com");
     }
 
     [Fact]

@@ -69,7 +69,7 @@ public sealed class KnownLimitTests
     }
 
     [Fact]
-    public async Task KnownLimit_SemanticCacheHitStopsTheBeforePass_SoThePiiHookAfterItNeverPublishesTheRedactedInputs()
+    public async Task SemanticCacheHit_StillRunsThePiiHook_SoTheAuditEntryHoldsTheRedactedInputs()
     {
         var audit = new InMemoryAuditSink();
         using var h = new Harness([new AuditHook(audit), new PiiRedactionHook(new RegexPiiRedactor())]);
@@ -84,10 +84,9 @@ public sealed class KnownLimitTests
         await foreach (var entry in audit.EnumerateAsync(Ct))
             entries.Add(entry);
         entries.Count.ShouldBe(2);
-        // The miss ran the PII hook, so its audit entry holds the redacted text.
+        // Both the miss and the hit ran the PII hook, so both audit entries hold the redacted text.
         entries[0].Inputs["Question"].ShouldBe("Please write to <REDACTED:EMAIL> about my order");
-        // The hit stopped before the PII hook, so its audit entry holds the address as typed.
-        entries[1].Inputs["Question"].ShouldBe(question);
+        entries[1].Inputs["Question"].ShouldBe("Please write to <REDACTED:EMAIL> about my order");
     }
 
     [Fact]
