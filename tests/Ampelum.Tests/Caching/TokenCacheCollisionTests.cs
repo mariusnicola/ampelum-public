@@ -223,4 +223,39 @@ public sealed class TokenCacheCollisionTests
         second.ResponseId.ShouldBe(first.ResponseId);
         second.Messages.Count.ShouldBe(first.Messages.Count);
     }
+
+    sealed class ThrowingGetter
+    {
+        public int Value => throw new InvalidOperationException("getter failed");
+    }
+
+    [Fact]
+    public async Task A_response_whose_serialization_throws_is_returned_and_not_cached()
+    {
+        var odd = new ChatResponse(new ChatMessage(ChatRole.Assistant, "one"))
+        {
+            AdditionalProperties = new AdditionalPropertiesDictionary { ["odd"] = new ThrowingGetter() },
+        };
+        var inner = new FakeChatClient().EnqueueRaw(odd).EnqueueText("two");
+        using var cache = new TokenCache();
+        var sut = new TokenCachedChatClient(inner, cache);
+
+        var first = await sut.GetResponseAsync(Hi, null, Ct);
+        var second = await sut.GetResponseAsync(Hi, null, Ct);
+
+        first.Text.ShouldBe("one");
+        second.Text.ShouldBe("two");
+        inner.RecordedCalls.Count.ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task A_request_whose_key_cannot_be_built_passes_through_uncached()
+    {
+        var options = new ChatOptions { AdditionalProperties = new AdditionalPropertiesDictionary { ["odd"] = new ThrowingGetter() } };
+
+        var (calls, _, second) = await TwiceAsync(options);
+
+        calls.ShouldBe(2);
+        second.Text.ShouldBe("two");
+    }
 }

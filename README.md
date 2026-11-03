@@ -303,6 +303,7 @@ Caching
 
 - `SemanticCacheHook` matches a reworded question only when an embedding generator is registered; without one it is an exact match on the module name, signature type and inputs. Its vectors are kept in the hook (4096 at most), not in the `ISemanticCache` store. A failing embedding call is skipped, not raised, and a streamed turn is never served from or stored in the cache.
 - An entry `SemanticCacheHook` stores while the embedding service fails has no vector, so it is found only by exact match afterwards; there is no retry. The skipped call is visible as `HookMetadataKeys.SemanticCacheEmbeddingFailed` on the call's context.
+- A `TokenCachedChatClient` hit is a JSON copy of the stored response: `AdditionalProperties` values and function-call arguments come back as `JsonElement` rather than their original types, and `RawRepresentation` is not carried. A response the serializer cannot copy is returned uncached.
 - The `SemanticCacheHook` similarity text is all inputs joined, so two long inputs that differ in one detail can pass the threshold, and the 0.95 default is not calibrated against a real embedding model.
 
 Routing and tracing

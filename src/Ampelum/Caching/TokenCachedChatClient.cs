@@ -37,8 +37,9 @@ public sealed class TokenCachedChatClient(IChatClient inner, TokenCache cache) :
     {
         if (!TokenCache.IsCacheable(options))
             return null;
+        // Any serializer failure (unsupported type, a getter that throws) means the request cannot be keyed: pass it through.
         try { return TokenCache.BuildKey(messages, options); }
-        catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException)
+        catch (Exception)
         {
             return null;
         }
@@ -57,8 +58,9 @@ public sealed class TokenCachedChatClient(IChatClient inner, TokenCache cache) :
                 copy.Usage = new UsageDetails { InputTokenCount = 0, OutputTokenCount = 0, TotalTokenCount = 0 };
             return copy;
         }
-        catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException)
+        catch (Exception)
         {
+            // The model call already succeeded; a response the serializer cannot copy is returned uncached.
             return null;
         }
     }
