@@ -26,16 +26,48 @@ public sealed class TokenCache : IDisposable
             cleanupInterval ?? TimeSpan.FromMinutes(1));
     }
 
-    /// <summary>Compute a cache key from the chat messages and options.</summary>
+    /// <summary>Compute a cache key from the chat messages and the options that change the output
+    /// (model id, sampling settings, stop sequences, response format, instructions, conversation id,
+    /// tool mode and tool names). Options a caller leaves unset add nothing to the key.</summary>
     public static string BuildKey(IEnumerable<ChatMessage> messages, ChatOptions? options)
     {
-        // Use the concatenated text of messages + model id for exact-match detection
         var sb = new System.Text.StringBuilder();
-        if (options?.ModelId is not null)
-            sb.Append(options.ModelId).Append('|');
+        if (options is not null)
+        {
+            if (options.ModelId is not null)
+                sb.Append(options.ModelId).Append('|');
+            AppendOption(sb, "temperature", options.Temperature);
+            AppendOption(sb, "top_p", options.TopP);
+            AppendOption(sb, "top_k", options.TopK);
+            AppendOption(sb, "max_tokens", options.MaxOutputTokens);
+            AppendOption(sb, "frequency_penalty", options.FrequencyPenalty);
+            AppendOption(sb, "presence_penalty", options.PresencePenalty);
+            AppendOption(sb, "seed", options.Seed);
+            AppendOption(sb, "instructions", options.Instructions);
+            AppendOption(sb, "conversation", options.ConversationId);
+            AppendOption(sb, "allow_multiple_tool_calls", options.AllowMultipleToolCalls);
+            if (options.StopSequences is { Count: > 0 } stops)
+                AppendOption(sb, "stop", string.Join('\u001f', stops));
+            if (options.ResponseFormat is not null)
+                AppendOption(sb, "response_format", options.ResponseFormat is ChatResponseFormatJson json
+                    ? "json:" + json.SchemaName + ":" + json.Schema
+                    : options.ResponseFormat.GetType().Name);
+            if (options.ToolMode is not null)
+                AppendOption(sb, "tool_mode", options.ToolMode is RequiredChatToolMode req
+                    ? "required:" + req.RequiredFunctionName
+                    : options.ToolMode.GetType().Name);
+            if (options.Tools is { Count: > 0 } tools)
+                AppendOption(sb, "tools", string.Join('\u001f', tools.Select(t => t.Name + "=" + t.Description)));
+        }
         foreach (var m in messages)
             sb.Append(m.Role).Append(':').Append(m.Text ?? "").Append('\n');
         return sb.ToString();
+    }
+
+    static void AppendOption(System.Text.StringBuilder sb, string name, object? value)
+    {
+        if (value is null) return;
+        sb.Append(name).Append('=').Append(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture)).Append('|');
     }
 
     /// <summary>Try to get a cached response for the given key.</summary>

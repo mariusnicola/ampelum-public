@@ -859,6 +859,9 @@ Ampelum.Exceptions.DeadlineExceededException.DeadlineExceededException(System.Da
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.Count.get -> int
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.TryGet(string! key) -> Ampelum.Caching.Semantic.SemanticCacheEntry?
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.InMemorySemanticCache.Set(string! key, Ampelum.Caching.Semantic.SemanticCacheEntry! entry) -> void
+Ampelum.Caching.TokenCachedChatClient
+Ampelum.Caching.TokenCachedChatClient.TokenCachedChatClient(Microsoft.Extensions.AI.IChatClient! inner, Ampelum.Caching.TokenCache! cache) -> void
+override Ampelum.Caching.TokenCachedChatClient.GetResponseAsync(System.Collections.Generic.IEnumerable<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.SemanticCacheHook(Ampelum.Caching.Semantic.ISemanticCache! cache, Microsoft.Extensions.AI.IEmbeddingGenerator<string!, Microsoft.Extensions.AI.Embedding<float>!>? embeddings = null, double minSimilarity = 0.95) -> void
 [AMPELUM_V09_PREVIEW]Ampelum.Caching.Semantic.SemanticCacheHook.Order.get -> int

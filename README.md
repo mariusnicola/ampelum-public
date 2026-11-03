@@ -302,7 +302,6 @@ Audit and safety
 Caching
 
 - `SemanticCacheHook` matches a reworded question only when an embedding generator is registered; without one it is an exact match on the module name, signature type and inputs. Its vectors are kept in the hook (4096 at most), not in the `ISemanticCache` store, and an embedding generator that throws fails the call.
-- Nothing in `src` calls `TokenCache`, and its key holds only the model id and the messages, so calls that differ in temperature or other options share an entry.
 
 Routing and tracing
 

@@ -9,7 +9,7 @@ The backend of a customer chat widget. A conversation reply streams token by tok
 | `StreamingChatSession` streams a reply token by token | `ChatBackend.OpenConversation` |
 | `ProgramStreamer.Streamify` with `IStreamableProgram` and `StreamUpdate` streams the typed fields | `ChatBackend.StreamFieldsAsync`, `ReplyProgram.cs` |
 | `SemanticCacheHook` with `InMemorySemanticCache`, registered by `AddSemanticCache` | `ChatBackend` constructor, `ChatBackend.AskAsync` |
-| `TokenCache` stops a repeated identical prompt | `TokenCachedChatClient.cs`, `ChatBackend.QuickReplyAsync` |
+| `TokenCachedChatClient` with `TokenCache` stops a repeated identical prompt | `ChatBackend` constructor, `ChatBackend.QuickReplyAsync` |
 | `RoutedChatClient` with `Failover` | `ChatBackend` constructor |
 
 `PinnedModelClient.cs` sends each endpoint's own model id. `ChatDemo.cs` runs the scenario and `Program.cs` picks fake or live.
@@ -54,4 +54,4 @@ Each was seen by running the code. `KnownLimitTests` pins every one except the T
 - A semantic cache hit stops the before-pass (`src/Ampelum/Hooks/HookPipeline.cs`, line 46). `SemanticCacheHook` is ordered 52, so `PiiRedactionHook` (50) still runs its before step on a hit and the audit entry holds `<REDACTED:EMAIL>`, as the miss does (`SemanticCacheHit_StillRunsThePiiHook_SoTheAuditEntryHoldsTheRedactedInputs`). Hooks ordered above 52, such as the prompt-injection hook (75), do not run their before step on a hit.
 - Streaming does not fail over. `RoutedChatClient.GetStreamingResponseAsync` returns the primary's stream without any fallback (`src/Ampelum/Routing/RoutedChatClient.cs`, line 83). A primary outage during a conversation reaches the caller while a one-shot call in the same outage is rescued (`KnownLimit_StreamingDoesNotFailOver...`).
 - `StreamingChatSession` yields each token before the after hooks run. It gives them the whole reply as `HookContext.Outputs` (`text`), so `ModerationHook` checks a streamed reply (`Conversation_GivesTheAfterHooksTheWholeReply`), but it can only fail the turn once the stream ends, after the flagged text reached the caller (`KnownLimit_ConversationSendsTextBeforeTheAfterHooks...`). A widget that must not show unsafe text cannot rely on moderation alone with this session.
-- Nothing in `src` calls `TokenCache`, so no chat client uses it. `TokenCachedChatClient` is the sample's own wiring. `TokenCache.BuildKey` keys on the model id and each message's role and text only, so two calls that differ in temperature or other options share an entry. In this sample the model id in the key is empty, because `TokenCachedChatClient` sits outside `PinnedModelClient`, which sets the id later.
+- In this sample the model id in the `TokenCache` key is empty, because `TokenCachedChatClient` sits outside `PinnedModelClient`, which sets the id later. The key still holds the options the caller sets, such as temperature.
