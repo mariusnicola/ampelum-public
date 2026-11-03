@@ -278,7 +278,7 @@ Host
 - `ProblemDetailsMiddleware` is internal and nothing registers it, so an unhandled endpoint exception is not mapped to a Host error code.
 - The Host optimize endpoint scores with a private `NoOpMetric` that returns 1.0, so it does not measure quality (`src/SignalGrid.Ampelum.Host/ModuleRegistry/PredictComposedAdapter.cs`).
 - A promoted prompt version is never applied to forward, prompt demo examples read back with null fields, and `rebuild-index` drops prompt versions created through the endpoint.
-- Audit lookup by trace id returns 404 until the index is rebuilt. Replay looks the module up by the audited name `Predict`, so a module registered under another name cannot be replayed.
+- Audit lookup by trace id returns 404 until the index is rebuilt. Replay of a `Predict` call finds the module by the audited name `Predict`, or else the one module whose signature accepts the recorded inputs; with two such modules and none named `Predict` it answers `module_not_found` (ambiguous).
 - The Host `rebuild-index` command fails when the working directory holds an `appsettings.json`.
 - `/readyz` answers 503 when one SQLite open takes longer than 50 ms, which can happen on a cold start, so a client must poll it (`src/SignalGrid.Ampelum.Host/Persistence/HostSqliteConnectionFactory.cs`, line 39).
 - `ChatAdapter.OnChunk` treats the closing `[[ ## completed ## ]]` marker as a field. The Host stream endpoint filters it out, but a direct `Predict.StreamAsync` caller sees an update named `completed`.

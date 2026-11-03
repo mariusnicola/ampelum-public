@@ -39,7 +39,6 @@ The Host and MCP tests run on an in-memory `TestServer`, with MCP tests on a rea
 ## What the sample works around
 
 - **Audit sink, swapped.** The original sample used the in-memory sink that `AddAuditHook` falls back to. It now uses a file-backed sink, because the Host builds its audit index (audit by trace id, replay) only from `Host:Storage:AuditFile`, and nothing else writes that file.
-- **Replay module name.** Replay finds the module by the name in the audit entry, which is `Predict` for a `Predict` call, not the name it was served under (`AuditReplayService.cs:53`). The sample registers the program a second time as `Predict` (`replayModule`, on in `Program.cs`, off by default). With only `Answer` registered replay answers 404 `module_not_found` (`KnownLimit_ReplayFindsNothingWhenOnlyTheServedNameIsRegistered`).
 - **CLI runtime.** Checked: started from the sample's output folder with the CLI's own runtime settings, `ampelum repl` stopped with `FileNotFoundException` for `Microsoft.Extensions.Logging.Abstractions` 10.0.0.0, while the same command started from the CLI project's own output folder, and through `dotnet exec --runtimeconfig` with the sample's runtime settings, reached its key check. The sample runs every CLI command through `dotnet exec --runtimeconfig`. I did not check other commands or other folder layouts, and I did not find out why the CLI's output folder has the assembly while the sample's does not.
 
 ## What does not work, and why

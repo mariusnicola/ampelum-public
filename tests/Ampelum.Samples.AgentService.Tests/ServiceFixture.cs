@@ -15,7 +15,7 @@ namespace Ampelum.Samples.AgentService.Tests;
 /// The sample's Host on an in-memory TestServer, so a test makes real HTTP requests without a port.
 /// Storage goes to a directory owned by this instance.
 /// </summary>
-public sealed class ServiceFixture(bool replayModule = false) : IAsyncLifetime
+public sealed class ServiceFixture : IAsyncLifetime
 {
     readonly string _storageDir = Path.Combine(Path.GetTempPath(), "ampelum-agent-service-tests-" + Guid.NewGuid().ToString("N"));
     WebApplication? _app;
@@ -110,7 +110,7 @@ public sealed class ServiceFixture(bool replayModule = false) : IAsyncLifetime
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         // The Host refuses to map a module without a key even when the model is a fake and never uses it.
         _app = AgentServiceHost.Build(
-            builder, new GatedChatClient(Model, this), "placeholder-host-key", _storageDir, replayModule, ConfigureServices);
+            builder, new GatedChatClient(Model, this), "placeholder-host-key", _storageDir, configureServices: ConfigureServices);
         await _app.StartAsync();
         _http = _app.GetTestClient();
         Client = new AgentServiceClient(_http);

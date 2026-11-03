@@ -44,14 +44,37 @@ internal sealed class AuditReplayService : IAuditReplayService
         _log = log;
     }
 
+    // A Predict call is audited as "Predict" whatever name the module is served under, so when no module
+    // carries that name the replayable module whose signature accepts the recorded inputs is the one.
+    // Two such modules cannot be told apart from the entry, so that case is refused.
+    ModuleSlot FindSlot(AuditEntry entry)
+    {
+        if (_registry.TryGet(entry.ModuleName, out var exact))
+            return exact;
+
+        if (entry.ModuleName == nameof(Predict))
+        {
+            var candidates = _registry.Names
+                .Select(n => _registry.Get(n))
+                .Where(s => s.Current is IReplayableModule r && r.AcceptsInputs(entry.Inputs))
+                .ToList();
+            if (candidates.Count == 1)
+                return candidates[0];
+            if (candidates.Count > 1)
+                throw new KeyNotFoundException(
+                    $"module_not_found:{entry.ModuleName} (ambiguous: {string.Join(", ", candidates.Select(c => c.ModuleName))})");
+        }
+
+        throw new KeyNotFoundException($"module_not_found:{entry.ModuleName}");
+    }
+
     /// <inheritdoc/>
     public async ValueTask<ForwardResponse> ReplayAsync(string traceId, CancellationToken ct)
     {
         var entry = await _lookup.TryGetByTraceIdAsync(traceId, ct)
             ?? throw new KeyNotFoundException($"trace_not_found:{traceId}");
 
-        if (!_registry.TryGet(entry.ModuleName, out var slot))
-            throw new KeyNotFoundException($"module_not_found:{entry.ModuleName}");
+        var slot = FindSlot(entry);
 
         if (slot.Current is not IReplayableModule replayable)
             throw new InvalidOperationException(

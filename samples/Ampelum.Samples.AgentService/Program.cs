@@ -32,7 +32,7 @@ try
     string[] trainingQuestions = ["Where is my parcel?", "When does it arrive?"];
     var serviceModel = fake ? FakeScript.ServiceModel(optimizeExamples: trainingQuestions.Length) : null;
     await using var app = AgentServiceHost.Build(
-        builder, serviceModel ?? config!.CreateChatClient(), hostKey, workDir, replayModule: true);
+        builder, serviceModel ?? config!.CreateChatClient(), hostKey, workDir);
     await app.StartAsync();
 
     using var http = new HttpClient { BaseAddress = new Uri(app.Urls.First()) };

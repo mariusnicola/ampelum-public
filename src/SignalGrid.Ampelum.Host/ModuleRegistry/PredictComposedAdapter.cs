@@ -34,6 +34,12 @@ public sealed class PredictComposedAdapter<TSig> : IComposedModule, IReplayableM
         return new PredictComposedAdapter<TSig>(p);
     }
 
+    bool IReplayableModule.AcceptsInputs(IReadOnlyDictionary<string, object?> inputs)
+    {
+        try { SignaturePropertyProjector.ProjectTo<TSig>(inputs); return true; }
+        catch (ArgumentException) { return false; }
+    }
+
     /// <inheritdoc/>
     async ValueTask<IReadOnlyDictionary<string, object?>> IReplayableModule.ReplayAsync(
         IReadOnlyDictionary<string, object?> inputs, AmpelumContext ctx, CancellationToken ct)

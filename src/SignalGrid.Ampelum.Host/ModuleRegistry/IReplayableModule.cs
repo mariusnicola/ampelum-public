@@ -10,6 +10,9 @@ internal interface IReplayableModule
     /// stripped of AuditHook + BudgetHook, with AuditReplayHook prepended).
     /// Returns the output field dict for wire serialisation.
     /// </summary>
+    /// <summary>True when <paramref name="inputs"/> carry every required input of this module's signature.</summary>
+    bool AcceptsInputs(IReadOnlyDictionary<string, object?> inputs);
+
     ValueTask<IReadOnlyDictionary<string, object?>> ReplayAsync(
         IReadOnlyDictionary<string, object?> inputs, AmpelumContext ctx, CancellationToken ct);
 }

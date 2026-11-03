@@ -11,9 +11,9 @@ public sealed class HostOperationsTests
 {
     static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    static async Task<ServiceFixture> StartAsync(bool replayModule = false)
+    static async Task<ServiceFixture> StartAsync()
     {
-        var service = new ServiceFixture(replayModule);
+        var service = new ServiceFixture();
         await service.InitializeAsync();
         return service;
     }
@@ -172,7 +172,7 @@ public sealed class HostOperationsTests
     [Fact]
     public async Task Replay_ServesTheRecordedAnswerWithoutCallingTheModel()
     {
-        await using var service = await StartAsync(replayModule: true);
+        await using var service = await StartAsync();
         service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
         var original = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
         await service.Client.RebuildIndexAsync(Ct);
@@ -187,7 +187,7 @@ public sealed class HostOperationsTests
     [Fact]
     public async Task Replay_OfAnUnknownTrace_Is404()
     {
-        await using var service = await StartAsync(replayModule: true);
+        await using var service = await StartAsync();
 
         var failure = await Should.ThrowAsync<AgentServiceException>(() => service.Client.ReplayAsync(new string('b', 32), Ct));
 
@@ -196,19 +196,18 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
-    public async Task KnownLimit_ReplayFindsNothingWhenOnlyTheServedNameIsRegistered()
+    public async Task Replay_FindsTheModuleServedUnderAnotherName()
     {
         await using var service = await StartAsync();
         service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
         var original = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
         await service.Client.RebuildIndexAsync(Ct);
 
-        var failure = await Should.ThrowAsync<AgentServiceException>(() => service.Client.ReplayAsync(original.TraceId, Ct));
-
         // The audit entry names the module "Predict", the registry knows it as "Answer".
-        failure.Status.ShouldBe(HttpStatusCode.NotFound);
-        failure.Error!.Code.ShouldBe(ErrorCodes.ModuleNotFound);
-        failure.Error.Message.ShouldContain(AgentServiceHost.ReplayModuleName);
+        var replayed = await service.Client.ReplayAsync(original.TraceId, Ct);
+
+        replayed.Outputs["Answer"].GetString().ShouldBe("Delivery takes 3 to 5 business days.");
+        service.Model.RecordedCalls.Count.ShouldBe(1);
     }
 
     [Fact]

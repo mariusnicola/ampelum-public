@@ -16,20 +16,13 @@ public static class AgentServiceHost
 {
     public const string ModuleName = "Answer";
 
-    /// <summary>The module name an audit entry of a Predict call carries.</summary>
-    public const string ReplayModuleName = "Predict";
-
     /// <param name="builder">Web application builder; the caller has already chosen the server.</param>
     /// <param name="chat">Model behind the module.</param>
     /// <param name="hostApiKey">Host:OpenRouter:ApiKey. The Host refuses to map a module without it.</param>
     /// <param name="storageDir">Directory for the Host's SQLite file, audit file and prompt store.</param>
     /// <param name="configureServices">Lets a caller adjust the services after the Host's are registered; tests use it to observe the Host.</param>
-    /// <param name="replayModule">
-    /// Also registers the program under <see cref="ReplayModuleName"/>. Replay looks the module up by the name the
-    /// audit entry carries, which for a Predict call is always that name, so replay finds nothing without it.
-    /// </param>
     public static WebApplication Build(
-        WebApplicationBuilder builder, IChatClient chat, string hostApiKey, string storageDir, bool replayModule = false,
+        WebApplicationBuilder builder, IChatClient chat, string hostApiKey, string storageDir,
         Action<IServiceCollection>? configureServices = null)
     {
         var auditFile = Path.Combine(storageDir, "audit.jsonl");
@@ -59,8 +52,6 @@ public static class AgentServiceHost
             ModuleName,
             sp => sp.GetRequiredService<Predict<AnswerSignature>>(),
             supportsStreaming: true);
-        if (replayModule)
-            app.MapAmpelumModule<AnswerSignature>(ReplayModuleName, sp => sp.GetRequiredService<Predict<AnswerSignature>>());
         app.MapAmpelumHostEndpoints();
         return app;
     }
