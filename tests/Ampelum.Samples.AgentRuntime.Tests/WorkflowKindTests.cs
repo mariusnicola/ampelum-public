@@ -100,7 +100,7 @@ public sealed class WorkflowKindTests : IDisposable
     [Fact]
     public async Task Monitor_ReportsBudgetBreachesAsRiskEvents()
     {
-        var policy = TriagePolicy.Load(_workspace.Root) with { MaxModelCalls = 4 };
+        var policy = TriagePolicy.Load(_workspace.Root) with { MaxCalls = 7 };
 
         var result = await RunAsync(new FakeTriageModel(), policy);
 

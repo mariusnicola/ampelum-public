@@ -1,6 +1,7 @@
 using Ampelum.Samples.AgentRuntime;
 using Microsoft.Extensions.AI;
 using Shouldly;
+using SignalGrid.Ampelum.Agent;
 using SignalGrid.Ampelum.Agent.Execution;
 using Xunit;
 
@@ -20,6 +21,25 @@ public sealed class SubAgentTests : IDisposable
         FakeFixerModel.ToolCall("w", "write_file", ("path", path), ("content", content), ("append", null));
 
     static ChatMessage Read(string path) => FakeFixerModel.ToolCall("r", "read_file", ("path", path), ("offset", null), ("limit", null));
+
+    [Fact]
+    public async Task Fix_WhenTheSharedBudgetIsUsedUp_IsRefusedBeforeTheModelRunsAndTheFileIsUntouched()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var before = File.ReadAllText(Pricing);
+        var model = new FakeFixerModel(FakeFixerModel.PricingFix());
+        var budget = new ModelBudget(new SessionBudget { MaxCallCount = 1 });
+        budget.TryReserve().ShouldBeTrue(); // the one call the session may make is already spent
+
+        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct, budget: budget.Meter);
+
+        fix.Passed.ShouldBeFalse();
+        fix.Run.Outcome.ShouldBe("Session budget exhausted.");
+        fix.Detail.ShouldContain("Session budget exhausted");
+        model.Calls.ShouldBe(0);
+        File.ReadAllText(Pricing).ShouldBe(before);
+        budget.Refused.ShouldBe(1);
+    }
 
     [Fact]
     public async Task Fix_WritesTheFileThroughTheRunnersWriteTool()

@@ -18,6 +18,7 @@ public class ToolDispatcher : IToolDispatcher
     private readonly TimeSpan _confirmationTtl;
     private readonly string _workspaceId;
     private readonly string _issuerId;
+    private readonly SessionBudgetMeter? _budget;
     private readonly Dictionary<string, HashSet<string>> _listingResults = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Func<IReadOnlyDictionary<string, JsonElement>, CancellationToken, Task<ToolResult>>> _handlers = new(StringComparer.Ordinal);
 
@@ -36,8 +37,10 @@ public class ToolDispatcher : IToolDispatcher
         IToolConfirmationStore? confirmationStore = null,
         TimeSpan? confirmationTtl = null,
         string? workspaceId = null,
-        string? issuerId = null)
+        string? issuerId = null,
+        SessionBudgetMeter? budget = null)
     {
+        _budget = budget;
         _loader = loader ?? throw new ArgumentNullException(nameof(loader));
         _tokenStore = tokenStore ?? throw new ArgumentNullException(nameof(tokenStore));
         _policyEngine = policyEngine ?? throw new ArgumentNullException(nameof(policyEngine));
@@ -138,6 +141,16 @@ public class ToolDispatcher : IToolDispatcher
             return result;
         }
 
+        // Counted here, after policy and confirmation, so a call that never reaches its handler for those reasons
+        // does not use up the budget, and before an observation token is consumed.
+        if (_budget is not null && !_budget.TryReserveCall())
+        {
+            var blocked = PolicyDecision.Blocked("Session budget exhausted.");
+            var result = Failure(toolName, "Session budget exhausted.");
+            await AuditAsync(toolName, caller, safeArgs, blocked, result, correlation, "budget.exhausted", correlation.ConfirmationId, null).ConfigureAwait(false);
+            return result;
+        }
+
         string? consumedTokenId = null;
         try
         {
@@ -175,6 +188,9 @@ public class ToolDispatcher : IToolDispatcher
             await AuditAsync(toolName, caller, safeArgs, decision, result, correlation, "handler.failed", correlation.ConfirmationId, null).ConfigureAwait(false);
             return result;
         }
+
+        if (_budget is not null && handlerResult.Output is { } output)
+            _budget.AddOutputBytes(System.Text.Encoding.UTF8.GetByteCount(output));
 
         var normalizedResult = handlerResult with { ToolName = string.IsNullOrWhiteSpace(handlerResult.ToolName) ? toolName : handlerResult.ToolName, ObservationTokenId = consumedTokenId };
         await AuditAsync(toolName, caller, safeArgs, decision, normalizedResult, correlation, normalizedResult.Success ? "handler.succeeded" : "handler.failed", correlation.ConfirmationId, null).ConfigureAwait(false);

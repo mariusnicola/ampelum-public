@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.AI;
+using SignalGrid.Ampelum.Agent;
 using SignalGrid.Ampelum.Agent.Execution;
 
 namespace Ampelum.Samples.AgentRuntime;
@@ -43,12 +44,12 @@ public sealed class Pricing
     public static IChatClient WithToolInvocation(IChatClient inner) => new FunctionInvokingChatClient(inner);
 
     /// <summary>Runs the sub-agent in <paramref name="root"/> and checks the file it was asked to change.</summary>
-    public static async Task<FixOutcome> FixAsync(string root, IChatClient client, int maxTurns = MaxTurns, CancellationToken ct = default)
+    public static async Task<FixOutcome> FixAsync(string root, IChatClient client, int maxTurns = MaxTurns, CancellationToken ct = default, SessionBudgetMeter? budget = null)
     {
         var target = Path.Combine(root, PricingFile.Replace('/', Path.DirectorySeparatorChar));
         var before = File.ReadAllText(target);
 
-        var runner = new SubAgentRunner(client, root, Guid.NewGuid().ToString("N"), maxTurns);
+        var runner = new SubAgentRunner(client, root, Guid.NewGuid().ToString("N"), maxTurns, budget);
         var run = await runner.RunAsync(new SubAgentTask { Id = "fix-102", Description = Description }, ct).ConfigureAwait(false);
 
         var (passed, detail) = Check(run, target, before);

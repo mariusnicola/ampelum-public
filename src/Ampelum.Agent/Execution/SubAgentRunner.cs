@@ -19,13 +19,16 @@ public sealed class SubAgentRunner
     readonly string _workingDir;
     readonly string _sessionId;
     readonly int _maxTurns;
+    readonly SessionBudgetMeter? _budget;
 
     public SubAgentRunner(
         IChatClient chatClient,
         string workingDir,
         string sessionId,
-        int maxTurns = DefaultMaxTurns)
+        int maxTurns = DefaultMaxTurns,
+        SessionBudgetMeter? budget = null)
     {
+        _budget = budget;
         _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
         _workingDir = workingDir ?? throw new ArgumentNullException(nameof(workingDir));
         _sessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
@@ -39,6 +42,11 @@ public sealed class SubAgentRunner
 
         var filesChanged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var warnings = new List<string>();
+
+        // A run counts as one call; its turns add their tokens, and a spent budget ends the run between turns.
+        if (_budget is not null && !_budget.TryReserveCall())
+            return BudgetStop(task, filesChanged, warnings);
+
         var tools = BuildTools(filesChanged);
         var history = new List<ChatMessage>
         {
@@ -51,6 +59,9 @@ public sealed class SubAgentRunner
         {
             for (int turn = 1; turn <= _maxTurns; turn++)
             {
+                if (turn > 1 && _budget is { IsExhausted: true })
+                    return BudgetStop(task, filesChanged, warnings);
+
                 var userText = turn == 1
                     ? task.Description
                     : "Continue. When your task is complete, end your final message with:\nDONE: <2-3 sentence summary>";
@@ -60,6 +71,7 @@ public sealed class SubAgentRunner
                 var lmContext = ResolveContext();
                 var chatResponse = await HookedLmCall.InvokeAsync(lmContext, "SubAgentRunner.Turn", history, options, ct)
                     .ConfigureAwait(false);
+                _budget?.AddTokens((chatResponse.Usage?.InputTokenCount ?? 0) + (chatResponse.Usage?.OutputTokenCount ?? 0));
                 var response = chatResponse.Text ?? "";
                 history.Add(new ChatMessage(ChatRole.Assistant, response));
 
@@ -102,6 +114,16 @@ public sealed class SubAgentRunner
             };
         }
     }
+
+    SubAgentResult BudgetStop(SubAgentTask task, HashSet<string> filesChanged, List<string> warnings) => new()
+    {
+        TaskId = task.Id,
+        Success = false,
+        FilesChanged = [.. filesChanged],
+        Outcome = "Session budget exhausted.",
+        Warnings = [.. warnings],
+        LogId = _sessionId,
+    };
 
     // Resolves the AmpelumContext HookedLmCall runs its hook pipeline through.
     //

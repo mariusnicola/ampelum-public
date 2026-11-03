@@ -8,7 +8,7 @@ namespace Ampelum.Samples.AgentRuntime;
 /// Keeping them in the project means the sample code carries no limit of its own.
 /// </summary>
 public sealed record TriagePolicy(
-    int MaxModelCalls,
+    int MaxCalls,
     long MaxTokens,
     IReadOnlyList<string> ReadablePaths,
     int GrantMinutes,
@@ -23,7 +23,7 @@ public sealed record TriagePolicy(
             ?? throw new InvalidOperationException($"{FileName} is empty.");
 
     /// <summary>The session budget these limits describe.</summary>
-    public SessionBudget ToBudget() => new() { MaxCallCount = MaxModelCalls, MaxTokens = MaxTokens };
+    public SessionBudget ToBudget() => new() { MaxCallCount = MaxCalls, MaxTokens = MaxTokens };
 
     /// <summary>Routing rules in table order, from the policy's task type to tier map.</summary>
     public IReadOnlyList<RoutingRule> ToRules() =>

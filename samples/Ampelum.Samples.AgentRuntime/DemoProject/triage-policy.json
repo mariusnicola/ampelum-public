@@ -1,5 +1,5 @@
 {
-  "maxModelCalls": 10,
+  "maxCalls": 20,
   "maxTokens": 2000,
   "readablePaths": ["src"],
   "grantMinutes": 30,

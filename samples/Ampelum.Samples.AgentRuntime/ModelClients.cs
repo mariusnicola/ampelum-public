@@ -16,47 +16,31 @@ public sealed class BudgetExhaustedException(string message) : InvalidOperationE
     }
 }
 
-/// <summary>Counts model calls and tokens against a <see cref="SessionBudget"/>. The budget type only answers questions; this class does the counting and the refusing.</summary>
+/// <summary>Counts model calls and tokens against a <see cref="SessionBudget"/> with the library's <see cref="SessionBudgetMeter"/>, the same meter <c>ToolDispatcher</c> and <c>SubAgentRunner</c> take.</summary>
 public sealed class ModelBudget(SessionBudget limits)
 {
-    readonly object _gate = new();
-    long _calls;
-    long _tokens;
-    long _refused;
+    readonly SessionBudgetMeter _meter = new(limits);
+
+    /// <summary>The meter itself, so the tool dispatcher and the sub-agent runner count against the same budget.</summary>
+    public SessionBudgetMeter Meter => _meter;
 
     /// <summary>Calls let through so far.</summary>
-    public long Calls { get { lock (_gate) return _calls; } }
+    public long Calls => _meter.Calls;
 
     /// <summary>Tokens reported by the provider so far.</summary>
-    public long Tokens { get { lock (_gate) return _tokens; } }
+    public long Tokens => _meter.Tokens;
 
     /// <summary>Calls turned away because the budget was used up.</summary>
-    public long Refused { get { lock (_gate) return _refused; } }
+    public long Refused => _meter.Refused;
 
     /// <summary>True when the next call would be refused.</summary>
-    public bool IsExhausted { get { lock (_gate) return limits.IsExhausted(_calls, _tokens, 0); } }
+    public bool IsExhausted => _meter.IsExhausted;
 
     /// <summary>Claims one call. Returns false, and counts a refusal, when no room is left.</summary>
-    public bool TryReserve()
-    {
-        lock (_gate)
-        {
-            if (limits.IsExhausted(_calls, _tokens, 0))
-            {
-                _refused++;
-                return false;
-            }
-            _calls++;
-            return true;
-        }
-    }
+    public bool TryReserve() => _meter.TryReserveCall();
 
     /// <summary>Adds the tokens a finished call used.</summary>
-    public void AddTokens(long tokens)
-    {
-        lock (_gate)
-            _tokens += tokens;
-    }
+    public void AddTokens(long tokens) => _meter.AddTokens(tokens);
 }
 
 /// <summary>Sends every call to one model id, whatever the caller put in the options.</summary>
@@ -76,7 +60,7 @@ public sealed class BudgetedChatClient(IChatClient inner, ModelBudget budget) : 
     public override async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)
     {
         if (!budget.TryReserve())
-            throw new BudgetExhaustedException($"Model budget used up after {budget.Calls} calls and {budget.Tokens} tokens.");
+            throw new BudgetExhaustedException($"Session budget used up after {budget.Calls} calls and {budget.Tokens} tokens.");
         var response = await base.GetResponseAsync(messages, options, cancellationToken).ConfigureAwait(false);
         budget.AddTokens(response.Usage?.TotalTokenCount ?? 0);
         return response;

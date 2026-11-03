@@ -53,7 +53,7 @@ public static class TriageScenario
             runId = await first.StartRunAsync(Goal, ct).ConfigureAwait(false);
             var stopped = await first.RunUntilApprovalAsync(runId, executionId, plan.Definition, ct).ConfigureAwait(false);
             var approvalStep = plan.Definition.Steps.First(s => s.Kind == WorkflowStepKind.Approval).StepId;
-            log?.WriteLine($"First runtime returned with status {stopped.Status}: workflow step '{approvalStep}' is {stopped.Nodes[approvalStep].Status}. Model calls so far: {first.Budget.Calls}, tokens: {first.Budget.Tokens}.");
+            log?.WriteLine($"First runtime returned with status {stopped.Status}: workflow step '{approvalStep}' is {stopped.Nodes[approvalStep].Status}. Calls counted so far (model calls and tool calls): {first.Budget.Calls}, tokens: {first.Budget.Tokens}.");
             log?.WriteLine("Both runtimes live in this one OS process; they share no memory, only the state folder.");
 
             await using var second = new TriageProcess(root, state, chat, tiers, policy);
@@ -67,7 +67,7 @@ public static class TriageScenario
             FixOutcome? fix = null;
             if (fixer is not null && outcome.ReportPath is not null)
             {
-                fix = await IssueFixer.FixAsync(root, IssueFixer.WithToolInvocation(fixer), ct: ct).ConfigureAwait(false);
+                fix = await IssueFixer.FixAsync(root, IssueFixer.WithToolInvocation(fixer), ct: ct, budget: second.Budget.Meter).ConfigureAwait(false);
                 log?.WriteLine($"Sub-agent fix of #102: {(fix.Passed ? "[OK]" : "[FAILED]")} {fix.Detail}. Sub-agent summary: {fix.Run.Outcome}");
             }
             return new ScenarioResult(plan, runId, executionId, paused, outcome, fix, inProcess);

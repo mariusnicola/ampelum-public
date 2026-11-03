@@ -17,19 +17,20 @@ public sealed class GovernanceTests : IDisposable
     public async Task ExhaustedCallBudget_RefusesTheCallsThatRemain_AndDefersTheIssueThatLostOut()
     {
         var model = new FakeTriageModel();
-        var policy = TriagePolicy.Load(_workspace.Root) with { MaxModelCalls = 4 };
+        var policy = TriagePolicy.Load(_workspace.Root) with { MaxCalls = 7 };
 
         var result = await TriageScenario.RunAsync(_workspace.Directory, model, FakeTriageModel.Tiers, policy: policy, ct: TestContext.Current.CancellationToken);
 
-        // Planning is not part of the session budget: two calls. Everything else may use four.
+        // Planning is not part of the session budget: two calls. Each issue is one tool call plus two model calls, so
+        // seven calls cover two issues and the tool call of the third; its first model call is refused.
         model.Calls.Count(IsBudgeted).ShouldBe(4);
         result.Outcome.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
         result.Outcome.Assessed.Results.Count.ShouldBe(2);
         var deferred = result.Outcome.Assessed.Deferred.ShouldHaveSingleItem();
-        deferred.Reason.ShouldContain("Model budget used up after 4 calls");
+        deferred.Reason.ShouldContain("Session budget used up after 7 calls");
         result.Outcome.Assessed.Score.ShouldBe(2d / 3d, 0.001);
         result.Outcome.EditorNotes.ShouldContain(note => note.StartsWith("Editor stopped:", StringComparison.Ordinal));
-        File.ReadAllText(result.Outcome.ReportPath!).ShouldContain($"- #{deferred.Issue}: Model budget used up");
+        File.ReadAllText(result.Outcome.ReportPath!).ShouldContain($"- #{deferred.Issue}: Session budget used up");
     }
 
     [Fact]
@@ -66,6 +67,31 @@ public sealed class GovernanceTests : IDisposable
 
         allowed.Success.ShouldBeTrue();
         File.ReadAllText(ReportPath).ShouldBe("report text");
+    }
+
+    [Fact]
+    public async Task ToolCall_WhenTheSharedBudgetIsUsedUp_IsRefusedAndTheReportIsNotWritten()
+    {
+        var caller = Caller();
+        var grants = new SessionGrantStore();
+        grants.Add(new SessionGrant("grant-1", caller.InstanceId, TriageTools.PostReport, PolicyDecision.Allowed, DateTimeOffset.UtcNow.AddMinutes(5), "test"));
+        var budget = new ModelBudget(new SessionBudget { MaxCallCount = 2 });
+        var dispatcher = TriageTools.CreateDispatcher(
+            caller, grants, DemoProject.ReadBacklog(_workspace.Root),
+            (_, _) => throw new InvalidOperationException("The audit tool is not used here."),
+            new ReportWriter(_workspace.Root, new SoftwareDomainProfile().BuildBlastRadius(_workspace.Root)),
+            budget.Meter);
+        budget.TryReserve().ShouldBeTrue(); // a model call elsewhere in the session used one of the two
+
+        var first = await dispatcher.InvokeAsync(TriageTools.PostReport, ReportArguments(), caller, TestContext.Current.CancellationToken);
+        File.Delete(ReportPath);
+        var second = await dispatcher.InvokeAsync(TriageTools.PostReport, ReportArguments(), caller, TestContext.Current.CancellationToken);
+
+        first.Success.ShouldBeTrue();
+        second.Success.ShouldBeFalse();
+        second.Error.ShouldNotBeNull().ShouldContain("Session budget exhausted");
+        File.Exists(ReportPath).ShouldBeFalse();
+        (budget.Calls, budget.Refused).ShouldBe((2, 1));
     }
 
     [Fact]

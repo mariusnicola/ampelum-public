@@ -49,9 +49,10 @@ public static class TriageTools
         SessionGrantStore grants,
         IReadOnlyList<TriageIssue> backlog,
         Func<TriageIssue, CancellationToken, Task<IssueResult>> audit,
-        ReportWriter writer)
+        ReportWriter writer,
+        SessionBudgetMeter? budget = null)
     {
-        var dispatcher = new ToolDispatcher(new ManifestToolLoader(Manifests), new InMemoryTokenStore(), new PolicyEngine([], grants), caller);
+        var dispatcher = new ToolDispatcher(new ManifestToolLoader(Manifests), new InMemoryTokenStore(), new PolicyEngine([], grants), caller, budget: budget);
         dispatcher.RegisterHandler(Audit, async (args, ct) =>
         {
             var number = args[IssueArgument].GetInt32();

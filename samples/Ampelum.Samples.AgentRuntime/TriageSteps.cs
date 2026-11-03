@@ -33,7 +33,7 @@ internal sealed class TriageSteps
         var backlog = DemoProject.ReadBacklog(process.Root);
         var auditor = new IssueAuditor(process.Root, executionId, process.Policy, process.Readable, process.Facts, process.Skills,
             process.ClientFor, process.Journal, process.Budget, process.Results);
-        _dispatcher = TriageTools.CreateDispatcher(process.Caller, process.Grants, backlog, auditor.AuditAsync, new ReportWriter(process.Root, process.Workspace.MaxBlastRadius));
+        _dispatcher = TriageTools.CreateDispatcher(process.Caller, process.Grants, backlog, auditor.AuditAsync, new ReportWriter(process.Root, process.Workspace.MaxBlastRadius), process.Budget.Meter);
     }
 
     public async Task<DurableWorkflowNodeResult> HandleAsync(DurableWorkflowNodeContext context, CancellationToken ct)
