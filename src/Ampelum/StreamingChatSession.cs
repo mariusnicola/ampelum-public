@@ -115,6 +115,8 @@ public sealed class StreamingChatSession
                 ModuleName = "StreamingChatSession",
                 Inputs = new Dictionary<string, object?> { ["message"] = userMessage }
             };
+            if (_tools is { Count: > 0 })
+                hookCtx.Set(Safety.Tools.ToolGateHook.OfferedKey, _tools.Select(t => t.Name).ToArray());
 
             Exception? terminalError = null;
             long totalInput = 0, totalOutput = 0;

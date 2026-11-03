@@ -297,7 +297,6 @@ Audit and safety
 - All `AuditHook`s over one sink share one append gate that is not reentrant: a sink must not call back into an `AuditHook` on itself from `AppendAsync`, or the append waits for itself.
 - `StreamingChatSession` sends each token to the caller before the after hooks run. The hooks get the whole reply as outputs (`text`), so `ModerationHook` checks it, but it can only fail the turn after the flagged text was delivered.
 - `FileTrustStore` keeps everything in memory, despite its name, and violations do not revoke trust.
-- Nothing in `src` sets `tools.requested`, so `ToolGateHook` does nothing unless the caller sets it.
 - `ModelRateTable.EstimateCost` ignores its model id.
 
 Caching

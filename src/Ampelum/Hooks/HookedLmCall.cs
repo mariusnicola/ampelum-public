@@ -71,6 +71,8 @@ public static class HookedLmCall
             ModuleName = moduleName,
             Inputs = FlattenMessages(messages),
         };
+        if (options?.Tools is { Count: > 0 } offered)
+            hookCtx.Set(Safety.Tools.ToolGateHook.OfferedKey, offered.Select(t => t.Name).ToArray());
 
         try
         {

@@ -68,6 +68,5 @@ Each of these was seen by running the code, not only by reading it.
 - `StreamingChatSession` is not used. Its text is sent to the caller before the after hooks run, so moderation, which does check the whole streamed reply, could only fail the turn after the text was delivered.
 - `FileTrustStore` keeps trust levels in memory only; nothing is written to its folder.
 - `ProcessSandbox` is not a sandbox. It runs a process with the caller's rights and refuses any policy that asks for isolation, which is how this sample uses it.
-- Nothing in the library fills `tools.requested`, so `ToolGateHook` does nothing until the caller publishes the tool names, as `ToolGovernance.CheckGateAsync` does.
 - `ModelRateTable` holds one price pair; the model id passed to `EstimateCost` is ignored.
 - `EditTool` returns a string and edits nothing. `EncryptedFileSecretStore` writes under the user profile with a key derived from the machine name and has no public constructor for another path, so neither is used.

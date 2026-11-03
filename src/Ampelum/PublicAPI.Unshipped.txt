@@ -569,6 +569,7 @@ Ampelum.Hooks.RetryHook.RetryHook(int maxAttempts = 3, System.TimeSpan? baseDela
 [AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.ToolRegistration(string! Name, string! Version, Ampelum.Safety.Tools.ToolCategory Category, string? Description = null, System.Collections.Generic.IReadOnlyDictionary<string!, object?>? Metadata = null) -> void
 [AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Version.get -> string!
 [AMPELUM_V09_PREVIEW]Ampelum.Safety.Tools.ToolRegistration.Version.init -> void
+[AMPELUM_V09_PREVIEW]const Ampelum.Safety.Tools.ToolGateHook.OfferedKey = "tools.offered" -> string!
 [AMPELUM_V09_PREVIEW]const Ampelum.Safety.Tools.ToolGateHook.PolicyOverrideKey = "tools.policy" -> string!
 [AMPELUM_V09_PREVIEW]const Ampelum.Safety.Tools.ToolGateHook.RequestedKey = "tools.requested" -> string!
 [AMPELUM_V09_PREVIEW]override Ampelum.Safety.Tools.ToolGatePolicy.Equals(object? obj) -> bool
