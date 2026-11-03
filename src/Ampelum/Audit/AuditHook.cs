@@ -66,9 +66,10 @@ public sealed class AuditHook : IHook
         // redacted form. See docs/security/threat-model-v1.md Â§6.
         var inputs = PersistedInputs(ctx);
         var outputs = ctx.Outputs ?? new Dictionary<string, object?>();
-        var modelId = ctx.Metadata.TryGetValue(AuditMetadataKeys.ModelId, out var mid) && mid is string s ? s : "unknown";
-        var pt = ctx.Metadata.TryGetValue(AuditMetadataKeys.PromptTokens, out var p) && p is long pl ? pl : 0L;
-        var ctk = ctx.Metadata.TryGetValue(AuditMetadataKeys.CompletionTokens, out var c) && c is long cl ? cl : 0L;
+        // Predict publishes these under HookMetadataKeys; a hook that sets the audit keys takes precedence.
+        var modelId = MetadataValue<string>(ctx, AuditMetadataKeys.ModelId, HookMetadataKeys.ModelId) ?? "unknown";
+        var pt = MetadataValue<long?>(ctx, AuditMetadataKeys.PromptTokens, HookMetadataKeys.PromptTokens) ?? 0L;
+        var ctk = MetadataValue<long?>(ctx, AuditMetadataKeys.CompletionTokens, HookMetadataKeys.CompletionTokens) ?? 0L;
         var ts = DateTimeOffset.UtcNow;
         // v1.0-rc1.alpha.5 (Gap 2): propagate hook-set EventType discriminator.
         // Default "forward.completed" matches the only kind AuditHook produced before alpha.5.
@@ -119,6 +120,11 @@ public sealed class AuditHook : IHook
     /// <inheritdoc/>
     public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct)
         => ValueTask.CompletedTask;
+
+    static T? MetadataValue<T>(HookContext ctx, string key, string fallbackKey) =>
+        ctx.Metadata.TryGetValue(key, out var v) && v is T t ? t
+        : ctx.Metadata.TryGetValue(fallbackKey, out var f) && f is T ft ? ft
+        : default;
 
     static IReadOnlyDictionary<string, object?> PersistedInputs(HookContext ctx) =>
         ctx.Metadata.TryGetValue("pii.redacted_inputs", out var ri)

@@ -93,6 +93,37 @@ public sealed class AuditHookRecordModeTests
         }
     }
 
+    [Signature("Be brief.")]
+    public sealed record PredictSig : ISignature
+    {
+        [Input] public string Q { get; init; } = "";
+        [Output] public string A { get; init; } = "";
+    }
+
+    [Fact]
+    public async Task PredictCall_IsRecordedWithTheModelIdAndTokensTheResponseCarried()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        using var fake = new SignalGrid.Ampelum.Testing.FakeChatClient();
+        fake.EnqueueText("[[ ## A ## ]]\nok\n[[ ## completed ## ]]",
+            new Microsoft.Extensions.AI.UsageDetails { InputTokenCount = 12, OutputTokenCount = 4 },
+            "model-x", "resp-1");
+        var sink = new InMemoryAuditSink();
+        var ctx = new AmpelumContext(fake, new ChatAdapter(),
+            NullTraceSink.Instance,
+            Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)
+        {
+            Hooks = new IHook[] { new AuditHook(sink) },
+        };
+
+        await new Predict<PredictSig>(ctx).ForwardAsync(new PredictSig { Q = "hi" }, ct: ct);
+
+        var entry = await sink.EnumerateAsync(ct).FirstAsync(ct);
+        entry.ModelId.ShouldBe("model-x");
+        entry.PromptTokens.ShouldBe(12L);
+        entry.CompletionTokens.ShouldBe(4L);
+    }
+
     [Fact]
     public async Task OnAfter_MissingModelId_FallsBackToUnknown()
     {

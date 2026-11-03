@@ -85,6 +85,19 @@ public sealed class AuditTests
     }
 
     [Fact]
+    public async Task AuditEntry_CarriesTheTokenCountsOfTheModelCall()
+    {
+        await using var h = await Harness.StartAsync();
+        FakeScript.EnqueueAnswer(h.Chat, "One.", 120, 18);
+
+        await h.Gateway.AskAsync("First?", Ct);
+
+        var entry = (await h.AuditEntriesAsync()).Single();
+        entry.PromptTokens.ShouldBe(120L);
+        entry.CompletionTokens.ShouldBe(18L);
+    }
+
+    [Fact]
     public async Task Replay_OfAQuestionThePiiHookChanged_AnswersFromTheFile()
     {
         using var folder = new TempFolder();
