@@ -9,19 +9,25 @@ namespace SignalGrid.Ampelum.Audit;
 /// <c>flushToDisk: true</c> for crash-safety. Spec Â§4.5; PSQ-9.
 /// Multi-process callers must use a different sink (e.g. PostgresAuditSink, future).
 /// </summary>
-public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
+public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable, ILastEntryHashSource
 {
     readonly string _path;
     readonly FileStream _stream;
     readonly object _gate = new();
     long _nextSequence;
+    byte[] _lastHash;
+
+    ValueTask<byte[]> ILastEntryHashSource.LastEntryHashAsync(CancellationToken ct)
+    {
+        lock (_gate) return ValueTask.FromResult(_lastHash);
+    }
 
     /// <summary>Open or create the audit log at <paramref name="path"/> and recover <see cref="NextSequence"/>.</summary>
     /// <param name="path">Filesystem path. Will be created if missing.</param>
     public JsonFileAuditSink(string path)
     {
         _path = path;
-        _nextSequence = CountExistingEntries(path);
+        (_nextSequence, _lastHash) = ReadExisting(path);
         _stream = new FileStream(
             path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite,
             bufferSize: 4096, useAsync: false);
@@ -42,12 +48,18 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
                 throw new InvalidOperationException(
                     $"Out-of-order audit entry: expected sequence {_nextSequence}, got {entry.Sequence}.");
 
-            var stored = entry with { Inputs = Concrete(entry.Inputs), Outputs = Concrete(entry.Outputs) };
+            // The same reduction the hasher applies, so what is written reads back as what was hashed.
+            var stored = entry with
+            {
+                Inputs = AuditPrimitiveValidator.CanonicalMap("Inputs", entry.Inputs),
+                Outputs = AuditPrimitiveValidator.CanonicalMap("Outputs", entry.Outputs),
+            };
             var json = JsonSerializer.Serialize(stored, AuditEntryJson.Default.AuditEntry);
             var bytes = System.Text.Encoding.UTF8.GetBytes(json + "\n");
             _stream.Write(bytes, 0, bytes.Length);
             _stream.Flush(flushToDisk: true);
             _nextSequence++;
+            _lastHash = entry.EntryHash;
         }
         return ValueTask.CompletedTask;
     }
@@ -65,19 +77,6 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
             yield return entry with { Inputs = Plain(entry.Inputs), Outputs = Plain(entry.Outputs) };
         }
     }
-
-    // The source-generated context only knows a fixed set of runtime types, so dictionaries and lists
-    // of any kind are copied into the two it was generated for. The values are unchanged, so the hash is too.
-    static Dictionary<string, object?> Concrete(IReadOnlyDictionary<string, object?> values) =>
-        values.ToDictionary(kv => kv.Key, kv => Concrete(kv.Value), StringComparer.Ordinal);
-
-    static object? Concrete(object? value) => value switch
-    {
-        string => value,
-        IReadOnlyDictionary<string, object?> nested => Concrete(nested),
-        System.Collections.IEnumerable list => list.Cast<object?>().Select(Concrete).ToList(),
-        _ => value,
-    };
 
     static Dictionary<string, object?> Plain(IReadOnlyDictionary<string, object?> values) =>
         values.ToDictionary(kv => kv.Key, kv => Plain(kv.Value), StringComparer.Ordinal);
@@ -102,20 +101,24 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable
         await _stream.DisposeAsync();
     }
 
-    static long CountExistingEntries(string path)
+    static (long Count, byte[] LastHash) ReadExisting(string path)
     {
-        if (!File.Exists(path)) return 0;
+        if (!File.Exists(path)) return (0, AuditChainHasher.ZeroHash);
         long count = 0;
+        string? lastLine = null;
         using var reader = new StreamReader(new FileStream(
             path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-        while (reader.ReadLine() is not null) count++;
-        return count;
+        while (reader.ReadLine() is { } line) { count++; lastLine = line; }
+        var last = lastLine is null
+            ? AuditChainHasher.ZeroHash
+            : JsonSerializer.Deserialize(lastLine, AuditEntryJson.Default.AuditEntry)!.EntryHash;
+        return (count, last);
     }
 }
 
 [System.Text.Json.Serialization.JsonSourceGenerationOptions]
 [System.Text.Json.Serialization.JsonSerializable(typeof(AuditEntry))]
-[System.Text.Json.Serialization.JsonSerializable(typeof(Dictionary<string, object?>))]
+[System.Text.Json.Serialization.JsonSerializable(typeof(SortedDictionary<string, object?>))]
 [System.Text.Json.Serialization.JsonSerializable(typeof(List<object?>))]
 [System.Text.Json.Serialization.JsonSerializable(typeof(double))]
 [System.Text.Json.Serialization.JsonSerializable(typeof(bool))]

@@ -5,11 +5,17 @@ namespace SignalGrid.Ampelum.Audit;
 /// <summary>
 /// In-memory <see cref="IAuditSink"/> for tests and dev. Thread-safe via a lock guard. Spec Â§4.5.
 /// </summary>
-public sealed class InMemoryAuditSink : IAuditSink
+public sealed class InMemoryAuditSink : IAuditSink, ILastEntryHashSource
 {
     readonly object _gate = new();
     readonly List<AuditEntry> _entries = [];
     long _count = 0;
+
+    ValueTask<byte[]> ILastEntryHashSource.LastEntryHashAsync(CancellationToken ct)
+    {
+        lock (_gate)
+            return ValueTask.FromResult(_entries.Count == 0 ? AuditChainHasher.ZeroHash : _entries[^1].EntryHash);
+    }
 
     /// <inheritdoc/>
     public long NextSequence

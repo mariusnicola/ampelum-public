@@ -93,6 +93,127 @@ public sealed class AuditHookRecordModeTests
         }
     }
 
+    static async Task Record(AuditHook hook, int n)
+    {
+        var ctx = new HookContext
+        {
+            ModuleName = "M",
+            Inputs = new Dictionary<string, object?> { ["q"] = n },
+        };
+        ctx.Outputs = new Dictionary<string, object?> { ["a"] = "x" };
+        await hook.OnAfterAsync(ctx, TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task OnAfter_NewHookOverABatchedSinkWithQueuedEntries_ContinuesTheChain()
+    {
+        var release = new TaskCompletionSource();
+        var inner = new HeldSink(release.Task);
+        var batched = new BatchedAuditSink(inner);
+        await Record(new AuditHook(batched), 0);
+        await Record(new AuditHook(batched), 1);
+        batched.NextSequence.ShouldBe(2L);
+        inner.NextSequence.ShouldBe(0L);
+
+        await Record(new AuditHook(batched), 2);
+        release.SetResult();
+        await batched.DisposeAsync();
+
+        var verdict = await AuditChainVerifier.VerifyAsync(inner, TestContext.Current.CancellationToken);
+        verdict.IsValid.ShouldBeTrue(verdict.Reason);
+        inner.NextSequence.ShouldBe(3L);
+    }
+
+    [Fact]
+    public async Task OnAfter_TwoHooksAlternatingOnOneSink_KeepOneChain()
+    {
+        var sink = new InMemoryAuditSink();
+        var first = new AuditHook(sink);
+        var second = new AuditHook(sink);
+
+        await Record(first, 0);
+        await Record(second, 1);
+        await Record(first, 2);
+        await Record(second, 3);
+
+        var verdict = await AuditChainVerifier.VerifyAsync(sink, TestContext.Current.CancellationToken);
+        verdict.IsValid.ShouldBeTrue(verdict.Reason);
+        sink.NextSequence.ShouldBe(4L);
+    }
+
+    [Fact]
+    public async Task OnAfter_TwoHooksAppendingAtTheSameTime_KeepOneChain()
+    {
+        var inner = new InMemoryAuditSink();
+        var sink = new SlowAppendSink(inner);
+        var first = new AuditHook(sink);
+        var second = new AuditHook(sink);
+        await Record(first, -1);
+
+        await Task.WhenAll(Enumerable.Range(0, 40).Select(i => Task.Run(() => Record(i % 2 == 0 ? first : second, i))));
+
+        var verdict = await AuditChainVerifier.VerifyAsync(inner, TestContext.Current.CancellationToken);
+        verdict.IsValid.ShouldBeTrue(verdict.Reason);
+        inner.NextSequence.ShouldBe(41L);
+    }
+
+    [Fact]
+    public async Task OnAfter_SinkThatCannotNameItsLastHash_IsReadToTheEnd()
+    {
+        var inner = new InMemoryAuditSink();
+        await Record(new AuditHook(inner), 0);
+        var plain = new PlainSink(inner);
+
+        await Record(new AuditHook(plain), 1);
+
+        var verdict = await AuditChainVerifier.VerifyAsync(inner, TestContext.Current.CancellationToken);
+        verdict.IsValid.ShouldBeTrue(verdict.Reason);
+        inner.NextSequence.ShouldBe(2L);
+    }
+
+    /// <summary>Accepts appends but shows them only after the gate opens, like a slow inner sink.</summary>
+    sealed class HeldSink(Task gate) : IAuditSink
+    {
+        readonly List<AuditEntry> _entries = [];
+        public long NextSequence { get { lock (_entries) return _entries.Count; } }
+
+        public async ValueTask AppendAsync(AuditEntry entry, CancellationToken ct)
+        {
+            await gate;
+            lock (_entries) _entries.Add(entry);
+        }
+
+        public async IAsyncEnumerable<AuditEntry> EnumerateAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+        {
+            AuditEntry[] snapshot;
+            lock (_entries) snapshot = _entries.ToArray();
+            foreach (var entry in snapshot) yield return entry;
+            await Task.CompletedTask;
+        }
+    }
+
+    /// <summary>Hands the thread back before each append, so concurrent writers really interleave.</summary>
+    sealed class SlowAppendSink(IAuditSink inner) : IAuditSink
+    {
+        public long NextSequence => inner.NextSequence;
+
+        public async ValueTask AppendAsync(AuditEntry entry, CancellationToken ct)
+        {
+            await Task.Delay(1, ct);
+            await inner.AppendAsync(entry, ct);
+        }
+
+        public IAsyncEnumerable<AuditEntry> EnumerateAsync(CancellationToken ct) => inner.EnumerateAsync(ct);
+    }
+
+    /// <summary>A sink with no shortcut for the newest hash.</summary>
+    sealed class PlainSink(IAuditSink inner) : IAuditSink
+    {
+        public long NextSequence => inner.NextSequence;
+        public ValueTask AppendAsync(AuditEntry entry, CancellationToken ct) => inner.AppendAsync(entry, ct);
+        public IAsyncEnumerable<AuditEntry> EnumerateAsync(CancellationToken ct) => inner.EnumerateAsync(ct);
+    }
+
     [Signature("Be brief.")]
     public sealed record PredictSig : ISignature
     {

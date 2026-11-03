@@ -170,35 +170,8 @@ internal static class AuditChainHasher
         return Convert.ToHexString(sha.GetHashAndReset()).ToLowerInvariant();
     }
 
-    static string SerializeCanonical(IReadOnlyDictionary<string, object?> source)
-    {
-        var sorted = new SortedDictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var kv in source) sorted[kv.Key] = Canonicalise(kv.Value);
-        return JsonSerializer.Serialize(sorted, typeof(SortedDictionary<string, object?>), AmpelumAuditJsonContext.Default);
-    }
-
-    static object? Canonicalise(object? value)
-    {
-        // AuditPrimitiveValidator.Validate has already accepted the dictionary, so any value
-        // reaching this method is one of the JSON-primitive shapes below.
-        if (value is null or string or bool or double or float) return value;
-        if (value is sbyte or byte or short or ushort or int or uint or long or ulong)
-            return Convert.ToInt64(value);
-        if (value is IReadOnlyDictionary<string, object?> nested) return CanonicaliseDict(nested);
-        return CanonicaliseList((System.Collections.IEnumerable)value);
-    }
-
-    static SortedDictionary<string, object?> CanonicaliseDict(IReadOnlyDictionary<string, object?> nested)
-    {
-        var sd = new SortedDictionary<string, object?>(StringComparer.Ordinal);
-        foreach (var kv in nested) sd[kv.Key] = Canonicalise(kv.Value);
-        return sd;
-    }
-
-    static List<object?> CanonicaliseList(System.Collections.IEnumerable list)
-    {
-        var result = new List<object?>();
-        foreach (var item in list) result.Add(Canonicalise(item));
-        return result;
-    }
+    static string SerializeCanonical(IReadOnlyDictionary<string, object?> source) =>
+        JsonSerializer.Serialize(
+            AuditPrimitiveValidator.CanonicalMap("", source),
+            typeof(SortedDictionary<string, object?>), AmpelumAuditJsonContext.Default);
 }

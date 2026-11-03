@@ -21,8 +21,11 @@ public sealed class AuditHook : IHook
     readonly IAuditSink _sink;
     readonly bool _replayMode;
     readonly object _replayGate = new();
-    readonly SemaphoreSlim _appendGate = new(1, 1);
+    // One gate per sink, shared by every hook over it, so two hooks never read the same NextSequence.
+    static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IAuditSink, SemaphoreSlim> AppendGates = new();
+    readonly SemaphoreSlim _appendGate;
     byte[]? _lastAppendedHash;
+    long _lastAppendedSequence;
     Dictionary<string, Queue<AuditEntry>>? _replayIndex;
 
     /// <summary>Creates a new audit hook bound to <paramref name="sink"/>.</summary>
@@ -32,6 +35,7 @@ public sealed class AuditHook : IHook
     {
         _sink = sink;
         _replayMode = replayMode;
+        _appendGate = AppendGates.GetValue(sink, static _ => new SemaphoreSlim(1, 1));
     }
 
     /// <inheritdoc/>
@@ -85,13 +89,15 @@ public sealed class AuditHook : IHook
 
         // Serialise sequence assignment + prev-hash resolution + entry construction + append
         // under a single gate so that concurrent callers never read the same NextSequence.
-        // The last-appended hash is cached to avoid O(n) enumeration on every call.
         await _appendGate.WaitAsync(ct);
         try
         {
             var seq = _sink.NextSequence;
-            // A sink that already holds entries (a reopened file) continues from its last entry's hash.
-            var prev = seq == 0 ? AuditChainHasher.ZeroHash : _lastAppendedHash ??= await LastEntryHashAsync(ct);
+            // The cached hash is only good when this hook wrote the entry just before this one; after a
+            // reopened file, another hook or queued entries the sink is asked for its newest hash.
+            var prev = seq == 0 ? AuditChainHasher.ZeroHash
+                : _lastAppendedHash is not null && _lastAppendedSequence == seq - 1 ? _lastAppendedHash
+                : await LastEntryHash.OfAsync(_sink, ct);
             var entry = new AuditEntry
             {
                 SchemaVersion = 3,
@@ -110,6 +116,7 @@ public sealed class AuditHook : IHook
             };
             await _sink.AppendAsync(entry, ct);
             _lastAppendedHash = entry.EntryHash;
+            _lastAppendedSequence = seq;
         }
         finally
         {
@@ -131,14 +138,6 @@ public sealed class AuditHook : IHook
             && ri is IReadOnlyDictionary<string, object?> redactedInputs
                 ? redactedInputs
                 : ctx.Inputs;
-
-    async ValueTask<byte[]> LastEntryHashAsync(CancellationToken ct)
-    {
-        var last = AuditChainHasher.ZeroHash;
-        await foreach (var e in _sink.EnumerateAsync(ct))
-            last = e.EntryHash;
-        return last;
-    }
 
     async ValueTask<Dictionary<string, Queue<AuditEntry>>> EnsureIndexAsync(CancellationToken ct)
     {

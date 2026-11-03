@@ -37,12 +37,20 @@ namespace SignalGrid.Ampelum.Audit;
 ///   fills and the wrapper is not amortising â€” prefer the synchronous inner sink directly.</item>
 /// </list>
 /// </remarks>
-public sealed class BatchedAuditSink : IAuditSink, IAsyncDisposable
+public sealed class BatchedAuditSink : IAuditSink, IAsyncDisposable, ILastEntryHashSource
 {
     readonly IAuditSink _inner;
     readonly Channel<AuditEntry> _channel;
     readonly Task _drainLoop;
     long _nextSequence;
+    byte[]? _lastQueuedHash;
+
+    // Queued entries are not visible through EnumerateAsync yet, so a writer that chains to the
+    // newest entry must be told about them here.
+    ValueTask<byte[]> ILastEntryHashSource.LastEntryHashAsync(CancellationToken ct) =>
+        Volatile.Read(ref _lastQueuedHash) is { } queued
+            ? ValueTask.FromResult(queued)
+            : LastEntryHash.OfAsync(_inner, ct);
 
     /// <summary>
     /// Initialises the batched sink wrapping <paramref name="inner"/> with the given queue
@@ -75,6 +83,7 @@ public sealed class BatchedAuditSink : IAuditSink, IAsyncDisposable
         // Caller assigns sequence numbers via NextSequence; we advance the counter monotonically
         // for the next caller, then await space in the channel.
         Interlocked.Increment(ref _nextSequence);
+        Volatile.Write(ref _lastQueuedHash, entry.EntryHash);
         await _channel.Writer.WriteAsync(entry, ct).ConfigureAwait(false);
     }
 

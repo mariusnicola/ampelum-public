@@ -97,7 +97,96 @@ public sealed class JsonFileAuditSinkTests : IAsyncLifetime
         { "array", new object?[] { "a", 1L } },
         { "nested object", new Dictionary<string, object?> { ["k"] = "v", ["n"] = 1L, ["inner"] = new Dictionary<string, object?> { ["d"] = 0.5 } } },
         { "list of objects", new List<object?> { new Dictionary<string, object?> { ["k"] = true } } },
+        { "negative zero", -0.0 },
+        { "negative zero in a list", new List<object?> { -0.0 } },
+        { "sbyte", (sbyte)-5 },
+        { "byte", (byte)200 },
+        { "short", (short)-300 },
+        { "ushort", (ushort)60000 },
+        { "uint", 4000000000u },
+        { "long min", long.MinValue },
+        { "ulong within long range", 5UL },
+        { "ulong at long max", (ulong)long.MaxValue },
+        { "float", 0.1f },
+        { "float max", float.MaxValue },
+        { "double 0.1", 0.1 },
+        { "double 1e-7", 1e-7 },
+        { "double 1e21", 1e21 },
+        { "double max", double.MaxValue },
+        { "double epsilon", double.Epsilon },
+        { "double with many digits", 123456789.123456789 },
+        { "double 0.1 + 0.2", 0.30000000000000004 },
+        { "string array", new[] { "a", "b" } },
+        { "list of strings", new List<string> { "a" } },
+        { "int array", new[] { 1, 2, 3 } },
+        { "string dictionary", new Dictionary<string, string> { ["k"] = "v" } },
+        { "dictionary of ints", new Dictionary<string, int> { ["k"] = 1 } },
+        { "read-only dictionary", new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(new Dictionary<string, string> { ["k"] = "v" }) },
+        { "immutable array", System.Collections.Immutable.ImmutableArray.Create("a", "b") },
+        { "list of mixed small numbers", new List<object?> { (byte)1, 0.1f, 1e-7 } },
+        { "object holding a float", new Dictionary<string, object?> { ["k"] = 0.1f } },
     };
+
+    public static TheoryData<string, object?> RejectedValues => new()
+    {
+        { "ulong above long max", 9223372036854775808UL },
+        { "ulong max", ulong.MaxValue },
+        { "decimal", 12.5m },
+        { "char", 'c' },
+        { "DateTime", new DateTime(2026, 4, 25, 0, 0, 0, DateTimeKind.Utc) },
+        { "Guid", Guid.Empty },
+        { "byte array", new byte[] { 1, 2 } },
+        { "NaN", double.NaN },
+        { "positive infinity", double.PositiveInfinity },
+        { "negative infinity", double.NegativeInfinity },
+        { "float NaN", float.NaN },
+        { "dictionary with integer keys", new Dictionary<int, string> { [1] = "v" } },
+        { "plain object", new object() },
+        { "list holding a Guid", new List<object?> { "ok", Guid.Empty } },
+        { "object holding a decimal", new Dictionary<string, object?> { ["k"] = 1m } },
+    };
+
+    [Theory]
+    [MemberData(nameof(RejectedValues))]
+    public async Task AppendAsync_RejectsOtherValues_BeforeAnythingIsWritten(string label, object? value)
+    {
+        var ts = new DateTimeOffset(2026, 4, 25, 12, 0, 0, TimeSpan.Zero);
+        var ins = new Dictionary<string, object?> { ["v"] = value };
+        var outs = new Dictionary<string, object?>();
+        Should.Throw<AuditSerializationException>(
+            () => AuditChainHasher.Compute(0, ts, "M", "m", ins, outs, 1, 2, AuditChainHasher.ZeroHash), label);
+        var entry = new AuditEntry
+        {
+            Sequence = 0, Timestamp = ts, ModuleName = "M", ModelId = "m",
+            Inputs = ins, Outputs = outs, PromptTokens = 1, CompletionTokens = 2,
+            PrevHash = AuditChainHasher.ZeroHash, EntryHash = new byte[32],
+        };
+
+        await using var sink = new JsonFileAuditSink(_path);
+        await Should.ThrowAsync<AuditSerializationException>(
+            async () => await sink.AppendAsync(entry, TestContext.Current.CancellationToken), label);
+
+        sink.NextSequence.ShouldBe(0L);
+        new FileInfo(_path).Length.ShouldBe(0L);
+    }
+
+    [Fact]
+    public async Task AuditHook_RecordsAFloat_AndTheFileVerifies()
+    {
+        await using var sink = new JsonFileAuditSink(_path);
+        var hook = new AuditHook(sink);
+        var ctx = new SignalGrid.Ampelum.Hooks.HookContext
+        {
+            ModuleName = "M",
+            Inputs = new Dictionary<string, object?> { ["temperature"] = 0.7f, ["zero"] = -0.0 },
+        };
+        ctx.Outputs = new Dictionary<string, object?> { ["score"] = (byte)3 };
+
+        await hook.OnAfterAsync(ctx, TestContext.Current.CancellationToken);
+
+        var verdict = await AuditChainVerifier.VerifyAsync(sink, TestContext.Current.CancellationToken);
+        verdict.IsValid.ShouldBeTrue(verdict.Reason);
+    }
 
     [Theory]
     [MemberData(nameof(NonStringValues))]
