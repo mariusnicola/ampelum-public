@@ -66,7 +66,7 @@ Each of these was seen by running the code, not only by reading it.
 
 - Replay works from the audit file for `AskAsync`, including a question the PII hook changed (`Replay_OfAQuestionThePiiHookChanged_AnswersFromTheFile`). A tool run cannot be replayed: a replayed model turn carries its text only, not its tool calls.
 - `StreamingChatSession` is not used. Its text is sent to the caller before the after hooks run, so moderation, which does check the whole streamed reply, could only fail the turn after the text was delivered.
-- `FileTrustStore` keeps trust levels in memory only; nothing is written to its folder.
+- `FileTrustStore` writes one JSON file per agent type and domain to its folder, so a restarted gateway keeps its trust levels (`TrustLoweredByARefusedRequest_IsOnDisk_ForANewStoreOnTheSameFolder`). A refused request lowers trust one level; it does not revoke.
 - `ProcessSandbox` is not a sandbox. It runs a process with the caller's rights and refuses any policy that asks for isolation, which is how this sample uses it.
 - `ModelRateTable` is built here with one price pair and no `PerModel` rates, so every model is priced the same.
 - `EditTool` returns a string and edits nothing. `EncryptedFileSecretStore` writes under the user profile with a key derived from the machine name and has no public constructor for another path, so neither is used.

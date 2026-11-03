@@ -120,3 +120,85 @@ public sealed class FileTrustStoreTests
             () => store.RevokeAsync("agent", "domain", null!));
     }
 }
+
+public sealed class FileTrustStorePersistenceTests : IDisposable
+{
+    readonly string _dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_dir)) Directory.Delete(_dir, recursive: true);
+    }
+
+    static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    static TrustOutcome Violation() => new("run", false, true, false, 1, DateTimeOffset.UtcNow);
+
+    [Fact]
+    public async Task SetTrustLevel_SurvivesANewStoreOnTheSameFolder()
+    {
+        await new FileTrustStore(_dir).SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+
+        (await new FileTrustStore(_dir).GetTrustLevelAsync("agent", "mail", Ct)).ShouldBe(TrustLevel.Trusted);
+    }
+
+    [Fact]
+    public async Task EachAgentTypeAndDomainPair_HasItsOwnLevel_AfterARestart()
+    {
+        var first = new FileTrustStore(_dir);
+        await first.SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+        await first.SetTrustLevelAsync("agent", "files", TrustLevel.Provisional, "grant", Ct);
+        await first.SetTrustLevelAsync("other", "mail", TrustLevel.Established, "grant", Ct);
+
+        var second = new FileTrustStore(_dir);
+
+        (await second.GetTrustLevelAsync("agent", "mail", Ct)).ShouldBe(TrustLevel.Trusted);
+        (await second.GetTrustLevelAsync("agent", "files", Ct)).ShouldBe(TrustLevel.Provisional);
+        (await second.GetTrustLevelAsync("other", "mail", Ct)).ShouldBe(TrustLevel.Established);
+        (await second.GetTrustLevelAsync("other", "files", Ct)).ShouldBe(TrustLevel.Unknown);
+        Directory.GetFiles(_dir).Length.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task ViolationDemotion_IsPersisted_ByOneLevel()
+    {
+        var first = new FileTrustStore(_dir);
+        await first.SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+        await first.RecordOutcomeAsync("agent", "mail", Violation(), Ct);
+
+        (await new FileTrustStore(_dir).GetTrustLevelAsync("agent", "mail", Ct)).ShouldBe(TrustLevel.Trusted - 1);
+    }
+
+    [Fact]
+    public async Task ViolationAfterARestart_DemotesTheStoredLevel()
+    {
+        await new FileTrustStore(_dir).SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+        var second = new FileTrustStore(_dir);
+
+        await second.RecordOutcomeAsync("agent", "mail", Violation(), Ct);
+
+        (await second.GetTrustLevelAsync("agent", "mail", Ct)).ShouldBe(TrustLevel.Trusted - 1);
+    }
+
+    [Fact]
+    public async Task Revoke_IsPersisted()
+    {
+        var first = new FileTrustStore(_dir);
+        await first.SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+        await first.RevokeAsync("agent", "mail", "incident", Ct);
+
+        (await new FileTrustStore(_dir).GetTrustLevelAsync("agent", "mail", Ct)).ShouldBe(TrustLevel.None);
+    }
+
+    [Theory]
+    [InlineData("../escape", "a/b")]
+    [InlineData("agent:with*odd?chars", "do main")]
+    public async Task NamesThatAreNotFileNames_StayInsideTheTrustFolder(string agentType, string domain)
+    {
+        await new FileTrustStore(_dir).SetTrustLevelAsync(agentType, domain, TrustLevel.Provisional, "grant", Ct);
+
+        (await new FileTrustStore(_dir).GetTrustLevelAsync(agentType, domain, Ct)).ShouldBe(TrustLevel.Provisional);
+        Directory.GetFiles(_dir).Length.ShouldBe(1);
+        Directory.GetDirectories(_dir).ShouldBeEmpty();
+    }
+}

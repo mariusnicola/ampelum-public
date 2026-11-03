@@ -1,16 +1,23 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
 
 namespace SignalGrid.Ampelum.Agent;
 
 /// <summary>File-based implementation of IAgentTrustStore.
-/// Stores trust state per (agentType, domain) pair using a simple in-memory cache
-/// backed by YAML persistence (per spec section 4).
-/// Admin override → policy rules → default Unknown (three-tier priority).</summary>
+/// Keeps trust state per (agentType, domain) pair in memory and in one JSON file per pair under the trust
+/// directory, so a new store on the same directory sees the levels the last one wrote. The file name is a hash of
+/// the pair, so any agent type or domain is a valid name.
+/// A violation demotes one level (never below Unknown); <see cref="RevokeAsync"/> drops to None.
+/// A level is read from its file the first time the pair is asked for; a file changed by another store after that
+/// is not re-read.</summary>
 public sealed class FileTrustStore : IAgentTrustStore
 {
     private readonly string _trustDir;
     private readonly TrustPolicy _policy;
     private readonly ConcurrentDictionary<(string agentType, string domain), TrustLevel> _cache = new();
+    private readonly object _gate = new();
 
     public FileTrustStore(string trustDir, TrustPolicy? policy = null)
     {
@@ -29,18 +36,52 @@ public sealed class FileTrustStore : IAgentTrustStore
         ArgumentNullException.ThrowIfNull(agentType);
         ArgumentNullException.ThrowIfNull(domain);
 
-        // Check cache first (memory → file-backed)
-        var cacheKey = (agentType, domain);
-        if (_cache.TryGetValue(cacheKey, out var cachedLevel))
-        {
-            return Task.FromResult(cachedLevel);
-        }
-
-        // Default: Unknown (new agents start with no history)
-        var level = TrustLevel.Unknown;
-        _cache[cacheKey] = level;
-        return Task.FromResult(level);
+        return Task.FromResult(Load((agentType, domain)));
     }
+
+    /// <summary>The cached level, else the level in the pair's file, else Unknown (a new agent has no history).</summary>
+    private TrustLevel Load((string agentType, string domain) key)
+    {
+        lock (_gate)
+        {
+            if (_cache.TryGetValue(key, out var cached))
+                return cached;
+            var path = PathFor(key);
+            var level = File.Exists(path) ? Read(path) : TrustLevel.Unknown;
+            _cache[key] = level;
+            return level;
+        }
+    }
+
+    private void Store((string agentType, string domain) key, TrustLevel level)
+    {
+        lock (_gate)
+        {
+            _cache[key] = level;
+            var path = PathFor(key);
+            var temp = path + ".tmp";
+            using (var stream = File.Create(temp))
+            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+            {
+                writer.WriteStartObject();
+                writer.WriteString("agentType", key.agentType);
+                writer.WriteString("domain", key.domain);
+                writer.WriteString("level", level.ToString());
+                writer.WriteEndObject();
+            }
+            File.Move(temp, path, overwrite: true);
+        }
+    }
+
+    private static TrustLevel Read(string path)
+    {
+        using var doc = JsonDocument.Parse(File.ReadAllBytes(path));
+        return Enum.Parse<TrustLevel>(doc.RootElement.GetProperty("level").GetString()!);
+    }
+
+    private string PathFor((string agentType, string domain) key) =>
+        Path.Combine(_trustDir,
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key.agentType + "\0" + key.domain))) + ".json");
 
     /// <summary>Record the outcome of a run for trust history.
     /// Updates trust state based on policy rules:
@@ -62,9 +103,12 @@ public sealed class FileTrustStore : IAgentTrustStore
         // Security violation → demote immediately (-1 level, minimum Unknown)
         if (outcome.HadSecurityViolation)
         {
-            var current = _cache.GetOrAdd(cacheKey, TrustLevel.Unknown);
-            var demoted = current > TrustLevel.Unknown ? current - 1 : TrustLevel.Unknown;
-            _cache[cacheKey] = demoted;
+            lock (_gate)
+            {
+                var current = Load(cacheKey);
+                var demoted = current > TrustLevel.Unknown ? current - 1 : TrustLevel.Unknown;
+                Store(cacheKey, demoted);
+            }
         }
 
         // Success without violation → potential escalation
@@ -91,7 +135,7 @@ public sealed class FileTrustStore : IAgentTrustStore
         ArgumentNullException.ThrowIfNull(reason);
 
         var cacheKey = (agentType, domain);
-        _cache[cacheKey] = level;
+        Store(cacheKey, level);
         return Task.CompletedTask;
     }
 
@@ -108,7 +152,7 @@ public sealed class FileTrustStore : IAgentTrustStore
         ArgumentNullException.ThrowIfNull(reason);
 
         var cacheKey = (agentType, domain);
-        _cache[cacheKey] = TrustLevel.None;
+        Store(cacheKey, TrustLevel.None);
         return Task.CompletedTask;
     }
 

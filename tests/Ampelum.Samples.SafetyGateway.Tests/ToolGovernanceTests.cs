@@ -194,6 +194,19 @@ public sealed class ToolGovernanceTests
     }
 
     [Fact]
+    public async Task TrustLoweredByARefusedRequest_IsOnDisk_ForANewStoreOnTheSameFolder()
+    {
+        await using var h = await Harness.StartAsync();
+        await h.Trust.SetTrustLevelAsync(h.Options.AgentType, h.Options.Domain, TrustLevel.Established, "set by the test", Ct);
+        ScriptTurn(h, Call("c2", ToolCatalog.RunShell, new() { ["command"] = "df -h" }));
+        await h.Gateway.AskWithToolsAsync("Show the disk.", Ct);
+
+        var restarted = new FileTrustStore(h.Folder.File("trust"));
+
+        (await restarted.GetTrustLevelAsync(h.Options.AgentType, h.Options.Domain, Ct)).ShouldBe(TrustLevel.Provisional);
+    }
+
+    [Fact]
     public async Task RevokedAgent_IsBlockedFromEveryTool_ByTheTrustPolicy()
     {
         await using var h = await Harness.StartAsync();

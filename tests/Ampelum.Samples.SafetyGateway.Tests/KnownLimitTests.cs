@@ -27,20 +27,6 @@ public sealed class KnownLimitTests
         (await signed.VerifyAsync(counterfeit, Ct)).ShouldBeNull();
     }
 
-    [Fact]
-    public async Task KnownLimit_FileTrustStore_KeepsLevelsInMemoryOnly_ANewStoreOnTheSameFolderStartsAtUnknown()
-    {
-        using var folder = new TempFolder();
-        var first = new FileTrustStore(folder.File("trust"));
-        await first.SetTrustLevelAsync("helpdesk-assistant", "helpdesk", TrustLevel.Trusted, "set by the test", Ct);
-
-        var second = new FileTrustStore(folder.File("trust"));
-
-        (await first.GetTrustLevelAsync("helpdesk-assistant", "helpdesk", Ct)).ShouldBe(TrustLevel.Trusted);
-        (await second.GetTrustLevelAsync("helpdesk-assistant", "helpdesk", Ct)).ShouldBe(TrustLevel.Unknown);
-        Directory.GetFiles(folder.File("trust")).ShouldBeEmpty();
-    }
-
     [Theory]
     [InlineData("password: hunter2hunter2")]
     [InlineData("Authorization: Bearer abcdef1234567890abcdef")]
