@@ -1,0 +1,11 @@
+Id,Title,Details,Kind,Impact,Note
+P-01,Export reports to CSV,Users can download any report as a CSV file.,Feature,3,Added CSV export for every report.
+P-02,Fix login loop on expired session,Expired sessions no longer redirect to the login page in a loop.,Fix,4,Fixed a login redirect loop after a session expired.
+P-03,Remove XML import,XML import is removed. Use the JSON import instead.,Breaking,4,Removed XML import. Use JSON import instead.
+P-04,Cleanup build scripts,Internal build scripts were reorganised.,Internal,1,Reorganised internal build scripts.
+P-05,Keyboard shortcuts for search,Search opens with a slash key and results move with the arrow keys.,Feature,2,Added keyboard shortcuts for search.
+P-06,Fix wrong total on invoices,Invoice totals now include the discount.,Fix,3,Fixed invoice totals that ignored discounts.
+P-07,Rename API field user to account,The field user in API responses is now account.,Breaking,5,Renamed the API field user to account.
+P-08,Upgrade logging library,Internal upgrade of the logging library.,Internal,1,Upgraded the internal logging library.
+P-09,Team workspaces,Teams can share projects in one workspace.,Feature,5,Added team workspaces for shared projects.
+P-10,Fix slow dashboard,The dashboard loaded slowly for large accounts.,Fix,2,Fixed slow dashboard loading for large accounts.

@@ -1,0 +1,7 @@
+query,gold_ids
+Fixed a login redirect loop,history:Orbit 2.3 > Fixes
+Removed XML import use JSON import,history:Orbit 2.3 > Breaking changes
+keyboard shortcuts for search,history:Orbit 2.3 > Features
+start with a past tense verb such as Added Fixed or Removed,style:0
+never use the words amazing or revolutionary,style:2
+slow dashboard loading for large accounts,history:Orbit 2.2 > Fixes

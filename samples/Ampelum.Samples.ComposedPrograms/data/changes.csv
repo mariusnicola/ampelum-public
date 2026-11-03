@@ -1,0 +1,9 @@
+Id,Area,Title,Details
+C-101,Billing,Bulk invoice export,Finance users can export all invoices of a month as one ZIP file from the Billing page.
+C-102,Billing,Fix duplicate charge on retry,Retrying a failed card payment no longer creates a second charge.
+C-103,Search,Remove legacy search API v1,"The v1 search endpoint is gone. Clients must call v2 search with the new query parameter."
+C-104,Search,Faster result paging,Paging through 10000 results is now three times faster.
+C-105,Editor,Fix crash when pasting images,Pasting an image larger than 5 MB no longer closes the editor.
+C-106,Editor,Refactor autosave module,"Internal cleanup of the autosave code, no visible change."
+C-107,Editor,Dark mode for comments,Comments now follow the dark theme.
+C-108,Billing,Rename plan field tier to plan_tier,"The API field tier in invoice responses is now plan_tier. Update your integrations."

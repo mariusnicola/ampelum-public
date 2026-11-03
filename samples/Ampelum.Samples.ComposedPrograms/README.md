@@ -1,0 +1,167 @@
+# Composed programs: release notes
+
+Drafts and scores product release notes from a CSV of changes. Each change is classified, drafted by a
+strategy that depends on its kind and impact, tightened in a loop, and scored. The notes are then
+reviewed by a panel of agents, fact checked, announced by a task agent, and the program can be measured
+and tuned against the approved notes of the previous release.
+
+## Run
+
+From the repository root:
+
+```
+dotnet restore samples/Ampelum.Samples.ComposedPrograms/Ampelum.Samples.ComposedPrograms.csproj --nologo
+dotnet build samples/Ampelum.Samples.ComposedPrograms/Ampelum.Samples.ComposedPrograms.csproj -c Release --no-restore --nologo
+dotnet run --project samples/Ampelum.Samples.ComposedPrograms/Ampelum.Samples.ComposedPrograms.csproj -c Release --no-build -- --fake
+```
+
+Without `--fake` the program takes the chat client from the shared sample configuration and runs the
+release only. Three flags add stages, because each makes many model calls:
+
+- `--evaluate` scores the classifier and the plain drafting call against the approved notes with the
+  metrics named in the options.
+- `--tune` runs GEPA on the approved notes and prints the ROUGE-L of the baseline and of the tuned
+  program.
+- `--extras` runs the stages below. They pick their change rows by classification, so editing
+  `data/changes.csv` does not break them; they stop with a message if no change is classified as Internal or Fix.
+  - one draft of an internal change with the impact bar lowered, so it goes through Refine;
+  - the style search of one fix change in every retrieval mode;
+  - a round trip of the style index: it is saved to a temporary file named `release-style-<guid>.json`
+    in the temp folder, restored by a second pipeline, searched again, and the file is deleted;
+  - the retrieval evaluation over `data/retrieval-eval.csv`;
+  - a draft with nearest neighbour few shot, and a draft chosen by an ensemble.
+
+`--fake` turns on `--evaluate`, `--tune` and `--extras` as well, and replaces the model with the scripted one.
+
+## Test
+
+```
+dotnet restore tests/Ampelum.Samples.ComposedPrograms.Tests/Ampelum.Samples.ComposedPrograms.Tests.csproj --nologo
+dotnet build tests/Ampelum.Samples.ComposedPrograms.Tests/Ampelum.Samples.ComposedPrograms.Tests.csproj -c Release --no-restore --nologo
+dotnet test tests/Ampelum.Samples.ComposedPrograms.Tests/Ampelum.Samples.ComposedPrograms.Tests.csproj -c Release --no-build
+```
+
+The tests need no key, no network and no environment variable. Some write temporary files in the temp
+folder and delete them.
+
+## Settings
+
+The live path reads only `OPENROUTER_API_KEY` and `OPENROUTER_MODEL_1`, through the shared sample
+configuration. `.sample.env` names them. No other setting is read, and no key, endpoint or model id is
+written in this sample.
+
+Tunables are in `ReleaseNotesOptions`: word limit, tolerance factor, pass limit, stalled epsilon, impact
+tolerance, fact check steps, impact bar, strategy per kind, candidates, refine threshold and limit,
+audiences, tone, retries and retry delay, tag fields, style top k, retrieval mode, score floor, chunk size,
+token budget, index path, panel turns and memory sizes, speaker selector, neighbour count, queued tracing,
+trace file and the metric names.
+
+These are fixed in code, not options:
+
+- the loop bound of two above the pass limit (`TightenStage`, a workaround for a library defect, see below);
+- the number of paraphrases (3) and sub questions (2) in `StyleRetrieval`, and the rewrite and router prompts;
+- the panel roster and roles (`ReviewPanel`) and which notes are fact checked (breaking ones);
+- the signatures and their instructions, the judge instructions and the set of registered metrics;
+- the data file names, and the GEPA options, which are the library defaults.
+
+## What `--fake` proves, and what it does not
+
+`--fake` replaces the model with `Fake/ScriptedModel.cs`: rules that read the prompt and return text.
+It needs no key and no network.
+
+It proves that the wiring runs end to end through the real library types: the right module is called
+for each change, the fields the model is asked for are in the prompt, answers in each wire format
+(plain fields, XML, JSON, tool calls) are parsed, the stop rules stop, scores come from the shipped
+metric code, and trace and log output is produced. The tests count model calls and read the requests
+the scripted model received.
+
+It does not prove anything about model quality. The notes, the classifications, the review verdict, the
+judge scores and the tuned instruction are written by the rules in `Fake/`, so they say nothing about
+what a real model writes. The tuning figure (ROUGE-L 0.326 to 0.540) is scripted under `--fake`, and it
+is measured on the same approved notes that GEPA trained on, so it is not a held-out result.
+
+The live path (a real model through `SampleConfig`) has not been run.
+
+## Notes for the live path
+
+- `KindParser.Parse` throws on a kind that is not Feature, Fix, Breaking or Internal (case is ignored),
+  and the classify call is not inside an ErrorHandler. One off schema classification reply therefore
+  aborts the release run. The drafting calls do have retries and a fallback.
+- `ReAct` (the fact check) and `TaskAgent` (the announcement) call tools, so they need a model that supports
+  tool calling.
+- The XML classify step and the two step headline need a model that can follow the format; a weak model
+  may fail strict XML parsing.
+
+## What only the tests exercise
+
+A default `--fake` run does not use the model driven speaker selector (`PanelPicksSpeakerWithModel` is
+off), and the episodic memory tier never reaches its summary threshold. Tests turn both on and assert the
+extra model calls. `AnnouncementResult.Streamed` and `Status` are not printed by the program; a test
+asserts both.
+
+## Feature map
+
+| Feature | Where it runs |
+|---|---|
+| Sequence | `Drafting/NoteDrafter.cs:52` |
+| ConditionalBranch | `Drafting/NoteDrafter.cs:80` |
+| Loop | `Drafting/TightenStage.cs:90` |
+| Loop predicates, CompositeAll, CompositeAny, LoopPredicateRegistry | `Drafting/TightenStage.cs:33` to `:37`, `:72` |
+| ErrorHandler | `Drafting/DraftingModules.cs:43` |
+| WithConfig | `Drafting/DraftingModules.cs:42` |
+| Lazy | `ReleaseNotesPipeline.cs:128` |
+| BestOfN | `Drafting/DraftingModules.cs:26` |
+| Refine | `Drafting/DraftingModules.cs:27` |
+| MultiChainComparison | `Drafting/DraftingModules.cs:29` |
+| Parallel | `Drafting/DraftingModules.cs:30` |
+| ChainOfThought | `Drafting/DraftingModules.cs:20` |
+| DynamicPredict | `Drafting/ChangeTagger.cs:25` |
+| XMLAdapter | `Drafting/NoteDrafter.cs:64` |
+| TwoStepAdapter | `ReleaseNotesPipeline.cs:129` |
+| Shipped metrics and registry | `Evaluation/MetricCatalog.cs:39` |
+| CsvDataset | `ChangeSource.cs:16`, `:18` |
+| EvalReport.Render | `Evaluation/ReleaseEvaluation.cs:46` |
+| TaskAgent | `Assistant/AnnouncementWriter.cs:25` |
+| Ensemble | `Tuning/PromptTuning.cs:50` |
+| GEPA | `Tuning/PromptTuning.cs:28` |
+| KnnFewShot | `Tuning/PromptTuning.cs:34` |
+| Trace sinks (in memory, logging, batched, synchronous and queued registration) | `ReleaseNotesServices.cs:43`, `:45`; `Observability/ReleaseTracing.cs:45`, `:67` |
+| OtelLogsBridge, ExporterDiagnostics | `Observability/ReleaseTracing.cs:87`, `:37` |
+| SubagentOrchestrator | `ReleaseNotesPipeline.cs:93` |
+| GroupChat, selectors | `Review/ReviewPanel.cs:38`, `:35`, `:36` |
+| Memory tiers, AddConversationMemory | `Review/ReviewPanel.cs:57`, `:58`, `:59`; `ReleaseNotesServices.cs:50` |
+| Agent tools (IAgentTool, registry), ITypedTool, IReActTool | `Review/ChangeTools.cs`, `Review/ReviewAgents.cs` |
+| ReAct | `Review/FactCheck.cs:11` |
+| Retrieval modes (rewrite, HyDE, multi query, step back, sub questions, router) | `Style/StyleRetrieval.cs:29` to `:34` |
+| ScoreThresholdRetriever, FilterPredicate | `Style/StyleRetrieval.cs:24`, `:39` |
+| Loaders and splitters | `Style/StyleIndex.cs:36` to `:48`, `Style/StyleMemory.cs:66` |
+| Index save and restore | `Style/StyleIndex.cs:77`, `:85` |
+| EmbeddingCache | `Style/StyleMemory.cs:34` |
+| RetrievalEvalHarness | `Style/StyleMemory.cs:73` |
+
+Of the optimizers, only GEPA, KnnFewShot and Ensemble are used here. The other optimizers are shown in the
+prompt tuning sample and the traced pipeline sample.
+
+## Not covered
+
+- A sub agent runner for coding agents with file and shell tools: nothing in a release notes job needs it.
+- A remote agent client: it needs a remote agent endpoint, which means a new setting.
+- Cohere and Voyage rerankers: they need third party keys that `.sample.env` does not name.
+- A PDF loader: this use case has no PDF.
+- The hybrid retriever and the reciprocal rank fusion reranker: the style index is small and searched by
+  one embedding, so there is no second ranking to fuse, and nothing in the use case needs a lexical index.
+
+## Known limits of the library
+
+Each is pinned by a test named `KnownLimit_...` in `tests/Ampelum.Samples.ComposedPrograms.Tests/KnownLimitTests.cs`.
+The test asserts the flawed behaviour, so it fails once the library is fixed and the workaround can go.
+
+- `Loop` counts every predicate check as an iteration, and labels a stop on the last allowed check as
+  `max_iterations`. The sample sets the loop bound two above the pass limit and counts body runs itself.
+- `EmbeddingRetriever` returns documents with score 0, so a score floor drops all of them. The sample
+  uses its own `ScoredEmbeddingRetriever`.
+- A reloaded index hands metadata back as JSON elements, so a store side equality filter matches nothing.
+  The sample filters on the returned documents instead.
+- The GEPA result carries no instruction overrides, so binding it again drops the tuned text. The sample
+  uses the returned program directly. A further suspicion, not proven: the optimizer's own model for
+  running the program is unused, so it may score expected output against itself. No test pins that.

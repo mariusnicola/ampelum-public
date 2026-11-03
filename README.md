@@ -133,6 +133,13 @@ dotnet run --project samples/Ampelum.Samples.SafetyGateway -c Release -- --fake
 dotnet test tests/Ampelum.Samples.SafetyGateway.Tests
 ```
 
+**Composed programs** (`samples/Ampelum.Samples.ComposedPrograms`). Release notes drafted from a CSV of changes. Each change is classified, drafted by a strategy chosen by its kind and impact, tightened in a loop and scored. A panel of agents then reviews the notes, ReAct checks the facts, a task agent writes the announcement, and the program can be measured and tuned with GEPA against the previous release's notes. Under `--fake` the tuning figures are scripted, and they are measured on the notes GEPA trained on. The live path has never been run.
+
+```bash
+dotnet run --project samples/Ampelum.Samples.ComposedPrograms -c Release -- --fake
+dotnet test tests/Ampelum.Samples.ComposedPrograms.Tests
+```
+
 ## What is in the repository
 
 | Area | Packages (all prefixed `SignalGrid.`) |
