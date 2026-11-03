@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Microsoft.Extensions.AI;
 using SignalGrid.Ampelum.Exceptions;
 
 namespace SignalGrid.Ampelum.Optimizers;
@@ -28,8 +29,25 @@ public sealed record OptimizedProgram<
     public int TrainsetSize { get; init; }
 
     /// <summary>
+    /// Per-submodule chat clients (for example fine-tuned ones) keyed by submodule name. <see cref="Bind"/>
+    /// gives a submodule its client in place of the base context's one. Not written by program persistence.
+    /// </summary>
+    public IReadOnlyDictionary<string, IChatClient> ChatClients { get; init; } =
+        new Dictionary<string, IChatClient>();
+
+    /// <summary>Score after each step of a multi-step optimizer, in step order. Null for single-step optimizers.</summary>
+    public IReadOnlyList<double>? StepScores { get; init; }
+
+    /// <summary>
     /// Returns a bound copy of <see cref="Program"/> where each submodule's
     /// <see cref="AmpelumContext"/> carries the optimized demos and instruction overrides.
+    ///
+    /// A client, demo list or instruction override this program sets replaces the one the module is bound to.
+    /// One it does not set stays when an earlier <c>Bind</c> set it on that module (the module's context carries
+    /// a mark for it), so the candidates of a later optimizer keep the work of an earlier step. A module bound
+    /// by your own code, with <c>WithContext</c>, carries no mark: it gets the client of <paramref name="baseContext"/>
+    /// and no demos or override beyond what this program sets, as before. This carry-over works for <c>Predict</c>
+    /// and <c>ChainOfThought</c> submodules only; any other module is bound as before.
     ///
     /// Path A (preferred): if <typeparamref name="TProgram"/> implements
     /// <see cref="IComposedModule"/>, iterates <c>Submodules</c>, builds a per-submodule
@@ -59,14 +77,52 @@ public sealed record OptimizedProgram<
             DemosBySubmodule.TryGetValue(name, out var demos);
             InstructionOverrides.TryGetValue(name, out var instruction);
 
-            var perCtx = baseContext with
+            // A field this program sets replaces the module's bound value. A field it leaves out stays when an
+            // earlier Bind set it (the module's context carries the mark), and is the context's otherwise.
+            var current = (module as IBoundContext)?.BoundContext;
+            var carried = current?.OptimizerBound ?? BoundFields.None;
+            var marks = BoundFields.None;
+
+            var perCtx = baseContext with { SubmoduleName = name };
+
+            if (demos is { Count: > 0 })
             {
-                SubmoduleName = name,
-                DefaultDemos  = (demos is { Count: > 0 }) ? demos : null,
-                InstructionOverrides = (instruction is not null)
-                    ? new Dictionary<string, string> { [name] = instruction }
-                    : null,
-            };
+                perCtx = perCtx with { DefaultDemos = demos };
+                marks |= BoundFields.Demos;
+            }
+            else if (carried.HasFlag(BoundFields.Demos))
+            {
+                perCtx = perCtx with { DefaultDemos = current!.DefaultDemos };
+                marks |= BoundFields.Demos;
+            }
+            else
+                perCtx = perCtx with { DefaultDemos = null };
+
+            if (instruction is not null)
+            {
+                perCtx = perCtx with { InstructionOverrides = new Dictionary<string, string> { [name] = instruction } };
+                marks |= BoundFields.Instructions;
+            }
+            else if (carried.HasFlag(BoundFields.Instructions))
+            {
+                perCtx = perCtx with { InstructionOverrides = current!.InstructionOverrides };
+                marks |= BoundFields.Instructions;
+            }
+            else
+                perCtx = perCtx with { InstructionOverrides = null };
+
+            if (ChatClients.TryGetValue(name, out var client))
+            {
+                perCtx = perCtx with { Chat = client };
+                marks |= BoundFields.Client;
+            }
+            else if (carried.HasFlag(BoundFields.Client))
+            {
+                perCtx = perCtx with { Chat = current!.Chat };
+                marks |= BoundFields.Client;
+            }
+
+            perCtx = perCtx with { OptimizerBound = marks };
 
             var reboundModule = CallWithContext(module, perCtx);
             newSubmodules[name] = reboundModule;
@@ -90,13 +146,61 @@ public sealed record OptimizedProgram<
         if (InstructionOverrides.Count > 0)
             overrides = InstructionOverrides;
 
-        var singleCtx = baseContext with
-        {
-            DefaultDemos          = demos,
-            InstructionOverrides  = overrides,
-        };
+        // A field this program sets replaces the module's bound value. A field it leaves out stays when an
+        // earlier Bind set it (the module's context carries the mark), and is the context's otherwise.
+        var current = (Program as IBoundContext)?.BoundContext;
+        var carried = current?.OptimizerBound ?? BoundFields.None;
+        var marks = BoundFields.None;
 
-        return (TProgram)CallWithContext(Program!, singleCtx);
+        var singleCtx = baseContext;
+
+        if (demos is not null)
+        {
+            singleCtx = singleCtx with { DefaultDemos = demos };
+            marks |= BoundFields.Demos;
+        }
+        else if (carried.HasFlag(BoundFields.Demos))
+        {
+            singleCtx = singleCtx with { DefaultDemos = current!.DefaultDemos };
+            marks |= BoundFields.Demos;
+        }
+        else
+            singleCtx = singleCtx with { DefaultDemos = null };
+
+        if (overrides is not null)
+        {
+            singleCtx = singleCtx with { InstructionOverrides = overrides };
+            marks |= BoundFields.Instructions;
+            // A module reads an instruction override only under its submodule name, so the context must
+            // carry the name the override is stored under. With several keys the module's own name stays.
+            if (overrides.Count == 1)
+                singleCtx = singleCtx with { SubmoduleName = overrides.Keys.First() };
+        }
+        else if (carried.HasFlag(BoundFields.Instructions))
+        {
+            singleCtx = singleCtx with
+            {
+                InstructionOverrides = current!.InstructionOverrides,
+                SubmoduleName = current.SubmoduleName,
+            };
+            marks |= BoundFields.Instructions;
+        }
+        else
+            singleCtx = singleCtx with { InstructionOverrides = null };
+
+        // One client is the single module's. Several clients cannot be told apart, so the module keeps its own.
+        if (ChatClients.Count == 1)
+        {
+            singleCtx = singleCtx with { Chat = ChatClients.First().Value };
+            marks |= BoundFields.Client;
+        }
+        else if (carried.HasFlag(BoundFields.Client))
+        {
+            singleCtx = singleCtx with { Chat = current!.Chat };
+            marks |= BoundFields.Client;
+        }
+
+        return (TProgram)CallWithContext(Program!, singleCtx with { OptimizerBound = marks });
     }
 
     /// <summary>

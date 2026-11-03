@@ -77,6 +77,7 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
     readonly int _fullEvalEvery;
     readonly int _seed;
     readonly IReadOnlyList<Example>? _valset;
+    readonly double _metricThreshold;
 
     /// <summary>Search trials used when <c>numTrials</c> is not given.</summary>
     public int MaxRounds => _maxRounds;
@@ -102,6 +103,9 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
     /// <summary>Seed for every random choice: shuffles, tips, the sampler and the minibatches.</summary>
     public int Seed => _seed;
 
+    /// <summary>Lowest metric score a run needs for its traces to become demos.</summary>
+    public double MetricThreshold => _metricThreshold;
+
     /// <summary>Construct a MIPROv2 optimizer.</summary>
     /// <param name="programRunner">Runs the program against an example, returning the produced outputs.</param>
     /// <param name="instructionProposerClient">Chat client that writes the dataset summary and the instruction proposals.</param>
@@ -114,6 +118,7 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
     /// <param name="fullEvalEvery">Full validation run period in trials. Default 5.</param>
     /// <param name="seed">Seed for every random choice. Default 0.</param>
     /// <param name="valset">Validation set. Default: the trainset passed to <c>CompileAsync</c>.</param>
+    /// <param name="metricThreshold">Lowest metric score a run needs for its traces to become demos in the bootstrapped demo sets. Default 1.0, for a metric in [0, 1]; use a lower value for a metric on another scale.</param>
     public MiproV2(
         Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>> programRunner,
         IChatClient instructionProposerClient,
@@ -125,7 +130,8 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
         int minibatchSize = 25,
         int fullEvalEvery = 5,
         int seed = 0,
-        IReadOnlyList<Example>? valset = null)
+        IReadOnlyList<Example>? valset = null,
+        double metricThreshold = 1.0)
     {
         ArgumentNullException.ThrowIfNull(programRunner);
         ArgumentNullException.ThrowIfNull(instructionProposerClient);
@@ -147,6 +153,7 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
         _fullEvalEvery = fullEvalEvery;
         _seed = seed;
         _valset = valset;
+        _metricThreshold = metricThreshold;
     }
 
     /// <inheritdoc />
@@ -283,7 +290,8 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
             {
                 _ = await _programRunner(prog, ex, runCtx, runCt).ConfigureAwait(false);
             },
-            maxBootstrappedDemos: _maxBootstrappedDemos);
+            maxBootstrappedDemos: _maxBootstrappedDemos,
+            metricThreshold: _metricThreshold);
 
         for (int d = 0; d < _numDemoSets; d++)
         {

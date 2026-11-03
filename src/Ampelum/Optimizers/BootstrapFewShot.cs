@@ -10,13 +10,26 @@ namespace SignalGrid.Ampelum.Optimizers;
 /// Trace-to-submodule partitioning key: <c>(ModuleName, SignatureType)</c>.
 /// Ambiguity (multiple submodules with same key) is resolved by execution order â€”
 /// the first matching submodule name wins.
+///
+/// A run becomes demos only when the metric scores the run's final outputs (the outputs of its last trace)
+/// against the example's expected outputs at or above <c>metricThreshold</c>. A passing run keeps the trace of
+/// every submodule, so the intermediate modules of a composed program get demos too. A metric that throws
+/// counts as a fail.
 /// </summary>
 /// <typeparam name="TProgram">The user program type.</typeparam>
+/// <param name="programRunner">Runs the program on one example inside the given context.</param>
+/// <param name="maxBootstrappedDemos">Maximum bootstrapped demos per submodule.</param>
+/// <param name="maxLabeledDemos">Maximum labeled demos per submodule when no trace passes.</param>
+/// <param name="metricThreshold">Lowest metric score a run needs for its traces to be kept. Default 1.0, for a metric in [0, 1].</param>
 public sealed class BootstrapFewShot<TProgram>(
     BootstrapFewShot<TProgram>.ProgramRunner programRunner,
     int maxBootstrappedDemos = 4,
-    int maxLabeledDemos = 16) : IOptimizer<TProgram>
+    int maxLabeledDemos = 16,
+    double metricThreshold = 1.0) : IOptimizer<TProgram>
 {
+    static readonly SignatureMetadata _placeholderMeta =
+        new(typeof(object), "", [], []);
+
     /// <summary>
     /// Delegate invoked once per trainset example. Implementations should call the program's
     /// forward pass inside <paramref name="ctx"/> so traces are captured by the
@@ -33,6 +46,9 @@ public sealed class BootstrapFewShot<TProgram>(
 
     /// <summary>Maximum labeled (trainset) demos per submodule (fallback if bootstrap yields fewer).</summary>
     public int MaxLabeledDemos { get; } = maxLabeledDemos;
+
+    /// <summary>Lowest metric score a trace needs to become a demo.</summary>
+    public double MetricThreshold { get; } = metricThreshold;
 
     /// <inheritdoc/>
     public async Task<OptimizedProgram<TProgram>> CompileAsync(
@@ -63,6 +79,7 @@ public sealed class BootstrapFewShot<TProgram>(
             var capturingSink = new InternalCapturingSink();
             var capturingCtx = context with { TraceSink = capturingSink };
 
+            bool runFailed = false;
             try
             {
                 await programRunner(program, trainset[i], capturingCtx, ct).ConfigureAwait(false);
@@ -74,12 +91,16 @@ public sealed class BootstrapFewShot<TProgram>(
             catch
             {
                 // Failed runs don't contribute demos â€” continue.
+                runFailed = true;
             }
 
-            foreach (var trace in capturingSink.Records)
+            // The run is scored once; a run that passes keeps every trace of every submodule. A run whose
+            // runner threw has partial traces and is not scored.
+            var passing = runFailed
+                ? Array.Empty<TraceRecord>()
+                : PassingTraces(capturingSink.Records, trainset[i], metric, MetricThreshold, out _);
+            foreach (var trace in passing)
             {
-                if (trace.Error is not null) continue;
-
                 var key = (trace.ModuleName, trace.SignatureType);
                 if (!partitions.TryGetValue(key, out var list))
                     partitions[key] = list = [];
@@ -138,6 +159,30 @@ public sealed class BootstrapFewShot<TProgram>(
         {
             TrainsetSize = trainset.Count,
         };
+    }
+
+    /// <summary>
+    /// The traces of one run that may become demos or training data: none when the run fails, otherwise every
+    /// trace without an error. A run is scored once, on the outputs of its last trace (the final module call)
+    /// against the example's expected outputs. A run with no trace, an errored last trace, a score below
+    /// <paramref name="threshold"/> (NaN included) or a metric that throws fails; <paramref name="metricThrew"/>
+    /// tells the last case apart. Cancellation propagates.
+    /// </summary>
+    internal static IReadOnlyList<TraceRecord> PassingTraces(
+        IReadOnlyList<TraceRecord> records, Example example, IMetric metric, double threshold, out bool metricThrew)
+    {
+        metricThrew = false;
+        if (records.Count == 0 || records[^1].Error is not null) return [];
+        try
+        {
+            if (!(metric.Score(records[^1].Outputs, example.Outputs, _placeholderMeta) >= threshold)) return [];
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            metricThrew = true;
+            return [];
+        }
+        return records.Where(r => r.Error is null).ToList();
     }
 
     sealed class InternalCapturingSink : ITraceSink

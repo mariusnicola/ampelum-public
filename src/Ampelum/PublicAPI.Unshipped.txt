@@ -1263,4 +1263,66 @@ SignalGrid.Ampelum.Optimizers.GepaOptions.MergeEvery.get -> int
 SignalGrid.Ampelum.Optimizers.GepaOptions.MergeEvery.init -> void
 SignalGrid.Ampelum.Optimizers.GepaOptions.Seed.get -> int
 SignalGrid.Ampelum.Optimizers.GepaOptions.Seed.init -> void
+*REMOVED*Ampelum.Optimizers.BootstrapFewShot<TProgram>.BootstrapFewShot(Ampelum.Optimizers.BootstrapFewShot<TProgram>.ProgramRunner! programRunner, int maxBootstrappedDemos = 4, int maxLabeledDemos = 16) -> void
+SignalGrid.Ampelum.Optimizers.BootstrapFewShot<TProgram>.BootstrapFewShot(SignalGrid.Ampelum.Optimizers.BootstrapFewShot<TProgram>.ProgramRunner! programRunner, int maxBootstrappedDemos = 4, int maxLabeledDemos = 16, double metricThreshold = 1) -> void
+SignalGrid.Ampelum.Optimizers.BootstrapFewShot<TProgram>.MetricThreshold.get -> double
+SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram>.ChatClients.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Microsoft.Extensions.AI.IChatClient!>!
+SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram>.ChatClients.init -> void
+SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram>.StepScores.get -> System.Collections.Generic.IReadOnlyList<double>?
+SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram>.StepScores.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.<Clone>$() -> SignalGrid.Ampelum.Optimizers.FineTuneRequest!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.Deconstruct(out string! Submodule, out System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!>! Examples) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.Equals(SignalGrid.Ampelum.Optimizers.FineTuneRequest? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.Examples.get -> System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.Examples.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.FineTuneRequest(string! Submodule, System.Collections.Generic.IReadOnlyList<System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>!>! Examples) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.Submodule.get -> string!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.FineTuneRequest.Submodule.init -> void
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.FineTuneRequest.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.FineTuneRequest.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.FineTuneRequest.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Optimizers.FineTuneRequest.operator !=(SignalGrid.Ampelum.Optimizers.FineTuneRequest? left, SignalGrid.Ampelum.Optimizers.FineTuneRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Optimizers.FineTuneRequest.operator ==(SignalGrid.Ampelum.Optimizers.FineTuneRequest? left, SignalGrid.Ampelum.Optimizers.FineTuneRequest? right) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.IFineTuneProvider
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.IFineTuneProvider.FineTuneAsync(SignalGrid.Ampelum.Optimizers.FineTuneRequest! request, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.IChatClient!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BootstrapFinetune<TProgram>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BootstrapFinetune<TProgram>.BootstrapFinetune(SignalGrid.Ampelum.Optimizers.BootstrapFewShot<TProgram!>.ProgramRunner! programRunner, SignalGrid.Ampelum.Optimizers.IFineTuneProvider! provider, TProgram? teacher = null, double metricThreshold = 1) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BootstrapFinetune<TProgram>.CompileAsync(TProgram! program, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>! trainset, SignalGrid.Ampelum.Optimizers.IMetric! metric, SignalGrid.Ampelum.AmpelumContext! context, System.IProgress<SignalGrid.Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BootstrapFinetune<TProgram>.MetricThreshold.get -> double
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.<Clone>$() -> SignalGrid.Ampelum.Optimizers.SimbaOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.Equals(SignalGrid.Ampelum.Optimizers.SimbaOptions? other) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.SimbaOptions() -> void
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.SimbaOptions.Equals(object? obj) -> bool
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.SimbaOptions.GetHashCode() -> int
+[AMPELUM_V09_PREVIEW]override SignalGrid.Ampelum.Optimizers.SimbaOptions.ToString() -> string!
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Optimizers.SimbaOptions.operator !=(SignalGrid.Ampelum.Optimizers.SimbaOptions? left, SignalGrid.Ampelum.Optimizers.SimbaOptions? right) -> bool
+[AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Optimizers.SimbaOptions.operator ==(SignalGrid.Ampelum.Optimizers.SimbaOptions? left, SignalGrid.Ampelum.Optimizers.SimbaOptions? right) -> bool
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.MinibatchSize.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.MinibatchSize.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.CandidatesPerStep.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.CandidatesPerStep.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.MaxSteps.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.MaxSteps.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.MaxDemos.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.MaxDemos.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.Temperature.get -> double
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.Temperature.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.Seed.get -> int
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptions.Seed.init -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptimizer<TProgram>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptimizer<TProgram>.CompileAsync(TProgram program, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>! trainset, SignalGrid.Ampelum.Optimizers.IMetric! metric, SignalGrid.Ampelum.AmpelumContext! context, System.IProgress<SignalGrid.Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptimizer<TProgram>.Options.get -> SignalGrid.Ampelum.Optimizers.SimbaOptions!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.SimbaOptimizer<TProgram>.SimbaOptimizer(System.Func<TProgram, SignalGrid.Ampelum.Example!, SignalGrid.Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<SignalGrid.Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! reflectionClient, SignalGrid.Ampelum.Optimizers.SimbaOptions? options = null, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>? valset = null) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BetterTogether<TProgram>
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BetterTogether<TProgram>.BetterTogether(System.Func<TProgram!, SignalGrid.Ampelum.Example!, SignalGrid.Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<SignalGrid.Ampelum.Example!>!>! programRunner, SignalGrid.Ampelum.Optimizers.IOptimizer<TProgram!>? promptOptimizer = null, SignalGrid.Ampelum.Optimizers.IOptimizer<TProgram!>? weightOptimizer = null, SignalGrid.Ampelum.Optimizers.IFineTuneProvider? fineTuneProvider = null, string! strategy = "p -> w -> p", System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>? valset = null, int seed = 0) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BetterTogether<TProgram>.CompileAsync(TProgram! program, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>! trainset, SignalGrid.Ampelum.Optimizers.IMetric! metric, SignalGrid.Ampelum.AmpelumContext! context, System.IProgress<SignalGrid.Ampelum.Optimizers.OptimizerProgress!>? progress = null, System.Threading.CancellationToken ct = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<SignalGrid.Ampelum.Optimizers.OptimizedProgram<TProgram!>!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Optimizers.BetterTogether<TProgram>.Steps.get -> System.Collections.Generic.IReadOnlyList<char>!
 [AMPELUM_V09_PREVIEW]static SignalGrid.Ampelum.Hooks.HookedLmCall.InvokeAsync(SignalGrid.Ampelum.AmpelumContext! context, string! moduleName, System.Collections.Generic.IReadOnlyList<Microsoft.Extensions.AI.ChatMessage!>! messages, Microsoft.Extensions.AI.ChatOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.AI.ChatResponse!>!
+*REMOVED*Ampelum.Optimizers.MiproV2<TProgram>.MiproV2(System.Func<TProgram!, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! instructionProposerClient, int maxRounds = 3, int candidatesPerSubmodule = 3, int maxBootstrappedDemos = 4, int? numTrials = null, int numDemoSets = 3, int minibatchSize = 25, int fullEvalEvery = 5, int seed = 0, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? valset = null) -> void
+SignalGrid.Ampelum.Optimizers.MiproV2<TProgram>.MiproV2(System.Func<TProgram!, SignalGrid.Ampelum.Example!, SignalGrid.Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<SignalGrid.Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! instructionProposerClient, int maxRounds = 3, int candidatesPerSubmodule = 3, int maxBootstrappedDemos = 4, int? numTrials = null, int numDemoSets = 3, int minibatchSize = 25, int fullEvalEvery = 5, int seed = 0, System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Example!>? valset = null, double metricThreshold = 1) -> void
+SignalGrid.Ampelum.Optimizers.MiproV2<TProgram>.MetricThreshold.get -> double
+*REMOVED*Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.BootstrapFewShotWithRandomSearch(Ampelum.Optimizers.BootstrapFewShot<TProgram!>.ProgramRunner! programRunner, int numCandidates = 8, int maxBootstrappedDemos = 4, int? seed = null, System.Func<TProgram!, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>? scoringRunner = null) -> void
+SignalGrid.Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.BootstrapFewShotWithRandomSearch(SignalGrid.Ampelum.Optimizers.BootstrapFewShot<TProgram!>.ProgramRunner! programRunner, int numCandidates = 8, int maxBootstrappedDemos = 4, int? seed = null, System.Func<TProgram!, SignalGrid.Ampelum.Example!, SignalGrid.Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<SignalGrid.Ampelum.Example!>!>? scoringRunner = null, double metricThreshold = 1) -> void
+SignalGrid.Ampelum.Optimizers.BootstrapFewShotWithRandomSearch<TProgram>.MetricThreshold.get -> double

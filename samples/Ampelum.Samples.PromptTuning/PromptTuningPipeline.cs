@@ -122,7 +122,7 @@ public sealed class PromptTuningPipeline(
         new Evaluate<SentimentSig>(program.ClassifyAsync, metric, maxDegreeOfParallelism: 1)
             .RunAsync(data, ct);
 
-    static async Task<Example> RunOneAsync(
+    internal static async Task<Example> RunOneAsync(
         SentimentProgram program, Example example, AmpelumContext context, CancellationToken ct)
     {
         var input = new SentimentSig

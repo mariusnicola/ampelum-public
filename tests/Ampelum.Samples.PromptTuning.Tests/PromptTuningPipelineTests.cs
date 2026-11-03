@@ -124,12 +124,30 @@ public sealed class PromptTuningPipelineTests : IDisposable
         tips.ShouldBe(ExpectedTips);
     }
 
-    // What seed 17 picks with this dataset and the scripted models.
+    // What seed 17 picks with this dataset and the scripted models. Both rows are among the first three,
+    // the only ones the untuned classifier answers right: a demo has to pass the metric.
     static readonly string[] ExpectedDemoFeedback =
     [
-        "I received the invoice and the amount matches the order.",
-        "Great quality for the price, I will order again.",
+        "The checkout was quick and the support team solved my issue in minutes.",
+        "The package came in a standard box.",
     ];
+
+    [Fact]
+    public async Task Demos_come_only_from_rows_the_untuned_classifier_answered_right()
+    {
+        var data = await SentimentData.LoadAsync(SentimentData.DefaultPath, Ct);
+        var answeredRight = data.Take(ScriptedChatClient.BaselineCorrect).Select(e => e.Inputs.Feedback).ToList();
+        await RunScriptedAsync();
+
+        var loaded = await new JsonProgramPersistence().LoadAsync<SentimentProgram>(ProgramPath, Ct);
+        var demos = loaded.DemosBySubmodule[SentimentProgram.ClassifierName];
+
+        demos.ShouldNotBeEmpty();
+        demos.ShouldAllBe(d => answeredRight.Contains(Convert.ToString(d.Inputs[nameof(SentimentSig.Feedback)])!));
+        demos.ShouldAllBe(d =>
+            data.Single(e => e.Inputs.Feedback == Convert.ToString(d.Inputs[nameof(SentimentSig.Feedback)]))
+                .Expected.Sentiment == Convert.ToString(d.Outputs[nameof(SentimentSig.Sentiment)]));
+    }
 
     static readonly string[] ExpectedTips =
     [

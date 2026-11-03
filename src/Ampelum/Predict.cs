@@ -34,7 +34,7 @@ public static class Predict
 
 /// <summary>Core Ampelum module: formats a signature + demos into chat messages, calls the LM once,
 /// parses the response, emits a <see cref="TraceRecord"/>, and returns a <see cref="Prediction{TSig}"/>.</summary>
-public sealed class Predict<TSig> : IModule<TSig, TSig> where TSig : ISignature
+public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContext where TSig : ISignature
 {
     // Cache PropertyInfo[] per concrete runtime type so ProjectInputs avoids per-call reflection.
     static readonly ConcurrentDictionary<Type, PropertyInfo[]> _inputPropCache = new();
@@ -90,6 +90,8 @@ public sealed class Predict<TSig> : IModule<TSig, TSig> where TSig : ISignature
         ArgumentNullException.ThrowIfNull(context);
         return new Predict<TSig>(context);
     }
+
+    AmpelumContext? Optimizers.IBoundContext.BoundContext => _ctorCtx;
 
     /// <summary>Run one forward pass: format â†’ LM call â†’ parse â†’ trace â†’ return.</summary>
     public async Task<Prediction<TSig>> ForwardAsync(

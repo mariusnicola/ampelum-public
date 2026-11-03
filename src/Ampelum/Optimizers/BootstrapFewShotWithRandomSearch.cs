@@ -39,12 +39,16 @@ public sealed class BootstrapFewShotWithRandomSearch<TProgram> : IOptimizer<TPro
     readonly int _numCandidates;
     readonly int _maxBootstrappedDemos;
     readonly int? _seed;
+    readonly double _metricThreshold;
 
     /// <summary>Number of random-search trials.</summary>
     public int NumCandidates => _numCandidates;
 
     /// <summary>Bootstrap demo cap per trial.</summary>
     public int MaxBootstrappedDemos => _maxBootstrappedDemos;
+
+    /// <summary>Lowest metric score a run needs for its traces to become demos.</summary>
+    public double MetricThreshold => _metricThreshold;
 
     /// <summary>Construct a random-search optimizer.</summary>
     /// <param name="programRunner">Trace-emitting runner used by the inner <c>BootstrapFewShot</c>.</param>
@@ -56,12 +60,14 @@ public sealed class BootstrapFewShotWithRandomSearch<TProgram> : IOptimizer<TPro
     /// against the trainset via this runner; when null, scoring falls back to the degenerate
     /// self-comparison mode (see class XML-doc).
     /// </param>
+    /// <param name="metricThreshold">Lowest metric score a run needs for its traces to become demos. Default 1.0, for a metric in [0, 1]; use a lower value for a metric on another scale.</param>
     public BootstrapFewShotWithRandomSearch(
         BootstrapFewShot<TProgram>.ProgramRunner programRunner,
         int numCandidates = 8,
         int maxBootstrappedDemos = 4,
         int? seed = null,
-        Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>>? scoringRunner = null)
+        Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>>? scoringRunner = null,
+        double metricThreshold = 1.0)
     {
         ArgumentNullException.ThrowIfNull(programRunner);
         ArgumentOutOfRangeException.ThrowIfLessThan(numCandidates, 1);
@@ -71,6 +77,7 @@ public sealed class BootstrapFewShotWithRandomSearch<TProgram> : IOptimizer<TPro
         _maxBootstrappedDemos = maxBootstrappedDemos;
         _seed = seed;
         _scoringRunner = scoringRunner;
+        _metricThreshold = metricThreshold;
     }
 
     /// <inheritdoc />
@@ -106,7 +113,7 @@ public sealed class BootstrapFewShotWithRandomSearch<TProgram> : IOptimizer<TPro
             var shuffled = Shuffle(trainset, effectiveSeed);
 
             var bootstrapper = new BootstrapFewShot<TProgram>(
-                _programRunner, maxBootstrappedDemos: _maxBootstrappedDemos);
+                _programRunner, maxBootstrappedDemos: _maxBootstrappedDemos, metricThreshold: _metricThreshold);
             var candidate = await bootstrapper.CompileAsync(
                 program, shuffled, metric, context, null, ct).ConfigureAwait(false);
 

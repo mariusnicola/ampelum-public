@@ -415,17 +415,8 @@ public sealed class GEPAOptimizer<TProgram> : IOptimizer<TProgram>
         static bool SameInstructions(Dictionary<string, string> a, IReadOnlyDictionary<string, string> b) =>
             a.Count == b.Count && a.All(kv => b.TryGetValue(kv.Key, out var v) && v == kv.Value);
 
-        string CurrentInstruction(string submodule, IReadOnlyDictionary<string, string> overrides)
-        {
-            if (overrides.TryGetValue(submodule, out var overridden)) return overridden;
-            object module = program is IComposedModule composed && composed.Submodules.TryGetValue(submodule, out var sub)
-                ? sub
-                : program!;
-            var signature = module.GetType().GetGenericArguments().FirstOrDefault(typeof(ISignature).IsAssignableFrom);
-            return signature is null
-                ? "(the module's own instruction)"
-                : SignatureMetadataCache.For(signature).Instructions;
-        }
+        string CurrentInstruction(string submodule, IReadOnlyDictionary<string, string> overrides) =>
+            OptimizerInstructions.Current(program!, submodule, overrides);
 
         async Task<string> ReflectAsync(
             string submodule, string current, IReadOnlyList<EvalRecord> records, CancellationToken ct)

@@ -8,7 +8,7 @@ namespace SignalGrid.Ampelum;
 /// The reasoning text is available via <see cref="PredictionExtensions.Reasoning{T}"/> on the returned prediction.
 /// </summary>
 /// <typeparam name="TSig">The signature type describing the task's inputs and outputs.</typeparam>
-public sealed class ChainOfThought<TSig> where TSig : ISignature
+public sealed class ChainOfThought<TSig> : Optimizers.IBoundContext where TSig : ISignature
 {
     readonly Predict<TSig> _inner;
 
@@ -58,6 +58,8 @@ public sealed class ChainOfThought<TSig> where TSig : ISignature
         ArgumentNullException.ThrowIfNull(context);
         return new ChainOfThought<TSig>(context);
     }
+
+    AmpelumContext? Optimizers.IBoundContext.BoundContext => ((Optimizers.IBoundContext)_inner).BoundContext;
 
     static IReadOnlyList<Example>? InjectReasoningDemos(IReadOnlyList<Example>? demos)
     {

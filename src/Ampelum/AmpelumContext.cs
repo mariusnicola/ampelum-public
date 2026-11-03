@@ -47,6 +47,13 @@ public sealed record AmpelumContext(
     public string? SubmoduleName { get; internal init; }
 
     /// <summary>
+    /// The fields <c>OptimizedProgram.Bind</c> set on this context from an optimized program (client, demos,
+    /// instruction override). A later <c>Bind</c> keeps a field of the module's current context only when it
+    /// carries the mark; a context built by user code carries none.
+    /// </summary>
+    internal Optimizers.BoundFields OptimizerBound { get; init; }
+
+    /// <summary>
     /// Optional usage tracker. When non-null, Predict/ReAct/etc. call Record after every LM response.
     /// </summary>
     public Usage.IUsageTracker? Usage { get; init; }
