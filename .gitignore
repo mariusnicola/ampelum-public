@@ -59,6 +59,8 @@ usersecrets/
 .agents/
 CLAUDE.md
 AGENTS.md
+!/CLAUDE.md
+!/AGENTS.md
 HANDOFF.md
 /.tmp/
 /tmp/
