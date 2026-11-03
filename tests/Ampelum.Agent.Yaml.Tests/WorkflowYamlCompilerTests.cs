@@ -281,11 +281,53 @@ public sealed class WorkflowYamlCompilerTests
 
         var result = WorkflowYamlCompiler.Compile(yaml);
 
-        // The Compensate step kind is itself rejected at DurableWorkflowRuntime execution time (WS1),
-        // but the YAML compiler's job is static schema validation, not execution-readiness -- confirming
+        // The YAML compiler's job is static schema validation, not execution-readiness -- confirming
         // the compensation-declared step compiles cleanly overall, not merely that one specific error is absent.
         result.Success.ShouldBeTrue(string.Join("; ", result.Errors));
         result.Errors.ShouldNotContain(e => e.Contains("neither a compensation step nor an explicit justification"));
+    }
+
+    [Fact]
+    public void Compile_WaitForSignalEvaluateEmitEventAndCompensateKinds_AreMappedWithTheirInputs()
+    {
+        const string yaml = """
+            id: all-kinds
+            version: 1.0.0
+            steps:
+              - id: charge
+                kind: tool
+                effect: mutating
+                compensation_step: refund
+              - id: receipt
+                kind: wait_for_signal
+                depends_on: [charge]
+                inputs:
+                  signal: receipt-arrived
+              - id: check
+                kind: evaluate
+                depends_on: [receipt]
+              - id: announce
+                kind: emit_event
+                depends_on: [check]
+                inputs:
+                  event: expense.settled
+                  detail: done
+              - id: refund
+                kind: compensate
+            """;
+
+        var result = WorkflowYamlCompiler.Compile(yaml);
+
+        result.Success.ShouldBeTrue(string.Join("; ", result.Errors));
+        var steps = result.Artifact!.Definition.Steps.ToDictionary(step => step.StepId);
+        steps["receipt"].Kind.ShouldBe(WorkflowStepKind.WaitForSignal);
+        steps["receipt"].Inputs!["signal"].ShouldBe("receipt-arrived");
+        steps["check"].Kind.ShouldBe(WorkflowStepKind.Evaluate);
+        steps["announce"].Kind.ShouldBe(WorkflowStepKind.EmitEvent);
+        steps["announce"].Inputs!["event"].ShouldBe("expense.settled");
+        steps["announce"].Inputs!["detail"].ShouldBe("done");
+        steps["refund"].Kind.ShouldBe(WorkflowStepKind.Compensate);
+        steps["charge"].CompensationStepId.ShouldBe("refund");
     }
 
     [Fact]

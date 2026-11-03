@@ -11,4 +11,7 @@ public interface IExpenseLedger
 
     /// <summary>Marks an expense for a human to review, with the expense's review reason if it has one.</summary>
     Task FlagForReviewAsync(Expense expense, string idempotencyKey, CancellationToken ct);
+
+    /// <summary>Gives back a payment made by <see cref="PayAsync"/>, when a later step of the workflow fails.</summary>
+    Task RefundAsync(Expense expense, string idempotencyKey, CancellationToken ct);
 }

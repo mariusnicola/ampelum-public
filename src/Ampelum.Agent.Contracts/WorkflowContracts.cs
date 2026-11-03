@@ -87,26 +87,28 @@ public enum WorkflowStepKind
     Join,
     /// <summary>
     /// Pauses durably pending an external signal delivered out-of-band from any declared dependency's
-    /// completion. Not yet executable by <c>DurableWorkflowRuntime</c> — declaring a step with this kind
-    /// fails <c>ValidateDefinition</c> until the runtime implements durable signal/wait plumbing.
+    /// completion. <c>DurableWorkflowRuntime</c> never calls the handler for it: once ready it waits, and
+    /// <c>SignalAsync</c> settles it with the signal named by <c>Inputs["signal"]</c> (the step id when absent).
+    /// A signal that arrives earlier is kept on the node and the step succeeds as soon as it is ready.
     /// </summary>
     WaitForSignal,
     /// <summary>
-    /// Runs a workflow's declared <c>WorkflowEvaluationPlan</c> and records metric observations. Not yet
-    /// executable by <c>DurableWorkflowRuntime</c> — declaring a step with this kind fails
-    /// <c>ValidateDefinition</c> until the runtime implements evaluation-plan execution.
+    /// Observes the metrics of the workflow's <c>WorkflowEvaluationPlan</c> through the runtime's evaluator and
+    /// records the observations. The step fails when a plan metric is missing or misses the threshold the workflow
+    /// <c>Objective</c> gives it. Needs an enabled evaluation plan and a runtime with an evaluator.
     /// </summary>
     Evaluate,
     /// <summary>
-    /// Appends a caller-declared event to the runtime's audit/event stream. Not yet executable by
-    /// <c>DurableWorkflowRuntime</c> — declaring a step with this kind fails <c>ValidateDefinition</c>
-    /// until the runtime exposes typed custom-event emission to step handlers.
+    /// Appends a caller-declared event to the runtime's audit stream. <c>DurableWorkflowRuntime</c> never calls the
+    /// handler for it: the event name is <c>Inputs["event"]</c> (required), the detail is <c>Inputs["detail"]</c>, and
+    /// the audit event <c>event.&lt;name&gt;</c> is written by the same swap that marks the step succeeded.
     /// </summary>
     EmitEvent,
     /// <summary>
-    /// Reverses a prior mutating step's effect as part of saga-style rollback on failure. Not yet
-    /// executable by <c>DurableWorkflowRuntime</c> — declaring a step with this kind fails
-    /// <c>ValidateDefinition</c> until the runtime implements compensation triggering.
+    /// Reverses a prior step's effect as part of saga-style rollback. A step names it in
+    /// <c>CompensationStepId</c>. It never runs in the forward flow: when the execution would fail,
+    /// <c>DurableWorkflowRuntime</c> runs, through the handler, the compensation of every succeeded step that declares
+    /// one, newest completion first, and then fails the execution. A successful execution ends with it skipped.
     /// </summary>
     Compensate,
 }

@@ -131,7 +131,7 @@ public sealed class PostgresWorkflowPersistenceTests : IAsyncDisposable
             {
                 ids = created;
                 _executionIds.AddRange(created);
-                created.Count.ShouldBe(2);
+                created.Count.ShouldBe(3);
                 foreach (var id in created)
                 {
                     (await Direct().LoadAsync(id, TestContext.Current.CancellationToken)).ShouldNotBeNull();
@@ -141,7 +141,7 @@ public sealed class PostgresWorkflowPersistenceTests : IAsyncDisposable
             });
 
             outcome.ExitCode.ShouldBe(0);
-            ids.Count.ShouldBe(2);
+            ids.Count.ShouldBe(3);
             foreach (var id in ids)
             {
                 (await Direct().LoadAsync(id, TestContext.Current.CancellationToken)).ShouldBeNull();

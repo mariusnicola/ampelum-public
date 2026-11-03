@@ -191,6 +191,61 @@ public sealed class PostgresWorkflowPersistenceTests : IAsyncDisposable
         ]);
     }
 
+    private StepKindBackend StepKindBackend() => new(
+        crash =>
+        {
+            var persistence = CreateStore();
+            if (crash is null) return (persistence, persistence);
+            var crashing = new CrashingTransactionStore(persistence, crash);
+            return (crashing, crashing);
+        },
+        (id, ct) => CreateStore().QueryAuditAsync(id, ct),
+        label => Track("postgres-" + label + Guid.NewGuid().ToString("N")));
+
+    [Fact]
+    public async Task WaitForSignal_CrashAfterDelivery_ResumesFromPostgres() =>
+        await StepKindScenarios.SignalSurvivesACrashAfterDelivery(StepKindBackend());
+
+    [Fact]
+    public async Task Evaluate_CrashAfterObservations_ResumesFromPostgres() =>
+        await StepKindScenarios.EvaluateSurvivesACrashAfterItsObservationsWereWritten(StepKindBackend());
+
+    [Fact]
+    public async Task EmitEvent_CrashAfterTheEvent_WritesItOnceOnPostgres() =>
+        await StepKindScenarios.EmitEventIsWrittenOnceAcrossACrashAndResume(StepKindBackend());
+
+    [Fact]
+    public async Task Compensate_CrashBetweenTwoCompensations_ContinuesOnPostgres() =>
+        await StepKindScenarios.CompensationContinuesAfterACrashBetweenTwoCompensations(StepKindBackend());
+
+    [Fact]
+    public async Task Load_CheckpointWrittenBeforeTheStepKindFields_LoadsWithTheFieldsDefaulted()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var request = CreateRequest(Track("postgres-legacy-" + Guid.NewGuid().ToString("N")), stepCount: 2);
+        var nodes = request.Workflow.Steps.ToDictionary(
+            step => step.StepId,
+            step => new DurableWorkflowNodeSnapshot(step.StepId, step.StepId == "step-1" ? DurableWorkflowNodeStatus.Succeeded : DurableWorkflowNodeStatus.Pending, step.StepId == "step-1" ? 1 : 0, $"{request.ExecutionId}:{step.StepId}"));
+        var legacyJson = LegacyCheckpoint.Json(new DurableWorkflowSnapshot(request, WorkflowExecutionStatus.Running, nodes, DateTimeOffset.UtcNow));
+        var store = CreateStore();
+        await using (var connection = new NpgsqlConnection(ConnectionString()))
+        {
+            await connection.OpenAsync(ct);
+            await using var insert = new NpgsqlCommand(
+                "INSERT INTO ampelum_workflow_checkpoints (execution_id, snapshot_json, version, updated_at_utc) VALUES (@id, @json::jsonb, 0, now());", connection);
+            insert.Parameters.AddWithValue("id", request.ExecutionId);
+            insert.Parameters.AddWithValue("json", legacyJson);
+            await insert.ExecuteNonQueryAsync(ct);
+        }
+
+        var loaded = await store.LoadAsync(request.ExecutionId, ct);
+
+        loaded.ShouldNotBeNull();
+        loaded.Nodes.Values.ShouldAllBe(node => node.Signal == null && node.Observations == null && node.CompletionOrder == 0);
+        var finished = await new DurableWorkflowRuntime(store, store).ResumeAsync(request, (_, _) => Task.FromResult(DurableWorkflowNodeResult.Success()), ct);
+        finished.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_prefixes.Count == 0) return;

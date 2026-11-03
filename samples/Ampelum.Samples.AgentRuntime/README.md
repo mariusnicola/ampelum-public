@@ -66,7 +66,7 @@ For a live model these file limits apply as they are. The sample gives it the ex
 
 - `SubAgentRunner` (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`): no shell, no build or test tool though the prompt names them (`BuildSystemPrompt`), no containment of paths in `Resolve`, tool calls not run unless the client invokes functions, tool parameters without defaults, and the prompt line "Working directory" printing the task id. Details in the section above.
 
-- `DurableWorkflowRuntime` pauses for `Approval` steps only. Every other kind, `Wait` included, goes to the one shared handler, and the sample's handler returns success for `Wait` at once. `Loop` does have continue and max-iteration logic and `Join` has readiness logic, which the sample uses.
+- `DurableWorkflowRuntime` pauses for `Approval` and `WaitForSignal` steps, and this sample uses only the first. `Wait` goes to the one shared handler like the other kinds, and the sample's handler returns success for it at once. `Loop` does have continue and max-iteration logic and `Join` has readiness logic, which the sample uses.
 - `DurableAgentRuntime.PauseAsync` followed by `ResumeAsync` on the same instance throws "Cannot resolve escalation from state Running", because pausing does not escalate the internal state machine. The sample resumes with a fresh instance, which restores the machine from the stored snapshot.
 - `SessionBudget` has `IsExhausted` and `IsWarning`; the sample calls `IsExhausted`, but nothing in src enforces the budget. The sample's `ModelBudget` and `BudgetedChatClient` do.
 - `SkillRegistry.LoadAsync` does nothing, so `skills.json` is read by the sample.

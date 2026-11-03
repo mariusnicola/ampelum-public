@@ -1,6 +1,10 @@
 id: expense-approval
 version: 1.0.0
 name: Expense approval
+objective:
+  metrics:
+    - id: receipt_matches
+      direction: maximize
 risk:
   max_effect_class: additive
 steps:
@@ -18,6 +22,7 @@ steps:
     depends_on: [route]
     effect: additive
     tool_allow_list: [pay_expense]
+    compensation_step: refund
   - id: review
     kind: tool
     tool: flag_for_review
@@ -27,3 +32,21 @@ steps:
   - id: done
     kind: join
     depends_on: [pay, review]
+  - id: receipt
+    kind: wait_for_signal
+    depends_on: [done]
+    inputs:
+      signal: receipt
+  - id: check
+    kind: evaluate
+    depends_on: [receipt, extract]
+    inputs:
+      threshold: "1"
+  - id: announce
+    kind: emit_event
+    depends_on: [check]
+    inputs:
+      event: expense.settled
+      detail: The receipt matches the expense.
+  - id: refund
+    kind: compensate

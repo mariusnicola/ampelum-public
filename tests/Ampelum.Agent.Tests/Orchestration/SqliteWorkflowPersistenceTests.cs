@@ -203,6 +203,68 @@ public sealed class SqliteWorkflowPersistenceTests : IDisposable
         ]);
     }
 
+    private StepKindBackend StepKindBackend()
+    {
+        var path = DatabasePath();
+        return new StepKindBackend(
+            crash =>
+            {
+                var persistence = new SqliteWorkflowPersistence(path);
+                if (crash is null) return (persistence, persistence);
+                var crashing = new CrashingTransactionStore(persistence, crash);
+                return (crashing, crashing);
+            },
+            (id, ct) => new SqliteWorkflowPersistence(path).QueryAuditAsync(id, ct),
+            label => label + Guid.NewGuid().ToString("N"));
+    }
+
+    [Fact]
+    public async Task WaitForSignal_CrashAfterDelivery_ResumesFromSqlite() =>
+        await StepKindScenarios.SignalSurvivesACrashAfterDelivery(StepKindBackend());
+
+    [Fact]
+    public async Task Evaluate_CrashAfterObservations_ResumesFromSqlite() =>
+        await StepKindScenarios.EvaluateSurvivesACrashAfterItsObservationsWereWritten(StepKindBackend());
+
+    [Fact]
+    public async Task EmitEvent_CrashAfterTheEvent_WritesItOnceOnSqlite() =>
+        await StepKindScenarios.EmitEventIsWrittenOnceAcrossACrashAndResume(StepKindBackend());
+
+    [Fact]
+    public async Task Compensate_CrashBetweenTwoCompensations_ContinuesOnSqlite() =>
+        await StepKindScenarios.CompensationContinuesAfterACrashBetweenTwoCompensations(StepKindBackend());
+
+    [Fact]
+    public async Task Load_CheckpointWrittenBeforeTheStepKindFields_LoadsWithTheFieldsDefaulted()
+    {
+        var path = DatabasePath();
+        var ct = TestContext.Current.CancellationToken;
+        var request = CreateRequest("sqlite-legacy", stepCount: 2);
+        var nodes = request.Workflow.Steps.ToDictionary(
+            step => step.StepId,
+            step => new DurableWorkflowNodeSnapshot(step.StepId, step.StepId == "step-1" ? DurableWorkflowNodeStatus.Succeeded : DurableWorkflowNodeStatus.Pending, step.StepId == "step-1" ? 1 : 0, $"{request.ExecutionId}:{step.StepId}"));
+        var legacyJson = LegacyCheckpoint.Json(new DurableWorkflowSnapshot(request, WorkflowExecutionStatus.Running, nodes, DateTimeOffset.UtcNow));
+        _ = new SqliteWorkflowPersistence(path);
+        using (var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path }.ToString()))
+        {
+            connection.Open();
+            using var insert = connection.CreateCommand();
+            insert.CommandText = "INSERT INTO workflow_checkpoints (execution_id, snapshot_json, version, updated_at_utc) VALUES ($id, $json, 0, $now);";
+            insert.Parameters.AddWithValue("$id", request.ExecutionId);
+            insert.Parameters.AddWithValue("$json", legacyJson);
+            insert.Parameters.AddWithValue("$now", DateTimeOffset.UtcNow.ToString("O"));
+            insert.ExecuteNonQuery();
+        }
+
+        var store = new SqliteWorkflowPersistence(path);
+        var loaded = await store.LoadAsync(request.ExecutionId, ct);
+
+        loaded.ShouldNotBeNull();
+        loaded.Nodes.Values.ShouldAllBe(node => node.Signal == null && node.Observations == null && node.CompletionOrder == 0);
+        var finished = await new DurableWorkflowRuntime(store, store).ResumeAsync(request, (_, _) => Task.FromResult(DurableWorkflowNodeResult.Success()), ct);
+        finished.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
+    }
+
     public void Dispose()
     {
         SqliteConnection.ClearAllPools();

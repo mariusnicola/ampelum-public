@@ -10,14 +10,19 @@ public sealed record ExpenseRunOutcome(int ExitCode, IReadOnlyList<string> Execu
 /// <summary>The command-line path of the sample, kept out of Program.cs so a test can run it.</summary>
 public static class ExpenseRun
 {
-    static readonly string[] Notes =
+    // A null receipt amount means the receipt shows the extracted amount. The third note comes with a receipt for
+    // another amount, so its payment is refunded and the execution fails; that is the outcome it is expected to have.
+    sealed record Note(string Text, string? ReceiptAmount, bool ExpectRefund);
+
+    static readonly Note[] Notes =
     [
-        "Taxi to the client site, Acme Taxi, 42.50 EUR, travel.",
-        "Conference ticket from DevSummit, 1800 EUR, training.",
+        new("Taxi to the client site, Acme Taxi, 42.50 EUR, travel.", null, false),
+        new("Conference ticket from DevSummit, 1800 EUR, training.", null, false),
+        new("Hotel night, Grand Hotel, 120 EUR, travel. The receipt shows 99 EUR.", "99", true),
     ];
 
     /// <summary>
-    /// Runs both notes. <c>--fake</c> scripts the model, <c>--postgres</c> keeps the state in PostgreSQL.
+    /// Runs the three notes. <c>--fake</c> scripts the model, <c>--postgres</c> keeps the state in PostgreSQL.
     /// The rows written for each execution are deleted when the run ends, also after a failure.
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
@@ -47,18 +52,23 @@ public static class ExpenseRun
             cleanup = openStore();
 
             IChatClient chat = fake
-                ? FakeExpenseClient.Create(new Expense("Acme Taxi", 42.50m, "travel"), new Expense("DevSummit", 1800m, "training"))
+                ? FakeExpenseClient.Create(new Expense("Acme Taxi", 42.50m, "travel"), new Expense("DevSummit", 1800m, "training"), new Expense("Grand Hotel", 120m, "travel"))
                 : config.Value.CreateChatClient();
-            var pipeline = new ExpenseApprovalPipeline(chat, new InMemoryExpenseLedger(write), ExpenseApprovalPipeline.LoadDefinition(), openStore);
+            var ledger = new InMemoryExpenseLedger(write);
+            var pipeline = new ExpenseApprovalPipeline(chat, ledger, ExpenseApprovalPipeline.LoadDefinition(), openStore);
             var failed = false;
             foreach (var note in Notes)
             {
-                write($"Note: {note}");
+                write($"Note: {note.Text}");
                 var executionId = Guid.NewGuid().ToString("N");
                 executionIds.Add(executionId);
-                var result = await pipeline.RunWithRestartAsync(note, executionId: executionId);
+                var refundsBefore = ledger.Refunded.Count;
+                var result = await pipeline.RunWithRestartAsync(note.Text, executionId: executionId, receiptAmount: note.ReceiptAmount);
                 write($"  [{result.Status}] tool={result.ToolExecuted} audit={string.Join(",", result.Audit.Select(e => e.EventType))}");
-                failed |= result.Status != WorkflowExecutionStatus.Succeeded;
+                var refunded = ledger.Refunded.Count - refundsBefore;
+                failed |= note.ExpectRefund
+                    ? result.Status != WorkflowExecutionStatus.Failed || refunded != 1
+                    : result.Status != WorkflowExecutionStatus.Succeeded || refunded != 0;
             }
             return new ExpenseRunOutcome(failed ? 1 : 0, executionIds);
         }

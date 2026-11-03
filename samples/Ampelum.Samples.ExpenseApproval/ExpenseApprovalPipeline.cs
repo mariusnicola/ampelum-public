@@ -11,8 +11,10 @@ namespace Ampelum.Samples.ExpenseApproval;
 
 /// <summary>
 /// Expense approval as a durable YAML workflow: extract the expense with a model, branch on the amount,
-/// pay or flag for review through the governed tool path, join. A run can be stopped after its first step
-/// and resumed from the database by a fresh runtime.
+/// pay or flag for review through the governed tool path, join. Then the workflow waits for the receipt
+/// (WaitForSignal), checks the receipt against the expense (Evaluate), and announces the settlement
+/// (EmitEvent). When the receipt does not match, the payment is refunded (Compensate). A run can be stopped
+/// after its first step and resumed from the database by a fresh runtime.
 /// </summary>
 public sealed class ExpenseApprovalPipeline
 {
@@ -22,7 +24,14 @@ public sealed class ExpenseApprovalPipeline
     /// <summary>Tool name of the flag-for-review step; must match the YAML.</summary>
     public const string ReviewTool = "flag_for_review";
 
+    /// <summary>Name of the signal the receipt step waits for; must match the YAML.</summary>
+    public const string ReceiptSignal = "receipt";
+
+    /// <summary>Metric the evaluate step observes; must match the YAML objective.</summary>
+    public const string ReceiptMetric = "receipt_matches";
+
     const string WorkflowResource = "expense-approval.yml";
+    const string ThresholdInput = "threshold";
     const string TextInput = "text";
     const string LimitInput = "limit";
     const string KeyArgument = "idempotency_key";
@@ -61,7 +70,11 @@ public sealed class ExpenseApprovalPipeline
         return () => ExpenseStore.Sqlite(databasePath);
     }
 
-    /// <summary>Compiles the embedded workflow YAML.</summary>
+    /// <summary>
+    /// Compiles the embedded workflow YAML. The YAML compiler has no field for a metric threshold or an evaluation plan,
+    /// so both are added here: the plan observes the objective's metrics, and the evaluate step's <c>threshold</c> input
+    /// is the threshold of each.
+    /// </summary>
     public static WorkflowDefinition LoadDefinition()
     {
         using var stream = typeof(ExpenseApprovalPipeline).Assembly.GetManifestResourceStream(WorkflowResource)
@@ -70,15 +83,29 @@ public sealed class ExpenseApprovalPipeline
         var result = WorkflowYamlCompiler.Compile(reader.ReadToEnd());
         if (!result.Success || result.Artifact is null)
             throw new InvalidOperationException("Workflow YAML did not compile: " + string.Join("; ", result.Errors));
-        return result.Artifact.Definition;
+
+        var definition = result.Artifact.Definition;
+        var evaluate = definition.Steps.Single(step => step.Kind == WorkflowStepKind.Evaluate);
+        if (evaluate.Inputs is null || !evaluate.Inputs.TryGetValue(ThresholdInput, out var raw)
+            || !double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var threshold))
+            throw new InvalidOperationException($"Evaluate step '{evaluate.StepId}' needs a numeric '{ThresholdInput}' input.");
+        var metrics = definition.Objective!.Metrics.Select(metric => metric with { Threshold = threshold }).ToList();
+        return definition with
+        {
+            Objective = new WorkflowObjective(metrics),
+            EvaluationPlan = new WorkflowEvaluationPlan([.. metrics.Select(metric => metric.MetricId)]),
+        };
     }
 
-    /// <summary>Runs the workflow, stops it after the first step, then resumes it on a new runtime and persistence.</summary>
-    public async Task<ExpenseApprovalResult> RunWithRestartAsync(string text, CancellationToken ct = default, string? executionId = null)
+    /// <summary>
+    /// Runs the workflow, stops it after the first step, then resumes it on a new runtime and persistence.
+    /// <paramref name="receiptAmount"/> is the amount on the receipt; null means the receipt shows the extracted amount.
+    /// </summary>
+    public async Task<ExpenseApprovalResult> RunWithRestartAsync(string text, CancellationToken ct = default, string? executionId = null, string? receiptAmount = null)
     {
         executionId ??= Guid.NewGuid().ToString("N");
         await using var stopped = await StartAndStopAsync(executionId, text, ct).ConfigureAwait(false);
-        return await ResumeAsync(executionId, ct).ConfigureAwait(false);
+        return await ResumeAsync(executionId, ct, receiptAmount).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -90,7 +117,7 @@ public sealed class ExpenseApprovalPipeline
         ArgumentException.ThrowIfNullOrWhiteSpace(executionId);
         ArgumentException.ThrowIfNullOrWhiteSpace(text);
         var store = _openStore();
-        var runtime = new DurableWorkflowRuntime(store.Persistence, store.Persistence);
+        var runtime = CreateRuntime(store);
         var request = new WorkflowExecutionRequest(
             executionId,
             _definition,
@@ -119,16 +146,42 @@ public sealed class ExpenseApprovalPipeline
         return new InterruptedExpenseRun(run, abandon);
     }
 
-    /// <summary>Resumes a stored execution on a new persistence and runtime and returns its outcome.</summary>
-    public async Task<ExpenseApprovalResult> ResumeAsync(string executionId, CancellationToken ct = default)
+    /// <summary>
+    /// Resumes a stored execution on a new persistence and runtime and returns its outcome. When the execution stops
+    /// at the receipt step, the receipt is delivered here, on another new runtime, and the execution is resumed again.
+    /// </summary>
+    /// <param name="executionId">The stored execution.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <param name="receiptAmount">Amount on the receipt; null means the receipt shows the extracted amount.</param>
+    public async Task<ExpenseApprovalResult> ResumeAsync(string executionId, CancellationToken ct = default, string? receiptAmount = null)
+    {
+        var waiting = await ResumeUntilReceiptAsync(executionId, ct).ConfigureAwait(false);
+        if (waiting.Status != WorkflowExecutionStatus.AwaitingConfirmation)
+            return waiting;
+        await DeliverReceiptAsync(executionId, receiptAmount ?? waiting.Expense!.Amount.ToString(CultureInfo.InvariantCulture), ct).ConfigureAwait(false);
+        return await ResumeUntilReceiptAsync(executionId, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Resumes a stored execution on a new persistence and runtime. It returns <see cref="WorkflowExecutionStatus.AwaitingConfirmation"/> while the receipt has not arrived.</summary>
+    public async Task<ExpenseApprovalResult> ResumeUntilReceiptAsync(string executionId, CancellationToken ct = default)
     {
         var store = _openStore();
         var persisted = await store.LoadAsync(executionId, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No stored execution '{executionId}'.");
-        var runtime = new DurableWorkflowRuntime(store.Persistence, store.Persistence);
+        var runtime = CreateRuntime(store);
         var snapshot = await runtime.ResumeAsync(persisted.Request, CreateHandler(store, null), ct).ConfigureAwait(false);
         return await BuildResultAsync(store, snapshot, ct).ConfigureAwait(false);
     }
+
+    /// <summary>Delivers the receipt to a stored execution on a new persistence and runtime. The amount is the receipt's payload.</summary>
+    public async Task DeliverReceiptAsync(string executionId, string amount, CancellationToken ct = default)
+    {
+        var store = _openStore();
+        await CreateRuntime(store).SignalAsync(executionId, ReceiptSignal, amount, nameof(ExpenseApprovalPipeline), ct).ConfigureAwait(false);
+    }
+
+    static DurableWorkflowRuntime CreateRuntime(ExpenseStore store) =>
+        new(store.Persistence, store.Persistence, evaluator: new ReceiptEvaluator());
 
     Func<DurableWorkflowNodeContext, CancellationToken, Task<DurableWorkflowNodeResult>> CreateHandler(
         ExpenseStore store,
@@ -154,7 +207,14 @@ public sealed class ExpenseApprovalPipeline
                     return await toolStep.HandleAsync(context, ct).ConfigureAwait(false);
                 case WorkflowStepKind.Join:
                     return DurableWorkflowNodeResult.Success();
+                case WorkflowStepKind.Compensate:
+                    // The runtime calls this only after the payment succeeded and a later step failed.
+                    var paid = await LoadExpenseAsync(store, context.Request, ct).ConfigureAwait(false)
+                        ?? throw new InvalidOperationException("No extracted expense is stored for this execution.");
+                    await _ledger.RefundAsync(paid, context.IdempotencyKey, ct).ConfigureAwait(false);
+                    return DurableWorkflowNodeResult.Success("refunded");
                 default:
+                    // WaitForSignal, Evaluate and EmitEvent never reach the handler: the runtime settles them itself.
                     return DurableWorkflowNodeResult.Failure($"Step '{context.Step.StepId}' has unsupported kind '{context.Step.Kind}'.");
             }
         };

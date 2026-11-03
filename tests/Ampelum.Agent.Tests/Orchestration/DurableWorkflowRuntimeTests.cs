@@ -357,12 +357,12 @@ public sealed class DurableWorkflowRuntimeTests
     }
 
     [Theory]
-    [InlineData(WorkflowStepKind.WaitForSignal)]
     [InlineData(WorkflowStepKind.Evaluate)]
     [InlineData(WorkflowStepKind.EmitEvent)]
     [InlineData(WorkflowStepKind.Compensate)]
-    public async Task RunAsync_NotYetExecutableStepKind_RejectsDefinitionRatherThanSilentlySucceeding(WorkflowStepKind kind)
+    public async Task RunAsync_StepKindDeclaredWithoutWhatItNeeds_RejectsDefinitionRatherThanSilentlySucceeding(WorkflowStepKind kind)
     {
+        // WaitForSignal needs nothing beyond its step, so it is accepted bare; see StepKindTests for the rejections of the rest.
         WorkflowStepDefinition[] steps = [new WorkflowStepDefinition("step-1", "test", [], Kind: kind)];
         var request = new WorkflowExecutionRequest(
             $"not-yet-executable-{kind}", new WorkflowDefinition("wf", "v1", "NotYetExecutable", steps), "tester", DateTimeOffset.UtcNow);

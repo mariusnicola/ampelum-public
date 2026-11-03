@@ -199,6 +199,97 @@ public sealed class ExpenseApprovalPipelineTests : IDisposable
         keys.PayKeys.ShouldBe([$"{result.ExecutionId}:pay"]);
     }
 
+    async Task<DurableWorkflowSnapshot> LoadAsync(string executionId) =>
+        (await new SqliteWorkflowPersistence(DatabasePath).LoadAsync(executionId, TestContext.Current.CancellationToken))!;
+
+    [Fact]
+    public async Task RunWithRestartAsync_ReceiptMatches_WaitsForTheSignalEvaluatesAndAnnouncesOnce()
+    {
+        var chat = FakeExpenseClient.Create(new Expense("Acme Taxi", 42.50m, "travel"));
+
+        var result = await CreatePipeline(chat).RunWithRestartAsync("Taxi 42.50", TestContext.Current.CancellationToken, "expense-settled");
+
+        result.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
+        var stored = await LoadAsync("expense-settled");
+        stored.Nodes["receipt"].Signal.ShouldBe(new DurableWorkflowSignal(ExpenseApprovalPipeline.ReceiptSignal, "42.50", nameof(ExpenseApprovalPipeline)));
+        stored.Nodes["receipt"].Attempts.ShouldBe(0);
+        stored.Nodes["check"].Observations.ShouldNotBeNull().ShouldHaveSingleItem().Value.ShouldBe(1);
+        stored.Nodes["announce"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
+        stored.Nodes["refund"].Status.ShouldBe(DurableWorkflowNodeStatus.Skipped);
+        result.Audit.Count(e => e.EventType == "event.expense.settled").ShouldBe(1);
+        result.Audit.ShouldContain(e => e.EventType == "node.evaluated" && e.Detail == "receipt_matches=1 (met maximize threshold 1)");
+        result.Audit.ShouldContain(e => e.EventType == "signal.received" && e.StepId == "receipt");
+        _ledger.Refunded.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task RunWithRestartAsync_ReceiptForAnotherAmount_RefundsThePaymentAndFailsWithoutAnnouncing()
+    {
+        var chat = FakeExpenseClient.Create(new Expense("Acme Taxi", 42.50m, "travel"));
+
+        var result = await CreatePipeline(chat).RunWithRestartAsync("Taxi 42.50", TestContext.Current.CancellationToken, "expense-mismatch", receiptAmount: "40");
+
+        result.Status.ShouldBe(WorkflowExecutionStatus.Failed);
+        result.FailureReason.ShouldNotBeNull().ShouldContain(ExpenseApprovalPipeline.ReceiptMetric);
+        _ledger.Paid.Count.ShouldBe(1);
+        _ledger.Refunded.ShouldBe([new Expense("Acme Taxi", 42.50m, "travel")]);
+        var stored = await LoadAsync("expense-mismatch");
+        stored.Nodes["refund"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
+        stored.Nodes["announce"].Status.ShouldBe(DurableWorkflowNodeStatus.Pending);
+        result.Audit.ShouldNotContain(e => e.EventType == "event.expense.settled");
+        result.Audit.TakeLast(4).Select(e => $"{e.EventType}:{e.StepId}").ShouldBe(
+            ["node.evaluated:check", "node.started:refund", "node.succeeded:refund", "execution.failed:"]);
+    }
+
+    [Fact]
+    public async Task RunWithRestartAsync_ReceiptForAnExpenseSentToReview_NothingWasPaidSoNothingIsRefunded()
+    {
+        var chat = FakeExpenseClient.Create(new Expense("DevSummit", 1800m, "training"));
+
+        var result = await CreatePipeline(chat).RunWithRestartAsync("Ticket 1800", TestContext.Current.CancellationToken, "expense-review-mismatch", receiptAmount: "1700");
+
+        result.Status.ShouldBe(WorkflowExecutionStatus.Failed);
+        _ledger.Flagged.Count.ShouldBe(1);
+        _ledger.Refunded.ShouldBeEmpty();
+        (await LoadAsync("expense-review-mismatch")).Nodes["refund"].Status.ShouldBe(DurableWorkflowNodeStatus.Pending);
+    }
+
+    [Fact]
+    public async Task ResumeUntilReceiptAsync_AfterAStop_WaitsForTheReceiptAndANewRuntimeDeliversIt()
+    {
+        var chat = FakeExpenseClient.Create(new Expense("Acme Taxi", 42.50m, "travel"));
+        var pipeline = CreatePipeline(chat);
+        const string executionId = "expense-wait";
+
+        await using var stopped = await pipeline.StartAndStopAsync(executionId, "Taxi 42.50", TestContext.Current.CancellationToken);
+        var waiting = await pipeline.ResumeUntilReceiptAsync(executionId, TestContext.Current.CancellationToken);
+
+        waiting.Status.ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
+        _ledger.Paid.Count.ShouldBe(1);
+        var parked = await LoadAsync(executionId);
+        parked.Nodes["receipt"].Status.ShouldBe(DurableWorkflowNodeStatus.Waiting);
+        parked.Nodes["check"].Status.ShouldBe(DurableWorkflowNodeStatus.Pending);
+
+        await pipeline.DeliverReceiptAsync(executionId, "42.50", TestContext.Current.CancellationToken);
+        var finished = await pipeline.ResumeUntilReceiptAsync(executionId, TestContext.Current.CancellationToken);
+
+        finished.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
+        _ledger.Paid.Count.ShouldBe(1);
+        chat.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public void LoadDefinition_AddsTheEvaluationPlanAndThresholdTheYamlCannotExpress()
+    {
+        var definition = ExpenseApprovalPipeline.LoadDefinition();
+
+        definition.EvaluationPlan.ShouldNotBeNull().MetricIds.ShouldBe([ExpenseApprovalPipeline.ReceiptMetric]);
+        var metric = definition.Objective.ShouldNotBeNull().Metrics.ShouldHaveSingleItem();
+        metric.Direction.ShouldBe("maximize");
+        metric.Threshold.ShouldBe(1d);
+        definition.Steps.Single(step => step.StepId == "pay").CompensationStepId.ShouldBe("refund");
+    }
+
     [Fact]
     public void Create_PostgresFlagWithEmptySetting_FailsNamingTheSettingAndDoesNotFallBack()
     {
@@ -230,7 +321,7 @@ public sealed class ExpenseApprovalPipelineTests : IDisposable
             key => throw new InvalidOperationException($"unexpected read of {key}"));
 
         outcome.ExitCode.ShouldBe(0);
-        outcome.ExecutionIds.Count.ShouldBe(2);
+        outcome.ExecutionIds.Count.ShouldBe(3);
         File.Exists(Path.Combine(_directory, "workflows.db")).ShouldBeTrue();
     }
 
@@ -245,6 +336,8 @@ public sealed class ExpenseApprovalPipelineTests : IDisposable
         }
 
         public Task FlagForReviewAsync(Expense expense, string idempotencyKey, CancellationToken ct) => Task.CompletedTask;
+
+        public Task RefundAsync(Expense expense, string idempotencyKey, CancellationToken ct) => Task.CompletedTask;
     }
 
     public void Dispose()
