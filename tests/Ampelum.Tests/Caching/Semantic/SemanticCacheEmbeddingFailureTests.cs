@@ -95,6 +95,70 @@ public sealed class SemanticCacheEmbeddingFailureTests
         result.Value.Answer.ShouldBe("yes");
     }
 
+    sealed class TimingOutEmbeddings : IEmbeddingGenerator<string, Embedding<float>>
+    {
+        public void Dispose() { }
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        // HttpClient reports its own timeout as a cancellation the caller did not ask for.
+        public Task<GeneratedEmbeddings<Embedding<float>>> GenerateAsync(
+            IEnumerable<string> values, EmbeddingGenerationOptions? options = null, CancellationToken cancellationToken = default) =>
+            throw new TaskCanceledException("The request was canceled due to the configured timeout.");
+    }
+
+    [Fact]
+    public async Task An_embedding_timeout_with_an_uncancelled_token_is_swallowed_on_store_and_on_lookup()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var cache = new InMemorySemanticCache();
+        var hook = new SemanticCacheHook(cache, new TimingOutEmbeddings());
+        var miss = Context("q");
+        miss.Outputs = new Dictionary<string, object?> { ["A"] = "a" };
+
+        await hook.OnAfterAsync(miss, ct);
+        var again = Context("q");
+        await hook.OnBeforeAsync(again, ct);
+
+        cache.Count.ShouldBe(1);
+        again.Outputs!["A"].ShouldBe("a");
+    }
+
+    [Fact]
+    public async Task A_skipped_embedding_on_store_sets_the_failure_flag_and_a_working_one_does_not()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var embeddings = new FlakyEmbeddings { Down = true };
+        var hook = new SemanticCacheHook(new InMemorySemanticCache(), embeddings);
+        var failed = Context("q");
+        failed.Outputs = new Dictionary<string, object?> { ["A"] = "a" };
+        embeddings.Down = false;
+        var fine = Context("other");
+        fine.Outputs = new Dictionary<string, object?> { ["A"] = "b" };
+        await hook.OnAfterAsync(fine, ct);
+        embeddings.Down = true;
+
+        await hook.OnAfterAsync(failed, ct);
+
+        failed.Metadata[HookMetadataKeys.SemanticCacheEmbeddingFailed].ShouldBe(true);
+        fine.Metadata.ContainsKey(HookMetadataKeys.SemanticCacheEmbeddingFailed).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task A_skipped_embedding_on_lookup_sets_the_failure_flag()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var embeddings = new FlakyEmbeddings();
+        var hook = new SemanticCacheHook(new InMemorySemanticCache(), embeddings);
+        var first = Context("original");
+        first.Outputs = new Dictionary<string, object?> { ["A"] = "a" };
+        await hook.OnAfterAsync(first, ct);
+        embeddings.Down = true;
+
+        var reworded = Context("reworded");
+        await hook.OnBeforeAsync(reworded, ct);
+
+        reworded.Metadata[HookMetadataKeys.SemanticCacheEmbeddingFailed].ShouldBe(true);
+    }
+
     [Fact]
     public async Task A_cancelled_embedding_call_is_not_swallowed()
     {

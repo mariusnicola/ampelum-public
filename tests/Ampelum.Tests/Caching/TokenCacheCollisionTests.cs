@@ -158,6 +158,50 @@ public sealed class TokenCacheCollisionTests
     }
 
     [Fact]
+    public async Task Mutating_the_text_of_a_returned_hit_does_not_change_the_next_hit()
+    {
+        var inner = new FakeChatClient().EnqueueText("one").EnqueueText("unused");
+        using var cache = new TokenCache();
+        var sut = new TokenCachedChatClient(inner, cache);
+
+        await sut.GetResponseAsync(Hi, cancellationToken: Ct);
+        var hit = await sut.GetResponseAsync(Hi, cancellationToken: Ct);
+        ((TextContent)hit.Messages[0].Contents[0]).Text = "MUTATED";
+        var next = await sut.GetResponseAsync(Hi, cancellationToken: Ct);
+
+        next.Text.ShouldBe("one");
+    }
+
+    [Fact]
+    public async Task Mutating_the_text_of_a_miss_does_not_change_what_the_cache_serves()
+    {
+        var inner = new FakeChatClient().EnqueueText("one").EnqueueText("unused");
+        using var cache = new TokenCache();
+        var sut = new TokenCachedChatClient(inner, cache);
+
+        var miss = await sut.GetResponseAsync(Hi, cancellationToken: Ct);
+        ((TextContent)miss.Messages[0].Contents[0]).Text = "MUTATED";
+        var hit = await sut.GetResponseAsync(Hi, cancellationToken: Ct);
+
+        hit.Text.ShouldBe("one");
+    }
+
+    [Fact]
+    public async Task A_miss_does_not_share_its_usage_with_the_cache()
+    {
+        var inner = new FakeChatClient().EnqueueText("one", new UsageDetails { InputTokenCount = 50, OutputTokenCount = 5 });
+        using var cache = new TokenCache();
+        var sut = new TokenCachedChatClient(inner, cache);
+
+        var miss = await sut.GetResponseAsync(Hi, cancellationToken: Ct);
+        var stored = cache.TryGet(TokenCache.BuildKey(Hi, null))!;
+
+        stored.Usage.ShouldNotBeSameAs(miss.Usage);
+        miss.Usage!.InputTokenCount = 999;
+        cache.TryGet(TokenCache.BuildKey(Hi, null))!.Usage!.InputTokenCount.ShouldBe(50);
+    }
+
+    [Fact]
     public async Task The_first_call_keeps_its_usage_and_a_hit_reports_zero_tokens()
     {
         var (_, first, second) = await TwiceAsync(null);

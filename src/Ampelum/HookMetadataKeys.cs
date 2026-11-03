@@ -71,6 +71,16 @@ public static class HookMetadataKeys
     /// <c>Predict</c> reports the module name <c>Predict</c>.</summary>
     public const string SignatureType = "SignalGrid.Ampelum.signature_type";
 
+    /// <summary>Value type: <see langword="bool"/>. Set to <see langword="true"/> by <c>SemanticCacheHook</c> when an
+    /// embedding call failed and was skipped (the lookup fell back to the exact match, or the entry was stored without
+    /// a vector), so audit and telemetry hooks can see it. The failure itself is not raised.</summary>
+    public const string SemanticCacheEmbeddingFailed = "SignalGrid.Ampelum.semantic_cache_embedding_failed";
+
+    /// <summary>Value type: <c>IReadOnlyList&lt;Exception&gt;</c>. Set by the hook pipeline when more than one after hook
+    /// threw: the first failure in run order (the highest-order hook) is rethrown with its own type, and the others
+    /// are listed here in run order. Absent when at most one hook threw.</summary>
+    public const string AfterHookFailures = "SignalGrid.Ampelum.after_hook_failures";
+
     /// <summary>Value type: <see langword="bool"/>. Set to <see langword="true"/> by the hook pipeline as soon as an
     /// after hook throws, before the remaining (lower-order) after hooks run. A hook that stores the call's outputs,
     /// such as the semantic cache, must not store them: the call failed and its reply was blocked.</summary>

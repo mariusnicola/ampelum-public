@@ -50,8 +50,8 @@ internal sealed class HookPipeline
 
     /// <summary>
     /// Runs every after hook in descending order even when one throws, so a lower-order hook such as the
-    /// audit hook still sees the call. One failure is rethrown as it is; several are rethrown together
-    /// as an <see cref="AggregateException"/> in the order they happened.
+    /// audit hook still sees the call. The first failure in run order is rethrown as it is; the others
+    /// are listed under <c>HookMetadataKeys.AfterHookFailures</c>.
     /// </summary>
     public async ValueTask RunAfterAsync(HookContext ctx, CancellationToken ct)
     {
@@ -67,9 +67,11 @@ internal sealed class HookPipeline
             }
         }
         if (failures is null) return;
-        if (failures.Count == 1)
-            ExceptionDispatchInfo.Capture(failures[0]).Throw();
-        throw new AggregateException(failures);
+        // The first failure (the highest-order hook, e.g. moderation) keeps its own type, so a handler that
+        // catches it still sees a block; any others stay on the context for audit and telemetry.
+        if (failures.Count > 1)
+            ctx.Set(HookMetadataKeys.AfterHookFailures, failures.Skip(1).ToList().AsReadOnly());
+        ExceptionDispatchInfo.Capture(failures[0]).Throw();
     }
 
     public async ValueTask RunErrorAsync(HookContext ctx, Exception error, CancellationToken ct)

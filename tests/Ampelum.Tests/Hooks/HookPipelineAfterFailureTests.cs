@@ -59,16 +59,81 @@ public sealed class HookPipelineAfterFailureTests
     }
 
     [Fact]
-    public async Task One_exception_keeps_its_type_and_two_become_an_AggregateException_in_run_order()
+    public async Task With_several_failures_the_first_in_run_order_is_rethrown_with_its_own_type_and_the_rest_are_in_the_metadata()
     {
         var log = new List<string>();
         var pipeline = HookPipeline.GetOrCreate([new RecordingHook(10, log), new ThrowingAfterHook(100, "low"), new ThrowingAfterHook(300, "high")]);
+        var ctx = Ctx();
 
-        var ex = await Should.ThrowAsync<AggregateException>(
-            () => pipeline.RunAfterAsync(Ctx(), TestContext.Current.CancellationToken).AsTask());
+        var ex = await Should.ThrowAsync<InvalidOperationException>(
+            () => pipeline.RunAfterAsync(ctx, TestContext.Current.CancellationToken).AsTask());
 
-        ex.InnerExceptions.Select(e => e.Message).ShouldBe(["high", "low"]);
+        ex.Message.ShouldBe("high");
         log.ShouldBe(["after:10"]);
+        var others = (IReadOnlyList<Exception>)ctx.Metadata[HookMetadataKeys.AfterHookFailures]!;
+        others.Select(e => e.Message).ShouldBe(["low"]);
+    }
+
+    [Fact]
+    public async Task A_single_failure_leaves_no_failures_entry_in_the_metadata()
+    {
+        var pipeline = HookPipeline.GetOrCreate([new RecordingHook(10, []), new ThrowingAfterHook(300)]);
+        var ctx = Ctx();
+
+        await Should.ThrowAsync<InvalidOperationException>(
+            () => pipeline.RunAfterAsync(ctx, TestContext.Current.CancellationToken).AsTask());
+
+        ctx.Metadata.ContainsKey(HookMetadataKeys.AfterHookFailures).ShouldBeFalse();
+    }
+
+    sealed class ThrowingSink : IAuditSink
+    {
+        public long NextSequence => 0;
+        public ValueTask AppendAsync(AuditEntry entry, CancellationToken ct) => throw new IOException("audit sink down");
+        public async IAsyncEnumerable<AuditEntry> EnumerateAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+    }
+
+    sealed class FlagAll : SignalGrid.Ampelum.Safety.Moderation.IOutputModerator
+    {
+        public ValueTask<SignalGrid.Ampelum.Safety.Moderation.ModerationResult> ModerateAsync(string text, CancellationToken cancellationToken) =>
+            new(new SignalGrid.Ampelum.Safety.Moderation.ModerationResult(true, ["x"], null));
+    }
+
+    [Fact]
+    public async Task A_flagged_reply_still_surfaces_ModerationException_when_the_audit_sink_also_throws()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var chat = new FakeChatClient().EnqueueText("[[ ## Answer ## ]]\nyes\n[[ ## completed ## ]]");
+        var ctx = new AmpelumContext(chat, new ChatAdapter(), NullTraceSink.Instance, NullLoggerFactory.Instance)
+            .WithHook(new AuditHook(new ThrowingSink()))
+            .WithHook(new SignalGrid.Ampelum.Safety.Moderation.ModerationHook(new FlagAll()));
+
+        await Should.ThrowAsync<SignalGrid.Ampelum.Safety.Moderation.ModerationException>(
+            () => new Predict<Ask>(ctx).ForwardAsync(new Ask { Question = "q" }, ct: ct));
+    }
+
+    [Fact]
+    public async Task Moderation_and_a_throwing_sink_in_one_pipeline_keep_the_second_exception_in_the_metadata()
+    {
+        var pipeline = HookPipeline.GetOrCreate([
+            new AuditHook(new ThrowingSink()),
+            new SignalGrid.Ampelum.Safety.Moderation.ModerationHook(new FlagAll())]);
+        var hookCtx = new HookContext
+        {
+            ModuleName = "Predict",
+            Inputs = new Dictionary<string, object?>(),
+            Outputs = new Dictionary<string, object?> { ["a"] = "b" },
+        };
+
+        await Should.ThrowAsync<SignalGrid.Ampelum.Safety.Moderation.ModerationException>(
+            () => pipeline.RunAfterAsync(hookCtx, TestContext.Current.CancellationToken).AsTask());
+
+        var others = (IReadOnlyList<Exception>)hookCtx.Metadata[HookMetadataKeys.AfterHookFailures]!;
+        others.Single().ShouldBeOfType<IOException>();
     }
 
     [Fact]

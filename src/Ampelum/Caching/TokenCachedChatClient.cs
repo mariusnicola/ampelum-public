@@ -24,9 +24,11 @@ public sealed class TokenCachedChatClient(IChatClient inner, TokenCache cache) :
             return await base.GetResponseAsync(sent, options, cancellationToken).ConfigureAwait(false);
 
         if (_cache.TryGet(key) is { } hit)
-            return Copy(hit, zeroUsage: true);
+            return Copy(hit, zeroUsage: true)!;
         var response = await base.GetResponseAsync(sent, options, cancellationToken).ConfigureAwait(false);
-        _cache.Set(key, Copy(response, zeroUsage: false));
+        // A response that cannot be copied cannot be cached safely: it is returned and not stored.
+        if (Copy(response, zeroUsage: false) is { } stored)
+            _cache.Set(key, stored);
         return response;
     }
 
@@ -42,28 +44,22 @@ public sealed class TokenCachedChatClient(IChatClient inner, TokenCache cache) :
         }
     }
 
-    // ChatMessage.Clone is shallow: the content list would still be shared.
-    static ChatMessage CopyMessage(ChatMessage m) =>
-        new(m.Role, [.. m.Contents])
+    // A deep copy through the response's own JSON form, so the caller and the cache share no content item, usage or
+    // dictionary; a hit costs no tokens. Null when the response cannot be serialized.
+    static ChatResponse? Copy(ChatResponse source, bool zeroUsage)
+    {
+        try
         {
-            AuthorName = m.AuthorName,
-            CreatedAt = m.CreatedAt,
-            MessageId = m.MessageId,
-            AdditionalProperties = m.AdditionalProperties is null ? null : new AdditionalPropertiesDictionary(m.AdditionalProperties),
-        };
-
-    // The caller and the cache never share an instance, and a hit costs no tokens.
-    static ChatResponse Copy(ChatResponse source, bool zeroUsage) =>
-        new([.. source.Messages.Select(CopyMessage)])
+            var copy = System.Text.Json.JsonSerializer.Deserialize<ChatResponse>(
+                System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(source, AIJsonUtilities.DefaultOptions),
+                AIJsonUtilities.DefaultOptions)!;
+            if (zeroUsage)
+                copy.Usage = new UsageDetails { InputTokenCount = 0, OutputTokenCount = 0, TotalTokenCount = 0 };
+            return copy;
+        }
+        catch (Exception ex) when (ex is NotSupportedException or System.Text.Json.JsonException)
         {
-            ResponseId = source.ResponseId,
-            ConversationId = source.ConversationId,
-            ModelId = source.ModelId,
-            CreatedAt = source.CreatedAt,
-            FinishReason = source.FinishReason,
-            Usage = zeroUsage
-                ? new UsageDetails { InputTokenCount = 0, OutputTokenCount = 0, TotalTokenCount = 0 }
-                : source.Usage,
-            AdditionalProperties = source.AdditionalProperties is null ? null : new AdditionalPropertiesDictionary(source.AdditionalProperties),
-        };
+            return null;
+        }
+    }
 }

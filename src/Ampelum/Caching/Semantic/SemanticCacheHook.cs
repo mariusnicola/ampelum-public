@@ -21,7 +21,8 @@ namespace SignalGrid.Ampelum.Caching.Semantic;
 /// <c>HookMetadataKeys.SemanticCacheSimilarity</c>. The hook keeps the vectors itself (at most 4096, oldest
 /// dropped first). The embedding service only speeds lookups up: an embedding call that throws is skipped
 /// (the exact entry is still stored, the lookup falls back to the exact match) and does not fail the model
-/// call; cancellation still propagates. A streamed turn (<c>HookMetadataKeys.Streamed</c>) is never served,
+/// call; the skipped call is flagged on the context (<c>HookMetadataKeys.SemanticCacheEmbeddingFailed</c>), and only
+/// the caller's own cancellation propagates (a timeout inside the client is a failure, not a cancellation). A streamed turn (<c>HookMetadataKeys.Streamed</c>) is never served,
 /// stored or embedded, because its tokens reach the caller before any cached answer could be used. Nothing is
 /// stored or embedded either once an after hook has thrown (<c>HookMetadataKeys.AfterHookFailed</c>), so a blocked
 /// reply is never served later.
@@ -83,7 +84,7 @@ public sealed class SemanticCacheHook : IHook
         var entry = _cache.TryGet(key);
         if (entry is null && _embeddings is not null)
         {
-            var found = await FindSimilarAsync(SemanticCacheKey.Scope(ctx.ModuleName, signature), ctx.Inputs, ct)
+            var found = await FindSimilarAsync(ctx, SemanticCacheKey.Scope(ctx.ModuleName, signature), ct)
                 .ConfigureAwait(false);
             if (found is { } f)
             {
@@ -103,7 +104,7 @@ public sealed class SemanticCacheHook : IHook
     }
 
     async ValueTask<(SemanticCacheEntry Entry, double Similarity)?> FindSimilarAsync(
-        string scope, IReadOnlyDictionary<string, object?> inputs, CancellationToken ct)
+        HookContext ctx, string scope, CancellationToken ct)
     {
         Indexed[] candidates;
         lock (_gate) candidates = _index.Where(i => i.Scope == scope).ToArray();
@@ -111,7 +112,7 @@ public sealed class SemanticCacheHook : IHook
             return null;
 
         // The embedding service is an accelerator: when it fails the lookup is a plain miss.
-        var query = await TryEmbedAsync(inputs, ct).ConfigureAwait(false);
+        var query = await TryEmbedAsync(ctx, ct).ConfigureAwait(false);
         if (query is null)
             return null;
         foreach (var (candidate, similarity) in candidates
@@ -128,17 +129,21 @@ public sealed class SemanticCacheHook : IHook
         return null;
     }
 
-    // Null when the embedding call failed. The hook has no logger to report it to; cancellation still propagates.
-    async ValueTask<float[]?> TryEmbedAsync(IReadOnlyDictionary<string, object?> inputs, CancellationToken ct)
+    // Null when the embedding call failed; the context carries SemanticCacheEmbeddingFailed then, since the hook has
+    // no logger. The caller's own cancellation still propagates.
+    async ValueTask<float[]?> TryEmbedAsync(HookContext ctx, CancellationToken ct)
     {
         try
         {
             var generated = await _embeddings!.GenerateAsync(
-                [SemanticCacheKey.Text(inputs)], cancellationToken: ct).ConfigureAwait(false);
+                [SemanticCacheKey.Text(ctx.Inputs)], cancellationToken: ct).ConfigureAwait(false);
             return generated[0].Vector.ToArray();
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        // A timeout inside the embedding client surfaces as a cancellation the caller did not ask for: only the
+        // caller's own token ends the call.
+        catch (Exception) when (!ct.IsCancellationRequested)
         {
+            ctx.Set(HookMetadataKeys.SemanticCacheEmbeddingFailed, true);
             return null;
         }
     }
@@ -181,7 +186,7 @@ public sealed class SemanticCacheHook : IHook
 
         if (_embeddings is not null)
         {
-            var vector = await TryEmbedAsync(ctx.Inputs, ct).ConfigureAwait(false);
+            var vector = await TryEmbedAsync(ctx, ct).ConfigureAwait(false);
             if (vector is null)
                 return; // the exact entry is stored; it just has no vector
             lock (_gate)

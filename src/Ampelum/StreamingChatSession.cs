@@ -287,14 +287,6 @@ public sealed class StreamingChatSession
                 }
             }
 
-            // Write AssistantText event after the turn completes
-            var responseText = fullResponse.Length > 0 ? fullResponse.ToString() : "";
-            if (responseText.Length > 0 && _eventStore is not null)
-            {
-                var assistantEvent = new AssistantText(turn, seq++, now, MakeKey("assistant", turn, seq, responseText), null, responseText);
-                await _eventStore.AppendAsync(assistantEvent, ct).ConfigureAwait(false);
-            }
-
             // Post-processing runs after the last yield — before the caller's foreach completes.
             var elapsed = Stopwatch.GetElapsedTime(startTs);
             hookCtx.PromptTokens = totalInput;
@@ -318,6 +310,15 @@ public sealed class StreamingChatSession
                 else
                     await hookPipeline.RunErrorAsync(hookCtx, terminalError, CancellationToken.None)
                         .ConfigureAwait(false);
+            }
+
+            // Write the AssistantText event only now: a reply the after hooks blocked threw above and is never stored,
+            // so a context selector cannot send it to the model on a later turn.
+            var responseText = fullResponse.Length > 0 ? fullResponse.ToString() : "";
+            if (responseText.Length > 0 && _eventStore is not null)
+            {
+                var assistantEvent = new AssistantText(turn, seq++, now, MakeKey("assistant", turn, seq, responseText), null, responseText);
+                await _eventStore.AppendAsync(assistantEvent, ct).ConfigureAwait(false);
             }
 
             _ctx.TraceSink.Write(new TraceRecord(
