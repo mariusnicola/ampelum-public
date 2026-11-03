@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using Microsoft.Extensions.AI;
 
 namespace SignalGrid.Ampelum.Routing;
@@ -14,7 +15,7 @@ namespace SignalGrid.Ampelum.Routing;
 /// an <see cref="IReadOnlyList{T}"/> supplied at construction; per-call work is the
 /// strategy lookup plus, on failure, walking the fallback chain.</para>
 /// <para>A streamed call fails over only while no update has been returned yet: an endpoint whose stream
-/// throws before its first update is replaced by the next one in the chain. Once an update was returned,
+/// throws or ends before its first update is replaced by the next one in the chain. Once an update was returned,
 /// a later failure reaches the caller, because a partial stream cannot safely be retried.</para>
 /// </remarks>
 [Experimental("AMPELUM_V09_PREVIEW")]
@@ -89,7 +90,8 @@ public sealed class RoutedChatClient : IChatClient
         for (var i = 0; ; i++)
         {
             IAsyncEnumerator<ChatResponseUpdate>? stream = null;
-            bool hasFirst;
+            var hasFirst = false;
+            Exception? failure = null;
             try
             {
                 stream = attempts[i].Client.GetStreamingResponseAsync(buffered, options, cancellationToken)
@@ -98,26 +100,41 @@ public sealed class RoutedChatClient : IChatClient
             }
             catch (Exception ex)
             {
-                if (stream is not null) await stream.DisposeAsync().ConfigureAwait(false);
-                // Nothing was sent yet, so the next endpoint can answer instead.
-                if (i < attempts.Count - 1 && !(ex is OperationCanceledException && cancellationToken.IsCancellationRequested))
+                failure = ex;
+            }
+
+            if (failure is not null || !hasFirst)
+            {
+                if (stream is not null)
+                {
+                    // A stream that cannot be closed must not stop the failover or hide the error being handled.
+                    try { await stream.DisposeAsync().ConfigureAwait(false); }
+                    catch { /* see above */ }
+                }
+                var isLast = i == attempts.Count - 1;
+                if (failure is not null)
+                {
+                    // Nothing was sent yet, so the next endpoint can answer instead.
+                    if (isLast || (failure is OperationCanceledException && cancellationToken.IsCancellationRequested))
+                        ExceptionDispatchInfo.Capture(failure).Throw();
                     continue;
-                throw;
+                }
+                // A stream that ended before its first update counts as a failure, except on the last endpoint,
+                // whose empty stream is the answer.
+                if (!isLast) continue;
+                yield break;
             }
 
             // From the first update on the caller has data, so a later failure is not retried.
             try
             {
-                if (hasFirst)
-                {
+                yield return stream!.Current;
+                while (await stream.MoveNextAsync().ConfigureAwait(false))
                     yield return stream.Current;
-                    while (await stream.MoveNextAsync().ConfigureAwait(false))
-                        yield return stream.Current;
-                }
             }
             finally
             {
-                await stream.DisposeAsync().ConfigureAwait(false);
+                await stream!.DisposeAsync().ConfigureAwait(false);
             }
             yield break;
         }

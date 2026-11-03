@@ -195,6 +195,73 @@ public sealed class RoutedChatClientTests
         ok.RecordedCalls.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task GetStreamingResponseAsync_PrimaryStreamEndsWithNoUpdate_FailsOverToFallback()
+    {
+        var empty = new StreamingClient([]);
+        var ok = new FakeChatClient().EnqueueStreamingChunks("from-fallback");
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", empty), new ProviderEndpoint("b", ok)],
+            new Failover());
+
+        var pieces = await Stream(router, TestContext.Current.CancellationToken);
+
+        pieces.ShouldBe(["from-fallback"]);
+    }
+
+    [Fact]
+    public async Task GetStreamingResponseAsync_LastEndpointStreamEndsWithNoUpdate_ReturnsItEmpty()
+    {
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", new StreamingClient([])), new ProviderEndpoint("b", new StreamingClient([]))],
+            new Failover());
+
+        (await Stream(router, TestContext.Current.CancellationToken)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task GetStreamingResponseAsync_DisposeThatThrows_NeverStopsTheFailoverOrReplacesTheError()
+    {
+        var ok = new FakeChatClient().EnqueueStreamingChunks("from-fallback");
+        var router = new RoutedChatClient(
+            [new ProviderEndpoint("a", new BrokenStreamClient()), new ProviderEndpoint("b", ok)],
+            new Failover());
+        (await Stream(router, TestContext.Current.CancellationToken)).ShouldBe(["from-fallback"]);
+
+        var last = new RoutedChatClient(
+            [new ProviderEndpoint("a", new BrokenStreamClient())],
+            new Failover());
+        var ex = await Should.ThrowAsync<HttpRequestException>(() => Stream(last, TestContext.Current.CancellationToken));
+        ex.Message.ShouldBe("read failed");
+    }
+
+    sealed class BrokenStreamClient : IChatClient
+    {
+        public ChatClientMetadata Metadata { get; } = new(nameof(BrokenStreamClient));
+        public Task<ChatResponse> GetResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+        public IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options = null,
+            CancellationToken cancellationToken = default) => new BrokenStream();
+        public object? GetService(Type serviceType, object? serviceKey = null) => null;
+        public void Dispose() { }
+
+        sealed class BrokenStream : IAsyncEnumerable<ChatResponseUpdate>
+        {
+            public IAsyncEnumerator<ChatResponseUpdate> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+                => new Enumerator();
+
+            sealed class Enumerator : IAsyncEnumerator<ChatResponseUpdate>
+            {
+                public ChatResponseUpdate Current => throw new InvalidOperationException();
+                public ValueTask<bool> MoveNextAsync() => throw new HttpRequestException("read failed");
+                public ValueTask DisposeAsync() => throw new InvalidOperationException("dispose failed");
+            }
+        }
+    }
+
     sealed class FailingStreamClient(string firstChunk) : IChatClient
     {
         public ChatClientMetadata Metadata { get; } = new(nameof(FailingStreamClient));

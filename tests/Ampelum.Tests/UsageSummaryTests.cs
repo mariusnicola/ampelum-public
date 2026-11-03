@@ -75,6 +75,29 @@ public sealed class ModelRateTablePerModelTests
     }
 
     [Fact]
+    public void EstimateCost_NullModelId_ThrowsWhetherOrNotPerModelIsSet()
+    {
+        var withPerModel = Default with { PerModel = new Dictionary<string, ModelRateTable>() };
+
+        Should.Throw<ArgumentNullException>(() => Default.EstimateCost(null!, 1, 1));
+        Should.Throw<ArgumentNullException>(() => withPerModel.EstimateCost(null!, 1, 1));
+    }
+
+    [Fact]
+    public void EstimateCost_FollowsTheComparerOfTheDictionaryTheCallerGave()
+    {
+        var table = Default with
+        {
+            PerModel = new Dictionary<string, ModelRateTable>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["big"] = new(InputPerToken: 1m, OutputPerToken: 1m),
+            },
+        };
+
+        table.EstimateCost("BIG", 1, 1).ShouldBe(2m);
+    }
+
+    [Fact]
     public void EstimateCost_MatchesModelIdExactly()
     {
         var table = Default with

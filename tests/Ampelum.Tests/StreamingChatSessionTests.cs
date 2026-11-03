@@ -112,6 +112,51 @@ public sealed class StreamingChatSessionTests
         session.LastUsage!.EstimatedCostUsd.ShouldBe(1000 * (decimal)input + 500 * (decimal)output);
     }
 
+    [Fact]
+    public async Task SendAsync_ToolLoopAnsweredByTwoModels_PricesEachIterationAtItsOwnModel()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var rates = new ModelRateTable(InputPerToken: 0.001m, OutputPerToken: 0m)
+        {
+            PerModel = new Dictionary<string, ModelRateTable>
+            {
+                ["cheap"] = new(InputPerToken: 0.000001m, OutputPerToken: 0m),
+                ["dear"] = new(InputPerToken: 0.001m, OutputPerToken: 0m),
+            },
+        };
+        var tool = AIFunctionFactory.Create(() => "r", "my_tool", "A test tool");
+        var chat = new TwoModelToolClient();
+        var session = new StreamingChatSession(BaseCtx(chat), "Sys", tools: [tool], rates: rates);
+
+        await foreach (var _ in session.SendAsync("go", ct)) { }
+
+        session.LastUsage!.InputTokens.ShouldBe(2000L);
+        session.LastUsage!.EstimatedCostUsd.ShouldBe(1000 * 0.000001m + 1000 * 0.001m);
+    }
+
+    sealed class TwoModelToolClient : IChatClient
+    {
+        int _calls;
+        public ChatClientMetadata Metadata => new("test");
+        public object? GetService(Type t, object? k) => null;
+        public void Dispose() { }
+        public Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options, CancellationToken ct)
+            => throw new NotImplementedException();
+        public async IAsyncEnumerable<ChatResponseUpdate> GetStreamingResponseAsync(
+            IEnumerable<ChatMessage> messages, ChatOptions? options,
+            [EnumeratorCancellation] CancellationToken ct)
+        {
+            await Task.Yield();
+            var first = _calls++ == 0;
+            var model = first ? "cheap" : "dear";
+            if (first)
+                yield return new ChatResponseUpdate(ChatRole.Assistant, [new FunctionCallContent("c1", "my_tool", new Dictionary<string, object?>())]) { ModelId = model };
+            else
+                yield return new ChatResponseUpdate(ChatRole.Assistant, "done") { ModelId = model };
+            yield return new ChatResponseUpdate { Contents = [new UsageContent(new UsageDetails { InputTokenCount = 1000, OutputTokenCount = 0 })], ModelId = model };
+        }
+    }
+
     // ── hooks ────────────────────────────────────────────────────────────────
 
     [Fact]

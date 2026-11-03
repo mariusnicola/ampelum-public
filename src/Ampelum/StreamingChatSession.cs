@@ -123,6 +123,7 @@ public sealed class StreamingChatSession
             Exception? terminalError = null;
             long totalInput = 0, totalOutput = 0;
             string? lastModelId = null;
+            decimal? totalCost = _rates is null ? null : 0m;
             var startTs = Stopwatch.GetTimestamp();
             var promptSnapshot = _history.ToArray();
             var fullResponse = new StringBuilder();
@@ -178,6 +179,8 @@ public sealed class StreamingChatSession
                 while (true)
                 {
                     var chunks = new List<ChatResponseUpdate>();
+                    long stepInput = 0, stepOutput = 0;
+                    string? stepModelId = null;
                     var enumerator = _ctx.Chat
                         .GetStreamingResponseAsync(contextHistory, options, ct)
                         .GetAsyncEnumerator(ct);
@@ -199,8 +202,10 @@ public sealed class StreamingChatSession
                                 {
                                     totalInput += uc.Details.InputTokenCount ?? 0;
                                     totalOutput += uc.Details.OutputTokenCount ?? 0;
+                                    stepInput += uc.Details.InputTokenCount ?? 0;
+                                    stepOutput += uc.Details.OutputTokenCount ?? 0;
                                 }
-                            if (chunk.ModelId is { } mid) lastModelId = mid;
+                            if (chunk.ModelId is { } mid) { lastModelId = mid; stepModelId = mid; }
 
                             if (chunk.Text is { Length: > 0 } t)
                             {
@@ -210,6 +215,10 @@ public sealed class StreamingChatSession
                         }
                     }
                     finally { await enumerator.DisposeAsync().ConfigureAwait(false); }
+
+                    // Each model call is priced at the rates of the model that answered it.
+                    if (_rates is not null)
+                        totalCost += _rates.EstimateCost(stepModelId ?? string.Empty, stepInput, stepOutput);
 
                     if (terminalError is not null) break;
 
@@ -341,8 +350,7 @@ public sealed class StreamingChatSession
             if (terminalError is not null)
                 ExceptionDispatchInfo.Capture(terminalError).Throw();
 
-            var summary = new ChatCostSummary(totalInput, totalOutput,
-                _rates?.EstimateCost(lastModelId ?? string.Empty, totalInput, totalOutput));
+            var summary = new ChatCostSummary(totalInput, totalOutput, totalCost);
             LastUsage = summary;
             SessionTotal += summary;
         }
