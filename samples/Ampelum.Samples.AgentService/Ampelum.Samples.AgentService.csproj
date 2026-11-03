@@ -18,6 +18,13 @@
     <ProjectReference Include="..\..\src\SignalGrid.Ampelum.Host.Contracts\SignalGrid.Ampelum.Host.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The one template `ampelum new` is run for; installed into a private template-engine home at run time. -->
+    <Content Include="..\..\src\Ampelum.Templates\templates\ampelum-agent\**\*"
+             Exclude="..\..\src\Ampelum.Templates\templates\ampelum-agent\bin\**;..\..\src\Ampelum.Templates\templates\ampelum-agent\obj\**"
+             Link="templates\ampelum-agent\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Ampelum.Samples.AgentService.Tests" />
   </ItemGroup>
 </Project>

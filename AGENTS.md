@@ -52,7 +52,7 @@ The README's [Use cases](README.md#use-cases) section lists every sample with it
 - Durable YAML workflow resumed by a new runtime: `samples/Ampelum.Samples.ExpenseApproval`
 - Measuring and tuning a prompt: `samples/Ampelum.Samples.PromptTuning`
 - Comparing optimizers and exporting traces: `samples/Ampelum.Samples.TracedPipeline`
-- Hosting behind HTTP: `samples/Ampelum.Samples.AgentService`
+- Hosting behind HTTP, audit replay, prompt versions, optimize, serving MCP, the CLI: `samples/Ampelum.Samples.AgentService`
 - Safety hooks and what they miss: `samples/Ampelum.Samples.SafetyGateway`
 - Composing modules, agents and GEPA tuning: `samples/Ampelum.Samples.ComposedPrograms`
 - Planned workflow that stops for approval and resumes, then a coding sub-agent: `samples/Ampelum.Samples.AgentRuntime`

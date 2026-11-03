@@ -45,9 +45,12 @@ public sealed class ToolAgent : IDisposable
     /// Lists tools through the governed source. Without a manifest verifier it caps every discovered tool
     /// to the most dangerous tier, whatever the server declares.
     /// </summary>
-    public static async Task<IReadOnlyList<ToolSurvey>> SurveyAsync(IMcpTransport transport, CancellationToken ct = default)
+    /// <param name="transport">The wire side to list tools from.</param>
+    /// <param name="serverUri">The address the tools are named after; the transport is what is called, not this address.</param>
+    /// <param name="ct">Cancellation.</param>
+    public static async Task<IReadOnlyList<ToolSurvey>> SurveyAsync(IMcpTransport transport, string serverUri, CancellationToken ct = default)
     {
-        var source = new McpToolSource(new McpServerConnection("http://orders.example.test/mcp", TrustLevel.Unknown), transport);
+        var source = new McpToolSource(new McpServerConnection(serverUri, TrustLevel.Unknown), transport);
         return await source.SurveyAsync(ct);
     }
 }

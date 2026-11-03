@@ -52,7 +52,7 @@ public sealed class ToolAgentTests
         var declared = await new OrderToolTransport().ListToolsAsync(Ct);
         declared.Single().DangerTier.ShouldBe(nameof(DangerTier.Safe));
 
-        var surveyed = await ToolAgent.SurveyAsync(new OrderToolTransport(), Ct);
+        var surveyed = await ToolAgent.SurveyAsync(new OrderToolTransport(), OrderToolTransport.ServerUri, Ct);
 
         var tool = surveyed.ShouldHaveSingleItem();
         tool.Name.ShouldBe("lookup_order");

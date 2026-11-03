@@ -112,7 +112,7 @@ dotnet run --project samples/Ampelum.Samples.VectorStoreSwap -c Release -- --fak
 dotnet test tests/Ampelum.Samples.VectorStoreSwap.Tests
 ```
 
-**Agent service** (`samples/Ampelum.Samples.AgentService`). Serve a program over HTTP with the Ampelum Host, call it from a client, read and verify its audit trail, give a ReAct agent MCP tools, and run an evaluation through the CLI as a process.
+**Agent service** (`samples/Ampelum.Samples.AgentService`). A program written once is served over HTTP by the Ampelum Host. The sample calls and streams it, reads and verifies its audit trail, looks entries up by trace id, replays a recorded call without the model, stores and promotes prompt versions, starts optimizer runs and follows their progress over SSE, and rebuilds the Host's index with the admin endpoint and with the Host's own command line. Its order tool is served as an MCP server on loopback, through a small transport the sample writes, and consumed back by a direct `tools/call` and by a ReAct agent. The CLI scores answers with `eval`, scaffolds a project with `new` and refuses to start `repl` without a key. Several of these Host features are plumbing with defects, and the sample's tests pin each one.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.AgentService -c Release -- --fake
@@ -237,7 +237,7 @@ Workflows
 MCP
 
 - `HttpMcpTransport` calls `tools/list` once and does not follow the next-cursor field, so a server that paginates returns only its first page (`src/Ampelum.Agent/Mcp/McpModels.cs`, lines 111 to 127).
-- `McpServerAdapter` has no transport in `src`, so Ampelum can call MCP servers but cannot be served as one without your own transport.
+- `McpServerAdapter` has no transport in `src`, so Ampelum can call MCP servers but cannot be served as one without your own transport. The agent service sample writes a minimal JSON-RPC over HTTP one.
 
 A2A, loaders and batch
 
@@ -253,6 +253,10 @@ Host
 - The optimize progress stream keeps no history. `OptimizerProgressBus.Publish` drops an event when no client is subscribed yet, so a client that connects after a run has started misses the earlier progress (`src/SignalGrid.Ampelum.Host/Optimize/OptimizerProgressBus.cs`).
 - `ProblemDetailsMiddleware` is internal and nothing registers it, so an unhandled endpoint exception is not mapped to a Host error code.
 - The Host optimize endpoint scores with a private `NoOpMetric` that returns 1.0, so it does not measure quality (`src/SignalGrid.Ampelum.Host/ModuleRegistry/PredictComposedAdapter.cs`).
+- A promoted prompt version is never applied to forward, prompt demo examples read back with null fields, and `rebuild-index` drops prompt versions created through the endpoint.
+- Audit lookup by trace id returns 404 until the index is rebuilt. Replay looks the module up by the audited name `Predict`, so a module registered under another name cannot be replayed.
+- `/audit/verify` and replay reject entries read back by `JsonFileAuditSink`, because it returns `JsonElement` values the hasher refuses.
+- The Host `rebuild-index` command fails when the working directory holds an `appsettings.json`.
 - `ChatAdapter.OnChunk` treats the closing `[[ ## completed ## ]]` marker as a field. The Host stream endpoint filters it out, but a direct `Predict.StreamAsync` caller sees an update named `completed`.
 - A chunk that carries the last tokens and that marker together is not sent as a `partial`, so the last `partial` can lag the text. The `final` frame is always complete.
 

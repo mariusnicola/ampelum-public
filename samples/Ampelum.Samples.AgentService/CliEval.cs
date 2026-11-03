@@ -32,18 +32,30 @@ public static class CliEval
     public static async Task<(int ExitCode, string Output)> RunAsync(
         string dataset, string metric, string outputDir, CancellationToken ct = default, TimeSpan? timeout = null)
     {
-        var start = new ProcessStartInfo(DotnetHostPath());
-        foreach (var arg in new[]
-                 {
-                     CliAssemblyPath, "eval",
-                     "--signature", typeof(AnswerSignature).FullName!,
-                     "--dataset", dataset,
-                     "--metric", metric,
-                     "--output", outputDir,
-                 })
-            start.ArgumentList.Add(arg);
-
+        var start = CliCommand(
+            "eval",
+            "--signature", typeof(AnswerSignature).FullName!,
+            "--dataset", dataset,
+            "--metric", metric,
+            "--output", outputDir);
         return await RunProcessAsync(start, timeout ?? DefaultTimeout, ct);
+    }
+
+    /// <summary>
+    /// The CLI run through <c>dotnet exec</c> with this sample's runtime settings. The CLI's own settings do not
+    /// include ASP.NET Core, so a command that needs the logging assembly shipped there cannot load it, and the
+    /// CLI's output folder is not a place this sample can rely on.
+    /// </summary>
+    internal static ProcessStartInfo CliCommand(params string[] arguments)
+    {
+        var start = new ProcessStartInfo(DotnetHostPath());
+        start.ArgumentList.Add("exec");
+        start.ArgumentList.Add("--runtimeconfig");
+        start.ArgumentList.Add(Path.Combine(AppContext.BaseDirectory, "Ampelum.Samples.AgentService.runtimeconfig.json"));
+        start.ArgumentList.Add(CliAssemblyPath);
+        foreach (var argument in arguments)
+            start.ArgumentList.Add(argument);
+        return start;
     }
 
     /// <summary>
@@ -60,7 +72,10 @@ public static class CliEval
     {
         start.RedirectStandardOutput = true;
         start.RedirectStandardError = true;
+        start.RedirectStandardInput = true;
         using var process = Process.Start(start) ?? throw new InvalidOperationException("The process did not start.");
+        // A tool that reads its input must see the end of it, not wait on this process's console.
+        process.StandardInput.Close();
         started?.Invoke(process);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
         linked.CancelAfter(limit);
@@ -82,7 +97,7 @@ public static class CliEval
     }
 
     /// <summary>The dotnet executable that runs this process, found from the runtime directory so PATH is not consulted.</summary>
-    static string DotnetHostPath()
+    internal static string DotnetHostPath()
     {
         var runtimeDirectory = new DirectoryInfo(RuntimeEnvironment.GetRuntimeDirectory());
         var root = runtimeDirectory.Parent?.Parent?.Parent

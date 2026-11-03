@@ -48,6 +48,9 @@ public sealed class OrderToolSource : IMcpClientToolSource
 /// </summary>
 public sealed class OrderToolTransport : IMcpTransport
 {
+    /// <summary>Names this stand-in as a source; it is a label and is never contacted.</summary>
+    public const string ServerUri = "in-process://orders";
+
     public Task<IReadOnlyList<McpToolDefinition>> ListToolsAsync(CancellationToken ct = default)
     {
         IReadOnlyList<McpToolDefinition> tools =
