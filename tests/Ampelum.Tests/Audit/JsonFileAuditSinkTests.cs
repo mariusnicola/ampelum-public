@@ -170,6 +170,39 @@ public sealed class JsonFileAuditSinkTests : IAsyncLifetime
         new FileInfo(_path).Length.ShouldBe(0L);
     }
 
+    [Theory]
+    [InlineData("\n", 1)]
+    [InlineData("garbage\n", 1)]
+    [InlineData("{\"Sequence\":0 ,\n", 1)]
+    [InlineData("{}\n", 1)]
+    [InlineData("null\n", 1)]
+    [InlineData("\n\n", 2)]
+    public async Task FileWithAnUnreadableLastLine_StillOpens_ButARecorderRefusesToExtendIt(string content, int lines)
+    {
+        await File.WriteAllTextAsync(_path, content, TestContext.Current.CancellationToken);
+        await using var sink = new JsonFileAuditSink(_path);
+        sink.NextSequence.ShouldBe((long)lines);
+
+        // Reading is as it always was: the damaged line fails to parse when it is reached.
+        await Should.ThrowAsync<Exception>(
+            async () => await AuditChainVerifier.VerifyAsync(sink, TestContext.Current.CancellationToken));
+
+        // Extending it is refused, naming the file and the line, and nothing is written.
+        var hook = new AuditHook(sink);
+        var ctx = new SignalGrid.Ampelum.Hooks.HookContext
+        {
+            ModuleName = "M",
+            Inputs = new Dictionary<string, object?> { ["q"] = "hi" },
+        };
+        ctx.Outputs = new Dictionary<string, object?> { ["a"] = "ok" };
+        var refused = await Should.ThrowAsync<InvalidDataException>(
+            async () => await hook.OnAfterAsync(ctx, TestContext.Current.CancellationToken));
+        refused.Message.ShouldContain(_path);
+        refused.Message.ShouldContain($"line {lines}");
+        sink.NextSequence.ShouldBe((long)lines);
+        new FileInfo(_path).Length.ShouldBe((long)content.Length);
+    }
+
     [Fact]
     public async Task AuditHook_RecordsAFloat_AndTheFileVerifies()
     {

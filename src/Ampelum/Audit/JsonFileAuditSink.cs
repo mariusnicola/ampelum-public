@@ -15,11 +15,27 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable, ILastEntry
     readonly FileStream _stream;
     readonly object _gate = new();
     long _nextSequence;
-    byte[] _lastHash;
+    // Hash of the newest entry; unknown (null) until asked for or until this instance appends, so a file
+    // with a damaged tail still opens, enumerates and verifies and only refuses to be extended.
+    byte[]? _lastHash;
+    string? _tailLine;
 
     ValueTask<byte[]> ILastEntryHashSource.LastEntryHashAsync(CancellationToken ct)
     {
-        lock (_gate) return ValueTask.FromResult(_lastHash);
+        lock (_gate)
+        {
+            if (_lastHash is null)
+            {
+                AuditEntry? tail = null;
+                try { tail = JsonSerializer.Deserialize(_tailLine!, AuditEntryJson.Default.AuditEntry); }
+                catch (JsonException) { }
+                _lastHash = (tail ?? throw new InvalidDataException(
+                    $"The audit file '{_path}' cannot be extended: line {_nextSequence} is not a readable audit entry."))
+                    .EntryHash;
+                _tailLine = null;
+            }
+            return ValueTask.FromResult(_lastHash);
+        }
     }
 
     /// <summary>Open or create the audit log at <paramref name="path"/> and recover <see cref="NextSequence"/>.</summary>
@@ -27,7 +43,8 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable, ILastEntry
     public JsonFileAuditSink(string path)
     {
         _path = path;
-        (_nextSequence, _lastHash) = ReadExisting(path);
+        (_nextSequence, _tailLine) = ReadExisting(path);
+        if (_nextSequence == 0) _lastHash = AuditChainHasher.ZeroHash;
         _stream = new FileStream(
             path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite,
             bufferSize: 4096, useAsync: false);
@@ -101,18 +118,15 @@ public sealed class JsonFileAuditSink : IAuditSink, IAsyncDisposable, ILastEntry
         await _stream.DisposeAsync();
     }
 
-    static (long Count, byte[] LastHash) ReadExisting(string path)
+    static (long Count, string? LastLine) ReadExisting(string path)
     {
-        if (!File.Exists(path)) return (0, AuditChainHasher.ZeroHash);
+        if (!File.Exists(path)) return (0, null);
         long count = 0;
         string? lastLine = null;
         using var reader = new StreamReader(new FileStream(
             path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
         while (reader.ReadLine() is { } line) { count++; lastLine = line; }
-        var last = lastLine is null
-            ? AuditChainHasher.ZeroHash
-            : JsonSerializer.Deserialize(lastLine, AuditEntryJson.Default.AuditEntry)!.EntryHash;
-        return (count, last);
+        return (count, lastLine);
     }
 }
 

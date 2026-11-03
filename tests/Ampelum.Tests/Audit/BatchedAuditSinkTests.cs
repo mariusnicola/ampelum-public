@@ -97,6 +97,23 @@ public sealed class BatchedAuditSinkTests
     }
 
     [Fact]
+    public async Task AppendAsync_ThatFails_LeavesThePreviousLastHash()
+    {
+        var batched = new BatchedAuditSink(new InMemoryAuditSink());
+        var queued = MakeEntry(0) with { EntryHash = Enumerable.Repeat((byte)1, 32).ToArray() };
+        await batched.AppendAsync(queued, TestContext.Current.CancellationToken);
+        await batched.DisposeAsync();
+
+        // The channel is completed, so this write is refused.
+        var refused = MakeEntry(1) with { EntryHash = Enumerable.Repeat((byte)2, 32).ToArray() };
+        await Should.ThrowAsync<System.Threading.Channels.ChannelClosedException>(
+            async () => await batched.AppendAsync(refused, TestContext.Current.CancellationToken));
+
+        var last = await ((ILastEntryHashSource)batched).LastEntryHashAsync(TestContext.Current.CancellationToken);
+        last.ShouldBe(queued.EntryHash);
+    }
+
+    [Fact]
     public async Task DisposeAsync_DisposesASyncDisposableInner()
     {
         var inner = new SyncDisposableAuditSink();

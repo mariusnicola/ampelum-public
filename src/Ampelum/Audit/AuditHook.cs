@@ -21,7 +21,11 @@ public sealed class AuditHook : IHook
     readonly IAuditSink _sink;
     readonly bool _replayMode;
     readonly object _replayGate = new();
-    // One gate per sink, shared by every hook over it, so two hooks never read the same NextSequence.
+    /// <summary>
+    /// One gate per sink, shared by every hook over it, so two hooks never read the same NextSequence.
+    /// The gate is not reentrant: a sink must not call back into an <see cref="AuditHook"/> on itself
+    /// from <see cref="IAuditSink.AppendAsync"/>, or the append waits for itself.
+    /// </summary>
     static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IAuditSink, SemaphoreSlim> AppendGates = new();
     readonly SemaphoreSlim _appendGate;
     byte[]? _lastAppendedHash;

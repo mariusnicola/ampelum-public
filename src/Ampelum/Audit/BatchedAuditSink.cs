@@ -83,8 +83,9 @@ public sealed class BatchedAuditSink : IAuditSink, IAsyncDisposable, ILastEntryH
         // Caller assigns sequence numbers via NextSequence; we advance the counter monotonically
         // for the next caller, then await space in the channel.
         Interlocked.Increment(ref _nextSequence);
-        Volatile.Write(ref _lastQueuedHash, entry.EntryHash);
         await _channel.Writer.WriteAsync(entry, ct).ConfigureAwait(false);
+        // Only an entry that was queued can be the newest one a new writer must chain to.
+        Volatile.Write(ref _lastQueuedHash, entry.EntryHash);
     }
 
     /// <inheritdoc/>
