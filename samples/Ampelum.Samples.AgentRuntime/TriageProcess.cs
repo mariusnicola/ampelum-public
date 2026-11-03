@@ -15,6 +15,8 @@ public sealed class TriageProcess : IAsyncDisposable
     const string FirstPhase = "assess";
     const string ResumePhase = "report";
     const string PlanFile = "backlog-triage.yml";
+    const string ApprovalPrompt = "Approve posting the triage report";
+    const string Approver = "maintainer";
 
     readonly string _stateDirectory;
     readonly IChatClient _chat;
@@ -108,39 +110,39 @@ public sealed class TriageProcess : IAsyncDisposable
     }
 
     /// <summary>
-    /// Runs the workflow until it reaches the approval step, where the run is paused and the first process stops
-    /// making progress, as when it is killed while a person has not answered yet.
+    /// Runs the workflow until the runtime parks the approval step and reports AwaitingConfirmation, then records the
+    /// pause in the run record. The call returns and this process has nothing left to do, as when it ends while a
+    /// person has not answered yet.
     /// </summary>
-    public async Task<InterruptedTriage> RunUntilApprovalAsync(DurableRunId runId, string executionId, WorkflowDefinition definition, CancellationToken ct = default)
+    public async Task<DurableWorkflowSnapshot> RunUntilApprovalAsync(DurableRunId runId, string executionId, WorkflowDefinition definition, CancellationToken ct = default)
     {
-        var reached = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var abandon = new CancellationTokenSource();
-        var steps = new TriageSteps(this, runId, executionId, definition, async stop =>
-        {
-            reached.TrySetResult();
-            // The runtime has no way to report "waiting for a person", so a handler can only block or fail.
-            await Task.Delay(Timeout.Infinite, abandon.Token).ConfigureAwait(false);
-        });
-
+        var steps = new TriageSteps(this, runId, executionId, definition);
         var request = new WorkflowExecutionRequest(executionId, definition, nameof(TriageProcess), DateTimeOffset.UtcNow);
-        var run = new DurableWorkflowRuntime(Store, Store).RunAsync(request, steps.HandleAsync, ct);
-        if (await Task.WhenAny(reached.Task, run).ConfigureAwait(false) == run)
-        {
-            abandon.Dispose();
-            var snapshot = await run.ConfigureAwait(false);
+        var snapshot = await new DurableWorkflowRuntime(Store, Store).RunAsync(request, steps.HandleAsync, ct).ConfigureAwait(false);
+        if (snapshot.Status != WorkflowExecutionStatus.AwaitingConfirmation)
             throw new InvalidOperationException($"Execution '{executionId}' ended as {snapshot.Status} before it reached the approval step: {snapshot.FailureReason}");
-        }
-        return new InterruptedTriage(run, abandon);
+
+        await Runtime.PauseAsync(runId, ApprovalPrompt, ct).ConfigureAwait(false);
+        steps.WaitForPerson(ApprovalPrompt);
+        return snapshot;
     }
 
-    /// <summary>The person's decision: resumes the paused run with the token it issued.</summary>
-    public async Task ApproveAsync(DurableRunId runId, string reason, CancellationToken ct = default)
+    /// <summary>
+    /// The person's decision: resumes the paused run record with the token it issued and delivers the approval to the
+    /// waiting workflow node. The workflow itself continues in <see cref="FinishAsync"/>.
+    /// </summary>
+    public async Task ApproveAsync(DurableRunId runId, string executionId, string reason, CancellationToken ct = default)
     {
         var snapshot = await Runtime.GetSnapshotAsync(runId, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"Run '{runId}' is unknown.");
         var pending = snapshot.PendingInterrupt
             ?? throw new InvalidOperationException($"Run '{runId}' is not waiting for anyone.");
         await Runtime.ResumeAsync(runId, new DurableResumeInput(pending.ResumeToken, reason, ResumePhase), ct).ConfigureAwait(false);
+
+        var stored = await Store.LoadAsync(executionId, ct).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"No stored execution '{executionId}'.");
+        var approvalStep = stored.Request.Workflow.Steps.First(s => s.Kind == WorkflowStepKind.Approval);
+        await new DurableWorkflowRuntime(Store, Store).DecideAsync(executionId, approvalStep.StepId, approved: true, Approver, reason, ct).ConfigureAwait(false);
     }
 
     /// <summary>Resumes the stored workflow execution and returns what the finished run left in the stores.</summary>
@@ -153,7 +155,7 @@ public sealed class TriageProcess : IAsyncDisposable
 
         var stored = await Store.LoadAsync(executionId, ct).ConfigureAwait(false)
             ?? throw new InvalidOperationException($"No stored execution '{executionId}'.");
-        var steps = new TriageSteps(this, runId, executionId, stored.Request.Workflow, waitForPerson: null);
+        var steps = new TriageSteps(this, runId, executionId, stored.Request.Workflow);
         var finished = await new DurableWorkflowRuntime(Store, Store).ResumeAsync(stored.Request, steps.HandleAsync, ct).ConfigureAwait(false);
         return await ReadOutcomeAsync(runId, finished, ct).ConfigureAwait(false);
     }
@@ -190,32 +192,5 @@ public sealed class TriageProcess : IAsyncDisposable
         Facts.Dispose();
         await Journal.DisposeAsync().ConfigureAwait(false);
         await Workspace.DisposeAsync().ConfigureAwait(false);
-    }
-}
-
-/// <summary>Handle to an execution stopped at the approval step. Disposing it releases the abandoned first runtime.</summary>
-public sealed class InterruptedTriage : IAsyncDisposable
-{
-    readonly Task<DurableWorkflowSnapshot> _run;
-    readonly CancellationTokenSource _abandon;
-
-    internal InterruptedTriage(Task<DurableWorkflowSnapshot> run, CancellationTokenSource abandon)
-    {
-        _run = run;
-        _abandon = abandon;
-    }
-
-    /// <summary>Lets the abandoned runtime finish; it loses its checkpoint race against the resumed one and writes nothing.</summary>
-    public async ValueTask DisposeAsync()
-    {
-        await _abandon.CancelAsync().ConfigureAwait(false);
-        try
-        {
-            await _run.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        _abandon.Dispose();
     }
 }

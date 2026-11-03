@@ -61,7 +61,7 @@ sealed class TempWorkspace : IDisposable
     }
 }
 
-/// <summary>A run stopped at the approval step, with the process that stopped it still open for inspection.</summary>
+/// <summary>A run parked at the approval step, with the process that ran it still open for inspection.</summary>
 sealed class PausedRun : IAsyncDisposable
 {
     public const string ExecutionId = "paused-run";
@@ -69,7 +69,6 @@ sealed class PausedRun : IAsyncDisposable
     readonly TempWorkspace _workspace;
     readonly FakeTriageModel _model;
     readonly TriagePolicy? _policy;
-    InterruptedTriage? _stopped;
 
     PausedRun(TempWorkspace workspace, FakeTriageModel model, TriagePolicy? policy, TriageProcess first, PlannedWorkflow plan, DurableRunId runId)
     {
@@ -97,9 +96,8 @@ sealed class PausedRun : IAsyncDisposable
         var first = workspace.NewProcess(model, policy);
         var plan = await first.PlanAsync(TriageScenario.Goal, ct);
         var runId = await first.StartRunAsync(TriageScenario.Goal, ct);
-        var paused = new PausedRun(workspace, model, policy, first, plan, runId);
-        paused._stopped = await first.RunUntilApprovalAsync(runId, ExecutionId, adjust?.Invoke(plan.Definition) ?? plan.Definition, ct);
-        return paused;
+        await first.RunUntilApprovalAsync(runId, ExecutionId, adjust?.Invoke(plan.Definition) ?? plan.Definition, ct);
+        return new PausedRun(workspace, model, policy, first, plan, runId);
     }
 
     /// <summary>Starts a second process on the same state, records the person's approval and finishes the run.</summary>
@@ -107,14 +105,9 @@ sealed class PausedRun : IAsyncDisposable
     {
         var ct = TestContext.Current.CancellationToken;
         await using var second = _workspace.NewProcess(_model, _policy);
-        await second.ApproveAsync(RunId, "Maintainer approved", ct);
+        await second.ApproveAsync(RunId, ExecutionId, "Maintainer approved", ct);
         return await second.FinishAsync(RunId, ExecutionId, ct);
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_stopped is not null)
-            await _stopped.DisposeAsync();
-        await First.DisposeAsync();
-    }
+    public async ValueTask DisposeAsync() => await First.DisposeAsync();
 }

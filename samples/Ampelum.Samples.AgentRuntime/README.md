@@ -6,7 +6,7 @@ What it shows, with the file that runs it:
 
 - Planning: `DefaultWorkflowSynthesizer` asks the model for workflow YAML, validates it through `WorkflowYamlCompiler` and writes it only after it compiles (`TriagePlanner.cs`). `PortfolioIntentDecomposer` splits the goal into one audit task per backlog issue.
 - Workflow kinds: the plan uses `FanOut` (assess), `Join` (collect), `Loop` (refine, bounded by `max_iterations`), `Approval` (signoff), `Wait` (settle) and a `Tool` step (`Fake/plan.yml`, `TriageSteps.cs`).
-- Interrupt and resume: `DurableAgentRuntime` pauses the run at the approval step and records a resume token. The first runtime is stopped by blocking its handler. A second runtime, with new objects on the same state folder, resumes with the token. Finished steps are not run again and no model call is repeated (`TriageProcess.cs`, `TriageSteps.cs`).
+- Interrupt and resume: `DurableWorkflowRuntime` parks the `Approval` step itself: the handler is not called, the node is `Waiting` and the execution reports `AwaitingConfirmation`. The first runtime's `RunAsync` returns and `DurableAgentRuntime` records the pause and a resume token. A second runtime, with new objects on the same state folder, resumes the run record with the token, delivers the approval with `DurableWorkflowRuntime.DecideAsync` and continues with `ResumeAsync`. Finished steps are not run again and no model call is repeated (`TriageProcess.cs`, `TriageSteps.cs`).
 - Event log: the run events (`Started`, `CheckpointSaved`, `InterruptRequested`, `CheckpointSaved`, `Resumed`, `CheckpointSaved`) are stored as JSON files and replayed with `StreamAsync`.
 - State machine and monitor: `WorkflowStateMachine` tracks phase and waiting state (`RunSupervisor.cs`); `DefaultWorkflowMonitor` scores the finished run, and an issue deferred for budget counts as a failed outcome with a risk event (`TriageProcess.cs`).
 - Memory: `MemoryManager` archives the finished phase and rebuilds the context with the goal first, over a JSON file store, so a report written after a restart still states the goal (`PhaseNotes.cs`). The Context subsystem (`InMemoryEventStore`, `CostLedger`, `HygienePipeline`, `TalkSelector`, `DefaultContextRenderer`) keeps this process's working memory: it stores one copy of a file that two issues read, and totals token usage (`RunJournal.cs`).
@@ -58,7 +58,7 @@ For a live model these file limits apply as they are. The sample gives it the ex
 ## What `--fake` does not prove
 
 - Nothing about a real model. The answers are scripted in `Fake/`. Output quality, prompt wording, the YAML a real model writes and the skill a real model picks are untested. The live path has not been run.
-- The two runtimes are two sets of objects in one operating system process. The first is stopped by blocking its handler, not by killing it.
+- The two runtimes are two sets of objects in one operating system process. The first one returns because the workflow is parked; it is not killed, so a crash while a node is waiting is covered by the library tests and not by this sample.
 - Token counts are the scripted 100 per call.
 - The sub-agent's turns are a fixed script, tool calls included (read the file, write it back rounded, say `DONE:`). It proves that the runner's tools change the file when the calls are run, that the run ends on `DONE:`, that the turn limit stops a run that never says it, and that the sample's check fails when the write is missing. It does not prove that a real model finds the file, writes valid C# or rounds correctly. The check is textual; the edited file is not compiled.
 
@@ -66,7 +66,7 @@ For a live model these file limits apply as they are. The sample gives it the ex
 
 - `SubAgentRunner` (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`): no shell, no build or test tool though the prompt names them (`BuildSystemPrompt`), no containment of paths in `Resolve`, tool calls not run unless the client invokes functions, tool parameters without defaults, and the prompt line "Working directory" printing the task id. Details in the section above.
 
-- All step kinds share one handler in `DurableWorkflowRuntime`, and nothing pauses for `Approval` or `Wait`. `Loop` does have continue and max-iteration logic and `Join` has readiness logic, which the sample uses. The pause comes from `DurableAgentRuntime.PauseAsync`, called inside the approval handler.
+- `DurableWorkflowRuntime` pauses for `Approval` steps only. Every other kind, `Wait` included, goes to the one shared handler, and the sample's handler returns success for `Wait` at once. `Loop` does have continue and max-iteration logic and `Join` has readiness logic, which the sample uses.
 - `DurableAgentRuntime.PauseAsync` followed by `ResumeAsync` on the same instance throws "Cannot resolve escalation from state Running", because pausing does not escalate the internal state machine. The sample resumes with a fresh instance, which restores the machine from the stored snapshot.
 - `SessionBudget` has `IsExhausted` and `IsWarning`; the sample calls `IsExhausted`, but nothing in src enforces the budget. The sample's `ModelBudget` and `BudgetedChatClient` do.
 - `SkillRegistry.LoadAsync` does nothing, so `skills.json` is read by the sample.

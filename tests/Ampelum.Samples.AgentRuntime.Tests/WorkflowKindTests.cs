@@ -47,13 +47,13 @@ public sealed class WorkflowKindTests : IDisposable
     }
 
     [Fact]
-    public async Task ApprovalAndWait_AreOrdinarySteps_TheRuntimeNeverPausesForThem()
+    public async Task Approval_ParksTheExecution_WhileWaitIsStillAnOrdinaryStep()
     {
         var seen = new List<WorkflowStepKind>();
         var definition = new WorkflowDefinition("pause-check", "1.0.0", "Pause check",
         [
-            new WorkflowStepDefinition("approve", "approve", [], Kind: WorkflowStepKind.Approval, MaxAutonomy: AutonomyMode.RequireApproval),
-            new WorkflowStepDefinition("hold", "hold", ["approve"], Kind: WorkflowStepKind.Wait),
+            new WorkflowStepDefinition("hold", "hold", [], Kind: WorkflowStepKind.Wait),
+            new WorkflowStepDefinition("approve", "approve", ["hold"], Kind: WorkflowStepKind.Approval, MaxAutonomy: AutonomyMode.RequireApproval),
         ]);
         var audit = new InMemoryWorkflowRuntimeAuditSink();
         var runtime = new DurableWorkflowRuntime(new InMemoryWorkflowStateStore(), audit);
@@ -67,9 +67,11 @@ public sealed class WorkflowKindTests : IDisposable
             },
             TestContext.Current.CancellationToken);
 
-        snapshot.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
-        seen.ShouldBe([WorkflowStepKind.Approval, WorkflowStepKind.Wait]);
-        audit.Events.Select(e => e.Status).Distinct().ShouldNotContain(WorkflowExecutionStatus.AwaitingConfirmation);
+        snapshot.Status.ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
+        snapshot.Nodes["hold"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
+        snapshot.Nodes["approve"].Status.ShouldBe(DurableWorkflowNodeStatus.Waiting);
+        seen.ShouldBe([WorkflowStepKind.Wait]);
+        audit.Events.Select(e => e.EventType).ShouldContain("execution.awaiting_confirmation");
     }
 
     [Fact]

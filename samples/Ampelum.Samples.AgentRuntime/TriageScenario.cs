@@ -14,8 +14,9 @@ public sealed record ScenarioResult(
     FixOutcome? Fix = null);
 
 /// <summary>
-/// The whole story in one place. A first runtime plans the run, assesses the backlog and stops at the approval step.
-/// A second runtime with new objects on the same state folder reads the event log, takes the approval and finishes.
+/// The whole story in one place. A first runtime plans the run, assesses the backlog and returns when the workflow runtime
+/// parks the approval step. A second runtime with new objects on the same state folder reads the event log, delivers the
+/// approval to the waiting step and finishes the workflow.
 /// Both run inside one operating system process.
 /// </summary>
 public static class TriageScenario
@@ -45,16 +46,16 @@ public static class TriageScenario
             log?.WriteLine($"Plan: {plan.Definition.Name} v{plan.Version}, steps: {string.Join(" > ", plan.Definition.Steps.Select(s => $"{s.StepId}[{s.Kind}]"))}");
 
             runId = await first.StartRunAsync(Goal, ct).ConfigureAwait(false);
-            await using var stopped = await first.RunUntilApprovalAsync(runId, executionId, plan.Definition, ct).ConfigureAwait(false);
+            var stopped = await first.RunUntilApprovalAsync(runId, executionId, plan.Definition, ct).ConfigureAwait(false);
             var approvalStep = plan.Definition.Steps.First(s => s.Kind == WorkflowStepKind.Approval).StepId;
-            log?.WriteLine($"First runtime stopped at workflow step '{approvalStep}'. Model calls so far: {first.Budget.Calls}, tokens: {first.Budget.Tokens}.");
+            log?.WriteLine($"First runtime returned with status {stopped.Status}: workflow step '{approvalStep}' is {stopped.Nodes[approvalStep].Status}. Model calls so far: {first.Budget.Calls}, tokens: {first.Budget.Tokens}.");
             log?.WriteLine("Both runtimes live in this one OS process; they share no memory, only the state folder.");
 
             await using var second = new TriageProcess(root, state, chat, tiers, policy);
             var paused = await second.Runtime.GetSnapshotAsync(runId, ct).ConfigureAwait(false) ?? throw new InvalidOperationException("The run is gone.");
             log?.WriteLine($"Second runtime reads the run record from the state folder: state {paused.State}, run phase '{paused.CurrentPhase}' (the run record's phase, not a workflow step), pending: {paused.PendingInterrupt?.Prompt}");
 
-            await second.ApproveAsync(runId, "Maintainer approved the report", ct).ConfigureAwait(false);
+            await second.ApproveAsync(runId, executionId, "Maintainer approved the report", ct).ConfigureAwait(false);
             var outcome = await second.FinishAsync(runId, executionId, ct).ConfigureAwait(false);
             Print(log, outcome);
 

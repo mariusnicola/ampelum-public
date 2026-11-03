@@ -47,16 +47,18 @@ public sealed class RuntimeResumeTests : IDisposable
         await using var first = _workspace.NewProcess(model);
         var plan = await first.PlanAsync(TriageScenario.Goal, ct);
         var runId = await first.StartRunAsync(TriageScenario.Goal, ct);
-        await using var stopped = await first.RunUntilApprovalAsync(runId, executionId, plan.Definition, ct);
+        var parked = await first.RunUntilApprovalAsync(runId, executionId, plan.Definition, ct);
+        parked.Status.ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
         var callsAtStop = model.Calls.Count;
         var stoppedAt = await first.Store.LoadAsync(executionId, ct);
         stoppedAt.ShouldNotBeNull();
+        stoppedAt.Status.ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
         stoppedAt.Nodes["assess"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
-        stoppedAt.Nodes["signoff"].Status.ShouldBe(DurableWorkflowNodeStatus.Running);
+        stoppedAt.Nodes["signoff"].Status.ShouldBe(DurableWorkflowNodeStatus.Waiting);
         stoppedAt.Nodes["report"].Status.ShouldBe(DurableWorkflowNodeStatus.Pending);
 
         await using var second = _workspace.NewProcess(model);
-        await second.ApproveAsync(runId, "Maintainer approved", ct);
+        await second.ApproveAsync(runId, executionId, "Maintainer approved", ct);
         var outcome = await second.FinishAsync(runId, executionId, ct);
 
         outcome.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
@@ -66,10 +68,16 @@ public sealed class RuntimeResumeTests : IDisposable
         finished.Nodes["assess"].Attempts.ShouldBe(1);
         finished.Nodes["collect"].Attempts.ShouldBe(1);
         finished.Nodes["refine"].Attempts.ShouldBe(2);
-        finished.Nodes["signoff"].Attempts.ShouldBe(2);
+        // The runtime parks the approval step itself: the handler never claims it.
+        finished.Nodes["signoff"].Attempts.ShouldBe(0);
+        finished.Nodes["signoff"].Status.ShouldBe(DurableWorkflowNodeStatus.Succeeded);
+        finished.Nodes["signoff"].Decision.ShouldBe(new DurableWorkflowDecision(true, "maintainer", "Maintainer approved"));
         Started(outcome, "assess").ShouldBe(1);
         Started(outcome, "refine").ShouldBe(2);
-        outcome.WorkflowAudit.Count(e => e.EventType == "node.recovered").ShouldBe(1);
+        Started(outcome, "signoff").ShouldBe(0);
+        outcome.WorkflowAudit.ShouldNotContain(e => e.EventType == "node.recovered");
+        outcome.WorkflowAudit.Select(e => e.EventType).SkipWhile(t => t != "node.waiting").Take(3)
+            .ShouldBe(["node.waiting", "execution.awaiting_confirmation", "node.approved"]);
         outcome.WorkflowAudit.Last().EventType.ShouldBe("execution.succeeded");
     }
 
@@ -82,7 +90,7 @@ public sealed class RuntimeResumeTests : IDisposable
         await using var first = _workspace.NewProcess(model);
         var plan = await first.PlanAsync(TriageScenario.Goal, ct);
         var runId = await first.StartRunAsync(TriageScenario.Goal, ct);
-        await using var stopped = await first.RunUntilApprovalAsync(runId, "token-check", plan.Definition, ct);
+        await first.RunUntilApprovalAsync(runId, "token-check", plan.Definition, ct);
 
         await using var second = _workspace.NewProcess(model);
         var refusal = await Should.ThrowAsync<InvalidOperationException>(() =>
@@ -102,7 +110,7 @@ public sealed class RuntimeResumeTests : IDisposable
         await using var first = _workspace.NewProcess(model);
         var plan = await first.PlanAsync(TriageScenario.Goal, ct);
         var runId = await first.StartRunAsync(TriageScenario.Goal, ct);
-        await using var stopped = await first.RunUntilApprovalAsync(runId, "stream-check", plan.Definition, ct);
+        await first.RunUntilApprovalAsync(runId, "stream-check", plan.Definition, ct);
 
         await using var second = _workspace.NewProcess(model);
         // The guard only keeps a regression from hanging the run; a healthy replay ends on its own.

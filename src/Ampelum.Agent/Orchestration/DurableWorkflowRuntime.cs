@@ -5,27 +5,44 @@ using SignalGrid.Ampelum.Agent.Contracts;
 namespace SignalGrid.Ampelum.Agent.Orchestration;
 
 /// <summary>Durable state of a single declarative workflow node.</summary>
-public enum DurableWorkflowNodeStatus { Pending, Running, Succeeded, Failed, Cancelled, Skipped }
+public enum DurableWorkflowNodeStatus
+{
+    Pending, Running, Succeeded, Failed, Cancelled, Skipped,
+    /// <summary>The node waits for a decision delivered through <see cref="DurableWorkflowRuntime.DecideAsync"/>.</summary>
+    Waiting,
+}
 
 /// <summary>Outcome returned by a durable workflow node handler.</summary>
 /// <param name="Succeeded">Whether the node completed successfully.</param>
 /// <param name="Retryable">Whether a failed outcome should be retried, up to the runtime's configured maximum attempts.</param>
-/// <param name="Detail">Optional human-readable detail recorded alongside the outcome.</param>
+/// <param name="Detail">Optional human-readable detail recorded alongside the outcome. For a waiting outcome, the reason the node waits.</param>
 /// <param name="SelectedNextStepId">For a <see cref="WorkflowStepKind.Branch"/> step, the declared branch target this outcome selects.</param>
 /// <param name="LoopContinue">For a <see cref="WorkflowStepKind.Loop"/> step, whether the loop body should re-execute (subject to the step's <c>MaxIterations</c> bound).</param>
+/// <param name="Waiting">Whether the node waits for a decision instead of finishing. A waiting outcome is never a success or a failure.</param>
 public sealed record DurableWorkflowNodeResult(
     bool Succeeded,
     bool Retryable = false,
     string? Detail = null,
     string? SelectedNextStepId = null,
-    bool LoopContinue = false)
+    bool LoopContinue = false,
+    bool Waiting = false)
 {
     /// <summary>Creates a successful node outcome.</summary>
     public static DurableWorkflowNodeResult Success(string? detail = null) => new(true, false, detail);
 
     /// <summary>Creates a failed node outcome.</summary>
     public static DurableWorkflowNodeResult Failure(string? detail = null, bool retryable = false) => new(false, retryable, detail);
+
+    /// <summary>Creates an outcome that parks the node until a decision is delivered for it.</summary>
+    /// <param name="reason">Why a decision is needed.</param>
+    public static DurableWorkflowNodeResult Wait(string? reason = null) => new(false, false, reason, Waiting: true);
 }
+
+/// <summary>A decision delivered for a waiting node.</summary>
+/// <param name="Approved">Whether the decider approved.</param>
+/// <param name="DecidedBy">Identity of the decider.</param>
+/// <param name="Reason">Optional reason or payload the decider supplied.</param>
+public sealed record DurableWorkflowDecision(bool Approved, string DecidedBy, string? Reason = null);
 
 /// <summary>Persisted node state, including its stable idempotency key.</summary>
 /// <param name="StepId">The declared workflow step identifier this snapshot tracks.</param>
@@ -38,13 +55,15 @@ public sealed record DurableWorkflowNodeResult(
 /// successfully so far. Tracked separately from <paramref name="Attempts"/> so a retry of a failed attempt does
 /// not silently consume the caller's declared <c>MaxIterations</c> budget.
 /// </param>
+/// <param name="Decision">The latest decision delivered for this node, if any.</param>
 public sealed record DurableWorkflowNodeSnapshot(
     string StepId,
     DurableWorkflowNodeStatus Status,
     int Attempts,
     string IdempotencyKey,
     string? Detail = null,
-    int LoopIterations = 0);
+    int LoopIterations = 0,
+    DurableWorkflowDecision? Decision = null);
 
 /// <summary>Persisted durable execution checkpoint.</summary>
 /// <param name="Request">The execution request this checkpoint tracks.</param>
@@ -177,7 +196,8 @@ public sealed record DurableWorkflowNodeContext(
     WorkflowExecutionRequest Request,
     WorkflowStepDefinition Step,
     string IdempotencyKey,
-    int Attempt);
+    int Attempt,
+    DurableWorkflowDecision? Decision = null);
 
 /// <summary>
 /// Generic durable runtime for declarative workflow definitions. Completed node keys are never re-executed;
@@ -256,12 +276,34 @@ public sealed class DurableWorkflowRuntime
             var readySteps = request.Workflow.Steps.Where(candidate => IsReady(candidate, snapshot.Nodes)).ToList();
             if (readySteps.Count == 0)
             {
+                // A failed node means the execution has failed, whatever else is left; it is never reported as a success.
+                var failedNode = snapshot.Nodes.Values.FirstOrDefault(node => node.Status == DurableWorkflowNodeStatus.Failed);
+                if (failedNode is not null)
+                    return await FailAsync(snapshot, failedNode.Detail ?? $"Step '{failedNode.StepId}' failed.", ct).ConfigureAwait(false);
                 if (snapshot.Nodes.Values.Any(node => node.Status == DurableWorkflowNodeStatus.Running))
                     return snapshot;
+                if (snapshot.Nodes.Values.Any(node => node.Status == DurableWorkflowNodeStatus.Waiting))
+                {
+                    if (snapshot.Status != WorkflowExecutionStatus.AwaitingConfirmation)
+                        snapshot = await AwaitConfirmationAsync(snapshot, ct).ConfigureAwait(false);
+                    // A lost swap hands back a changed checkpoint: scan it again instead of reporting a stale state.
+                    if (snapshot.Status == WorkflowExecutionStatus.AwaitingConfirmation) return snapshot;
+                    continue;
+                }
                 var incomplete = snapshot.Nodes.Values.Any(node => node.Status is DurableWorkflowNodeStatus.Pending or DurableWorkflowNodeStatus.Running);
                 if (incomplete)
                     return await FailAsync(snapshot, "Workflow contains unresolved dependencies.", ct).ConfigureAwait(false);
-                return await SucceedAsync(snapshot, ct).ConfigureAwait(false);
+                snapshot = await SucceedAsync(snapshot, ct).ConfigureAwait(false);
+                continue;
+            }
+
+            // An Approval step never reaches the handler: the runtime parks it, then re-scans readiness.
+            var approvalSteps = readySteps.Where(step => step.Kind == WorkflowStepKind.Approval).ToList();
+            if (approvalSteps.Count > 0)
+            {
+                foreach (var approvalStep in approvalSteps)
+                    snapshot = await WaitForDecisionAsync(snapshot, approvalStep, ct).ConfigureAwait(false);
+                continue;
             }
 
             snapshot = await ClaimReadyBatchAsync(snapshot, readySteps, ct).ConfigureAwait(false);
@@ -336,7 +378,7 @@ public sealed class DurableWorkflowRuntime
                 var node = snapshot.Nodes[step.StepId];
                 try
                 {
-                    var outcome = await handler(new DurableWorkflowNodeContext(request, step, node.IdempotencyKey, node.Attempts), ct).ConfigureAwait(false);
+                    var outcome = await handler(new DurableWorkflowNodeContext(request, step, node.IdempotencyKey, node.Attempts, node.Decision), ct).ConfigureAwait(false);
                     return (step, outcome);
                 }
                 catch (OperationCanceledException) when (ct.IsCancellationRequested)
@@ -398,6 +440,93 @@ public sealed class DurableWorkflowRuntime
         }
     }
 
+    /// <summary>
+    /// Delivers a decision for one waiting node of one execution, through the same version compare-and-swap and
+    /// audit as every other transition. An approved <see cref="WorkflowStepKind.Approval"/> node succeeds; an
+    /// approved node of any other kind returns to pending with the decision recorded, and the next handler call
+    /// receives it in <see cref="DurableWorkflowNodeContext.Decision"/>. A rejection fails the node and the
+    /// execution. After an approval the caller continues with <see cref="ResumeAsync"/>.
+    /// </summary>
+    /// <param name="executionId">The execution the node belongs to.</param>
+    /// <param name="stepId">The waiting node.</param>
+    /// <param name="approved">Approve or reject.</param>
+    /// <param name="decidedBy">Identity of the decider.</param>
+    /// <param name="reason">Optional reason or payload recorded with the decision.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <exception cref="InvalidOperationException">The execution or node is unknown, the execution is already terminal, or the node is not waiting.</exception>
+    public async Task<DurableWorkflowSnapshot> DecideAsync(
+        string executionId, string stepId, bool approved, string decidedBy, string? reason = null, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(executionId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(stepId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(decidedBy);
+
+        var snapshot = await _store.LoadAsync(executionId, ct).ConfigureAwait(false)
+            ?? throw new InvalidOperationException($"Execution '{executionId}' is unknown.");
+        while (true)
+        {
+            if (IsTerminal(snapshot.Status))
+                throw new InvalidOperationException($"Execution '{executionId}' is already {snapshot.Status}.");
+            if (!snapshot.Nodes.TryGetValue(stepId, out var node))
+                throw new InvalidOperationException($"Execution '{executionId}' has no node '{stepId}'.");
+            if (node.Status != DurableWorkflowNodeStatus.Waiting)
+                throw new InvalidOperationException($"Node '{stepId}' of execution '{executionId}' is {node.Status}, not Waiting.");
+
+            var isApprovalKind = snapshot.Request.Workflow.Steps.Any(step => step.StepId == stepId && step.Kind == WorkflowStepKind.Approval);
+            var decision = new DurableWorkflowDecision(approved, decidedBy, reason);
+            var settled = !approved
+                ? DurableWorkflowNodeStatus.Failed
+                : isApprovalKind ? DurableWorkflowNodeStatus.Succeeded : DurableWorkflowNodeStatus.Pending;
+            var detail = reason ?? (approved ? $"Approved by {decidedBy}." : $"Rejected by {decidedBy}.");
+            var nodes = snapshot.Nodes.ToDictionary(pair => pair.Key, pair => pair.Value);
+            nodes[stepId] = node with { Status = settled, Detail = detail, Decision = decision };
+            // A rejection fails the node and the execution in the same swap. The store appends one audit event per swap,
+            // so node.rejected is written with the swap (its status already Failed) and execution.failed follows as a
+            // plain append; a crash between the two leaves a consistent Failed checkpoint.
+            var status = !approved ? WorkflowExecutionStatus.Failed
+                : snapshot.Status == WorkflowExecutionStatus.AwaitingConfirmation ? WorkflowExecutionStatus.Running : snapshot.Status;
+            var next = snapshot with
+            {
+                Nodes = nodes, Status = status, FailureReason = approved ? snapshot.FailureReason : detail,
+                UpdatedAt = DateTimeOffset.UtcNow, Version = snapshot.Version + 1,
+            };
+            if (await TryUpdateAndAuditAsync(snapshot, next, approved ? "node.approved" : "node.rejected", stepId, $"{decidedBy}: {detail}", ct).ConfigureAwait(false))
+            {
+                if (!approved)
+                    await _audit.AppendAsync(CreateAuditEvent(next, "execution.failed", null, detail), ct).ConfigureAwait(false);
+                return next;
+            }
+
+            snapshot = await _store.LoadAsync(executionId, ct).ConfigureAwait(false)
+                ?? throw new InvalidOperationException("Workflow checkpoint disappeared during a decision.");
+        }
+    }
+
+    // Parks a pending Approval node. A lost compare-and-swap reloads and re-checks, so a node settled by someone
+    // else in the meantime is left alone.
+    async Task<DurableWorkflowSnapshot> WaitForDecisionAsync(DurableWorkflowSnapshot snapshot, WorkflowStepDefinition step, CancellationToken ct)
+    {
+        while (true)
+        {
+            var node = snapshot.Nodes[step.StepId];
+            if (node.Status != DurableWorkflowNodeStatus.Pending) return snapshot;
+            var reason = $"Step '{step.StepId}' awaits approval.";
+            var nodes = snapshot.Nodes.ToDictionary(pair => pair.Key, pair => pair.Value);
+            nodes[step.StepId] = node with { Status = DurableWorkflowNodeStatus.Waiting, Detail = reason, Decision = null };
+            var next = snapshot with { Nodes = nodes, UpdatedAt = DateTimeOffset.UtcNow, Version = snapshot.Version + 1 };
+            if (await TryUpdateAndAuditAsync(snapshot, next, "node.waiting", step.StepId, reason, ct).ConfigureAwait(false))
+                return next;
+            snapshot = await _store.LoadAsync(snapshot.Request.ExecutionId, ct).ConfigureAwait(false)
+                ?? throw new InvalidOperationException("Workflow checkpoint disappeared while parking a node.");
+        }
+    }
+
+    async Task<DurableWorkflowSnapshot> AwaitConfirmationAsync(DurableWorkflowSnapshot snapshot, CancellationToken ct)
+    {
+        var waiting = string.Join(", ", snapshot.Nodes.Values.Where(node => node.Status == DurableWorkflowNodeStatus.Waiting).Select(node => node.StepId));
+        return await TransitionAsync(snapshot, WorkflowExecutionStatus.AwaitingConfirmation, null, "execution.awaiting_confirmation", ct, $"Waiting for a decision: {waiting}").ConfigureAwait(false);
+    }
+
     async Task<DurableWorkflowSnapshot> RecoverInFlightNodesAsync(DurableWorkflowSnapshot snapshot, CancellationToken ct)
     {
         if (snapshot.Status != WorkflowExecutionStatus.Running || !snapshot.Nodes.Values.Any(node => node.Status == DurableWorkflowNodeStatus.Running)) return snapshot;
@@ -414,7 +543,24 @@ public sealed class DurableWorkflowRuntime
     async Task<DurableWorkflowSnapshot> RecordOutcomeAsync(DurableWorkflowSnapshot snapshot, WorkflowStepDefinition step, DurableWorkflowNodeResult outcome, CancellationToken ct)
     {
         var stepId = step.StepId;
-        var node = snapshot.Nodes[stepId];
+        // A lost swap (a decision, a sibling's outcome or another instance wrote first) reloads and applies the same
+        // outcome to the fresh checkpoint, using the fresh node. It stops only when the node is no longer Running,
+        // meaning someone else already settled it.
+        while (true)
+        {
+            var node = snapshot.Nodes[stepId];
+            if (node.Status != DurableWorkflowNodeStatus.Running) return snapshot;
+            var applied = await TryApplyOutcomeAsync(snapshot, node, step, outcome, ct).ConfigureAwait(false);
+            if (applied is not null) return applied;
+            snapshot = await _store.LoadAsync(snapshot.Request.ExecutionId, ct).ConfigureAwait(false)
+                ?? throw new InvalidOperationException("Workflow checkpoint disappeared during node completion.");
+        }
+    }
+
+    // Returns the resulting checkpoint, or null when the swap was lost.
+    async Task<DurableWorkflowSnapshot?> TryApplyOutcomeAsync(DurableWorkflowSnapshot snapshot, DurableWorkflowNodeSnapshot node, WorkflowStepDefinition step, DurableWorkflowNodeResult outcome, CancellationToken ct)
+    {
+        var stepId = step.StepId;
         // Loop iterations are tracked independently from Attempts: Attempts increments on every claim
         // (including retries of a failed attempt), so bounding loop re-execution by Attempts would let
         // retries silently eat into the caller's declared MaxIterations budget.
@@ -422,11 +568,14 @@ public sealed class DurableWorkflowRuntime
         var loopAgain = outcome.Succeeded && step.Kind == WorkflowStepKind.Loop && outcome.LoopContinue
             && step.MaxIterations is { } maxIterations && loopIterations < maxIterations;
         var retry = !outcome.Succeeded && outcome.Retryable && node.Attempts < _maxAttempts;
-        var status = outcome.Succeeded
-            ? loopAgain ? DurableWorkflowNodeStatus.Pending : DurableWorkflowNodeStatus.Succeeded
-            : retry ? DurableWorkflowNodeStatus.Pending : DurableWorkflowNodeStatus.Failed;
+        var status = outcome.Waiting
+            ? DurableWorkflowNodeStatus.Waiting
+            : outcome.Succeeded
+                ? loopAgain ? DurableWorkflowNodeStatus.Pending : DurableWorkflowNodeStatus.Succeeded
+                : retry ? DurableWorkflowNodeStatus.Pending : DurableWorkflowNodeStatus.Failed;
         var nodes = snapshot.Nodes.ToDictionary(pair => pair.Key, pair => pair.Value);
-        nodes[stepId] = node with { Status = status, Detail = outcome.Detail, LoopIterations = loopIterations };
+        // A node that waits again, or starts another loop iteration, asks for a new decision, so the one it holds is dropped.
+        nodes[stepId] = node with { Status = status, Detail = outcome.Detail, LoopIterations = loopIterations, Decision = outcome.Waiting || loopAgain ? null : node.Decision };
 
         if (outcome.Succeeded && !loopAgain && step.Kind == WorkflowStepKind.Branch)
             ApplyBranchOutcome(snapshot.Request.Workflow, step, outcome.SelectedNextStepId, nodes);
@@ -440,12 +589,12 @@ public sealed class DurableWorkflowRuntime
             DurableWorkflowNodeStatus.Succeeded => "node.succeeded",
             DurableWorkflowNodeStatus.Pending => loopAgain ? "node.loop.iterated" : "node.retrying",
             DurableWorkflowNodeStatus.Failed => "node.failed",
+            DurableWorkflowNodeStatus.Waiting => "node.waiting",
             _ => throw new InvalidOperationException($"Step '{stepId}' completed with unexpected status '{finalStatus}'."),
         };
         var next = snapshot with { Nodes = nodes, UpdatedAt = DateTimeOffset.UtcNow, Version = snapshot.Version + 1 };
         if (!await TryUpdateAndAuditAsync(snapshot, next, eventType, stepId, nodes[stepId].Detail, ct).ConfigureAwait(false))
-            return await _store.LoadAsync(snapshot.Request.ExecutionId, ct).ConfigureAwait(false)
-                ?? throw new InvalidOperationException("Workflow checkpoint disappeared during node completion.");
+            return null;
         var failed = finalStatus == DurableWorkflowNodeStatus.Failed;
         if (failed)
             return await FailAsync(next, nodes[stepId].Detail ?? $"Step '{stepId}' failed.", ct).ConfigureAwait(false);
@@ -511,16 +660,23 @@ public sealed class DurableWorkflowRuntime
     }
 
     Task<DurableWorkflowSnapshot> SucceedAsync(DurableWorkflowSnapshot snapshot, CancellationToken ct) => TransitionAsync(snapshot, WorkflowExecutionStatus.Succeeded, null, "execution.succeeded", ct);
-    Task<DurableWorkflowSnapshot> FailAsync(DurableWorkflowSnapshot snapshot, string reason, CancellationToken ct) => TransitionAsync(snapshot, WorkflowExecutionStatus.Failed, reason, "execution.failed", ct);
-    Task<DurableWorkflowSnapshot> CancelAsync(DurableWorkflowSnapshot snapshot, string reason, CancellationToken ct) => TransitionAsync(snapshot, WorkflowExecutionStatus.Cancelled, reason, "execution.cancelled", ct);
+    Task<DurableWorkflowSnapshot> FailAsync(DurableWorkflowSnapshot snapshot, string reason, CancellationToken ct) => TransitionAsync(snapshot, WorkflowExecutionStatus.Failed, reason, "execution.failed", ct, retryOnLoss: true);
+    Task<DurableWorkflowSnapshot> CancelAsync(DurableWorkflowSnapshot snapshot, string reason, CancellationToken ct) => TransitionAsync(snapshot, WorkflowExecutionStatus.Cancelled, reason, "execution.cancelled", ct, retryOnLoss: true);
 
-    async Task<DurableWorkflowSnapshot> TransitionAsync(DurableWorkflowSnapshot snapshot, WorkflowExecutionStatus status, string? reason, string eventType, CancellationToken ct)
+    // Failing and cancelling are one-way intentions, so a lost swap reloads and applies them to the fresh checkpoint
+    // unless that one is already terminal. Succeeding and awaiting depend on the state, so a lost swap hands the fresh
+    // checkpoint back and the caller scans it again.
+    async Task<DurableWorkflowSnapshot> TransitionAsync(DurableWorkflowSnapshot snapshot, WorkflowExecutionStatus status, string? reason, string eventType, CancellationToken ct, string? detail = null, bool retryOnLoss = false)
     {
-        var next = snapshot with { Status = status, FailureReason = reason, UpdatedAt = DateTimeOffset.UtcNow, Version = snapshot.Version + 1 };
-        if (!await TryUpdateAndAuditAsync(snapshot, next, eventType, null, reason, ct).ConfigureAwait(false))
-            return await _store.LoadAsync(snapshot.Request.ExecutionId, ct).ConfigureAwait(false)
+        while (true)
+        {
+            var next = snapshot with { Status = status, FailureReason = reason, UpdatedAt = DateTimeOffset.UtcNow, Version = snapshot.Version + 1 };
+            if (await TryUpdateAndAuditAsync(snapshot, next, eventType, null, detail ?? reason, ct).ConfigureAwait(false))
+                return next;
+            snapshot = await _store.LoadAsync(snapshot.Request.ExecutionId, ct).ConfigureAwait(false)
                 ?? throw new InvalidOperationException("Workflow checkpoint disappeared during terminal transition.");
-        return next;
+            if (!retryOnLoss || IsTerminal(snapshot.Status)) return snapshot;
+        }
     }
 
     async Task<bool> TryCreateAndAuditAsync(DurableWorkflowSnapshot snapshot, string eventType, string? stepId, string? detail, CancellationToken ct)

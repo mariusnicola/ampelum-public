@@ -14,14 +14,14 @@ namespace SignalGrid.Ampelum.Agent.Orchestration;
 /// handler delegate, not a change to the runtime itself.
 /// </summary>
 /// <remarks>
-/// A <see cref="WorkflowPolicyGate"/> decision of <c>RequireConfirmation</c> currently fails the step rather
-/// than pausing for an out-of-band approval — there is no confirmation-resolution loop wired between
-/// workflow-level policy decisions and <see cref="IToolDispatcher"/>'s own tool-level confirmation store yet.
-/// This is a documented, deliberate scope cut (fail-closed, never silently proceed) pending that follow-up
-/// work, <b>not</b> a node-local gap: because the failure is non-retryable, <c>DurableWorkflowRuntime</c>
-/// takes the whole execution terminal (<c>Failed</c>), and there is currently no way to resume the same
-/// execution after an out-of-band approval — a new execution must be started once approved. Building an
-/// actual approval-then-resume path is a real follow-up item, not something this handler already provides.
+/// A <see cref="WorkflowPolicyGate"/> decision of <c>RequireConfirmation</c> parks the node: the handler returns
+/// <see cref="DurableWorkflowNodeResult.Wait"/> and the execution reports <c>AwaitingConfirmation</c>. A caller
+/// delivers the decision with <see cref="DurableWorkflowRuntime.DecideAsync"/> and continues the same execution
+/// with <see cref="DurableWorkflowRuntime.ResumeAsync"/>. The next call of this handler then carries the approval in
+/// <see cref="DurableWorkflowNodeContext.Decision"/>, skips the confirmation and dispatches the tool with the
+/// node's unchanged idempotency key. A rejection fails the node and the execution. A <c>Block</c> decision still
+/// fails the step, whatever was decided. This handler does not use <see cref="IToolDispatcher"/>'s own tool-level
+/// confirmation store.
 /// </remarks>
 public sealed class WorkflowToolStepHandler
 {
@@ -65,8 +65,8 @@ public sealed class WorkflowToolStepHandler
         var decision = _policyGate.Evaluate(context.Request.Workflow, step, toolName);
         if (decision.Decision == Decision.Block)
             return DurableWorkflowNodeResult.Failure(decision.Reason ?? $"Step '{step.StepId}' is blocked by workflow policy.");
-        if (decision.Decision == Decision.RequireConfirmation)
-            return DurableWorkflowNodeResult.Failure(decision.Reason ?? $"Step '{step.StepId}' requires approval per workflow policy.");
+        if (decision.Decision == Decision.RequireConfirmation && context.Decision is not { Approved: true })
+            return DurableWorkflowNodeResult.Wait(decision.Reason ?? $"Step '{step.StepId}' requires approval per workflow policy.");
 
         var invocationContext = new ToolInvocationContext(
             TraceId: context.Request.ExecutionId,

@@ -10,7 +10,7 @@ namespace Ampelum.Samples.AgentRuntime;
 
 /// <summary>
 /// The handler the durable runtime calls for every step. The runtime only knows step kinds; what a fan-out, a loop,
-/// an approval or a wait does is decided here.
+/// a join or a tool call does is decided here. The runtime itself parks Approval steps until a decision arrives.
 /// </summary>
 internal sealed class TriageSteps
 {
@@ -18,18 +18,16 @@ internal sealed class TriageSteps
     readonly DurableRunId _runId;
     readonly string _executionId;
     readonly WorkflowDefinition _definition;
-    readonly Func<CancellationToken, Task>? _waitForPerson;
     readonly ToolDispatcher _dispatcher;
     readonly RunSupervisor _supervisor;
     int _completed;
 
-    public TriageSteps(TriageProcess process, DurableRunId runId, string executionId, WorkflowDefinition definition, Func<CancellationToken, Task>? waitForPerson)
+    public TriageSteps(TriageProcess process, DurableRunId runId, string executionId, WorkflowDefinition definition)
     {
         _process = process;
         _runId = runId;
         _executionId = executionId;
         _definition = definition;
-        _waitForPerson = waitForPerson;
         _supervisor = new RunSupervisor(runId.Value, definition.Steps[0].StepId);
 
         var backlog = DemoProject.ReadBacklog(process.Root);
@@ -49,7 +47,7 @@ internal sealed class TriageSteps
             WorkflowStepKind.FanOut => await AssessAsync(ct).ConfigureAwait(false),
             WorkflowStepKind.Join => await CollectAsync(ct).ConfigureAwait(false),
             WorkflowStepKind.Loop => await RefineAsync(ct).ConfigureAwait(false),
-            WorkflowStepKind.Approval => await AwaitApprovalAsync(ct).ConfigureAwait(false),
+            // The runtime parks Approval steps itself and never hands them to this handler, so there is no case for it.
             // The runtime runs Wait like any other step and does not pause for it, so nothing is awaited here.
             WorkflowStepKind.Wait => DurableWorkflowNodeResult.Success("no external signal is awaited"),
             WorkflowStepKind.Tool => await ReportAsync(context, ct).ConfigureAwait(false),
@@ -117,32 +115,23 @@ internal sealed class TriageSteps
         return new DurableWorkflowNodeResult(true, Detail: JsonSerializer.Serialize(_process.EditorNotes), LoopContinue: again);
     }
 
-    // The first time through, the run is paused and this process stops. After a person approved on a restarted process,
-    // the same step finds the Resumed event in the log and lets the run continue with a grant for the report tool.
-    async Task<DurableWorkflowNodeResult> AwaitApprovalAsync(CancellationToken ct)
+    /// <summary>Records in the in-memory state machine that the run now waits for a person.</summary>
+    public void WaitForPerson(string reason) => _supervisor.WaitForPerson(TriageTools.PostReport, reason);
+
+    // The grant for the report tool exists only when the stored decision of the approval step is an approval.
+    // Without one the tool stays refused, so a run that was never approved cannot post.
+    async Task<DurableWorkflowNodeResult> ReportAsync(DurableWorkflowNodeContext context, CancellationToken ct)
     {
-        var log = await _process.RunEvents.ReadAsync(_runId, ct).ConfigureAwait(false);
-        var approval = log.LastOrDefault(e => e.Kind == DurableRunEventKind.Resumed);
-        if (approval is not null)
+        var approvalStep = _definition.Steps.FirstOrDefault(s => s.Kind == WorkflowStepKind.Approval);
+        var stored = await _process.Store.LoadAsync(_executionId, ct).ConfigureAwait(false);
+        var decision = approvalStep is null ? null : stored?.Nodes[approvalStep.StepId].Decision;
+        if (decision is { Approved: true })
         {
             _process.Grants.Add(new SessionGrant(
                 Guid.NewGuid().ToString("N"), _process.Caller.InstanceId, TriageTools.PostReport, PolicyDecision.Allowed,
-                DateTimeOffset.UtcNow.AddMinutes(_process.Policy.GrantMinutes), approval.Message));
-            return DurableWorkflowNodeResult.Success($"approved: {approval.Message}");
+                DateTimeOffset.UtcNow.AddMinutes(_process.Policy.GrantMinutes), decision.Reason ?? $"approved by {decision.DecidedBy}"));
         }
 
-        if (_waitForPerson is null)
-            return DurableWorkflowNodeResult.Failure("The run was not approved.");
-
-        const string reason = "Approve posting the triage report";
-        await _process.Runtime.PauseAsync(_runId, reason, ct).ConfigureAwait(false);
-        _supervisor.WaitForPerson(TriageTools.PostReport, reason);
-        await _waitForPerson(ct).ConfigureAwait(false);
-        return DurableWorkflowNodeResult.Failure("The approval wait returned without a decision.");
-    }
-
-    async Task<DurableWorkflowNodeResult> ReportAsync(DurableWorkflowNodeContext context, CancellationToken ct)
-    {
         var assessed = await ReadStoredAsync<AssessDetail>(WorkflowStepKind.FanOut, ct).ConfigureAwait(false) ?? new AssessDetail([], [], 0);
         var editorNotes = await ReadStoredAsync<List<string>>(WorkflowStepKind.Loop, ct).ConfigureAwait(false) ?? [];
         var notes = await _process.Notes.ContextAsync(_runId.Value, ct).ConfigureAwait(false);

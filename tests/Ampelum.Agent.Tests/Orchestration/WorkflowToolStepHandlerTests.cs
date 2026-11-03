@@ -66,6 +66,7 @@ public sealed class WorkflowToolStepHandlerTests
         var result = await handler.HandleAsync(context, TestContext.Current.CancellationToken);
 
         result.Succeeded.ShouldBeFalse();
+        result.Waiting.ShouldBeTrue();
         dispatcher.InvokedToolName.ShouldBeNull();
     }
 

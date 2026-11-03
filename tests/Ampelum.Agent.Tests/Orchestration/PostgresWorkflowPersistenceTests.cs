@@ -162,6 +162,35 @@ public sealed class PostgresWorkflowPersistenceTests : IAsyncDisposable
         retryAudit.Concat(cancellationAudit).Concat(failureAudit).Select(x => x.Sequence).Distinct().Count().ShouldBe(retryAudit.Count + cancellationAudit.Count + failureAudit.Count);
     }
 
+    [Fact]
+    public async Task WaitingNodeAndDecision_SurviveRecreatedPersistenceAndRuntime()
+    {
+        var request = ApprovalPauseResumeTests.ApprovalRequest(Track("postgres-approval-" + Guid.NewGuid().ToString("N")));
+        var seen = new List<string>();
+        var ct = TestContext.Current.CancellationToken;
+        var first = CreateStore();
+        (await new DurableWorkflowRuntime(first, first).RunAsync(request, ApprovalPauseResumeTests.Record(seen), ct)).Status
+            .ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
+
+        var second = CreateStore();
+        var stored = await second.LoadAsync(request.ExecutionId, ct);
+        stored.ShouldNotBeNull().Status.ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
+        stored.Nodes["approve"].Status.ShouldBe(DurableWorkflowNodeStatus.Waiting);
+        await new DurableWorkflowRuntime(second, second).DecideAsync(request.ExecutionId, "approve", true, "maria", "ok", ct);
+
+        var third = CreateStore();
+        (await third.LoadAsync(request.ExecutionId, ct))!.Nodes["approve"].Decision.ShouldBe(new DurableWorkflowDecision(true, "maria", "ok"));
+        var finished = await new DurableWorkflowRuntime(third, third).ResumeAsync(request, ApprovalPauseResumeTests.Record(seen), ct);
+
+        finished.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
+        seen.ShouldBe(["other", "after"]);
+        (await third.QueryAuditAsync(request.ExecutionId, ct)).Select(x => x.EventType).ShouldBe(
+        [
+            "execution.started", "node.waiting", "node.started", "node.succeeded", "execution.awaiting_confirmation",
+            "node.approved", "node.started", "node.succeeded", "execution.succeeded",
+        ]);
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_prefixes.Count == 0) return;

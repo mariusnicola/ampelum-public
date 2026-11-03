@@ -61,7 +61,7 @@ There are two MCP paths on purpose. `Ampelum.Mcp` is a thin `AIFunction` bridge 
 
 ## Durable workflows
 
-`DurableWorkflowRuntime` executes declarative workflow definitions with checkpointed state, so a run can survive a restart. Step types come from `WorkflowStepKind`. The runtime dispatches `Sequential`, `Branch`, `Loop`, `Tool`, `FanOut` and `Join`. `WaitForSignal`, `Evaluate`, `EmitEvent` and `Compensate` are rejected at validation. `Approval` and `Wait` are accepted but have no pause behavior. See Known limits in the [root README](../README.md).
+`DurableWorkflowRuntime` executes declarative workflow definitions with checkpointed state, so a run can survive a restart. Step types come from `WorkflowStepKind`. The runtime dispatches `Sequential`, `Branch`, `Loop`, `Tool`, `FanOut` and `Join`. `WaitForSignal`, `Evaluate`, `EmitEvent` and `Compensate` are rejected at validation. `Approval` steps pause the execution until `DecideAsync` approves or rejects them, and a handler can return `DurableWorkflowNodeResult.Wait` to pause any step the same way. `Wait` is accepted and runs through the handler. See Known limits in the [root README](../README.md).
 
 - Persistence is `SqliteWorkflowPersistence`, `PostgresWorkflowPersistence` from `Ampelum.Agent.Postgres`, or the in-memory `InMemoryWorkflowStateStore` for tests.
 - `Ampelum.Agent.Yaml` compiles YAML definitions with `WorkflowYamlCompiler`.

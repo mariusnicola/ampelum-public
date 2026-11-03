@@ -173,6 +173,36 @@ public sealed class SqliteWorkflowPersistenceTests : IDisposable
         (await store.LoadAsync(request.ExecutionId, TestContext.Current.CancellationToken))!.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
     }
 
+    [Fact]
+    public async Task WaitingNodeAndDecision_SurviveRecreatedPersistenceAndRuntime()
+    {
+        var path = DatabasePath();
+        var request = ApprovalPauseResumeTests.ApprovalRequest("sqlite-approval");
+        var seen = new List<string>();
+        var ct = TestContext.Current.CancellationToken;
+        var first = new SqliteWorkflowPersistence(path);
+        (await new DurableWorkflowRuntime(first, first).RunAsync(request, ApprovalPauseResumeTests.Record(seen), ct)).Status
+            .ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
+
+        var second = new SqliteWorkflowPersistence(path);
+        var stored = await second.LoadAsync(request.ExecutionId, ct);
+        stored.ShouldNotBeNull().Status.ShouldBe(WorkflowExecutionStatus.AwaitingConfirmation);
+        stored.Nodes["approve"].Status.ShouldBe(DurableWorkflowNodeStatus.Waiting);
+        await new DurableWorkflowRuntime(second, second).DecideAsync(request.ExecutionId, "approve", true, "maria", "ok", ct);
+
+        var third = new SqliteWorkflowPersistence(path);
+        (await third.LoadAsync(request.ExecutionId, ct))!.Nodes["approve"].Decision.ShouldBe(new DurableWorkflowDecision(true, "maria", "ok"));
+        var finished = await new DurableWorkflowRuntime(third, third).ResumeAsync(request, ApprovalPauseResumeTests.Record(seen), ct);
+
+        finished.Status.ShouldBe(WorkflowExecutionStatus.Succeeded);
+        seen.ShouldBe(["other", "after"]);
+        (await third.QueryAuditAsync(request.ExecutionId, ct)).Select(x => x.EventType).ShouldBe(
+        [
+            "execution.started", "node.waiting", "node.started", "node.succeeded", "execution.awaiting_confirmation",
+            "node.approved", "node.started", "node.succeeded", "execution.succeeded",
+        ]);
+    }
+
     public void Dispose()
     {
         SqliteConnection.ClearAllPools();
