@@ -10,24 +10,30 @@ var programPath = Path.Combine(Path.GetTempPath(), $"prompt-tuning-{Guid.NewGuid
 try
 {
     IChatClient chat;
+    IChatClient proposer;
     if (useFake)
     {
         Console.WriteLine("[WARNING] --fake: scores come from scripted replies and are not real measurements.");
         chat = ScriptedChatClient.Create(await SentimentData.LoadAsync(datasetPath));
+        proposer = ScriptedProposerClient.Create();
     }
     else
     {
         chat = SampleConfig.Load().CreateChatClient();
+        proposer = chat;
     }
 
     using (chat)
+    using (ReferenceEquals(proposer, chat) ? null : proposer)
     {
         var pipeline = new PromptTuningPipeline(
-            chat, datasetPath, programPath, new JsonProgramPersistence(), new LabelMatch());
+            chat, proposer, datasetPath, programPath, new JsonProgramPersistence(), new LabelMatch());
         var result = await pipeline.RunAsync();
 
+        Console.WriteLine($"Optimizer seed:       {PromptTuningPipeline.OptimizerSeed}");
         Console.WriteLine($"Baseline instruction: {result.BaselineInstruction}");
         Console.WriteLine($"Tuned instruction:    {result.TunedInstruction}");
+        Console.WriteLine($"Tuned demos:          {result.TunedDemoCount}");
         Console.WriteLine();
         Console.WriteLine(result.ReportMarkdown);
         if (useFake)

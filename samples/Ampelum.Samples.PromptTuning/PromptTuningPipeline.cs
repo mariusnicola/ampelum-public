@@ -13,6 +13,7 @@ namespace Ampelum.Samples.PromptTuning;
 /// <param name="Tuned">Evaluation of the program loaded back from disk.</param>
 /// <param name="BaselineInstruction">Instruction the untuned program sends.</param>
 /// <param name="TunedInstruction">Instruction read back from the saved file.</param>
+/// <param name="TunedDemoCount">Demonstrations read back from the saved file for the classifier.</param>
 /// <param name="ProgramPath">Where the tuned program was saved.</param>
 /// <param name="ReportMarkdown">A/B comparison as markdown.</param>
 /// <param name="ReportJson">A/B comparison as JSON.</param>
@@ -21,23 +22,47 @@ public sealed record PromptTuningResult(
     EvaluationResult<SentimentSig> Tuned,
     string BaselineInstruction,
     string TunedInstruction,
+    int TunedDemoCount,
     string ProgramPath,
     string ReportMarkdown,
     string ReportJson);
 
 /// <summary>Measures a prompt on labeled data, tunes it, saves it, reloads it and measures again.</summary>
+/// <param name="chat">Chat client the classifier runs on.</param>
+/// <param name="proposer">Chat client that writes the dataset summary and the instruction proposals.</param>
+/// <param name="datasetPath">Labeled JSONL file.</param>
+/// <param name="programPath">Where the tuned program is saved.</param>
+/// <param name="persistence">Saves and loads the tuned program.</param>
+/// <param name="metric">Scores a prediction against its label.</param>
 public sealed class PromptTuningPipeline(
     IChatClient chat,
+    IChatClient proposer,
     string datasetPath,
     string programPath,
     IProgramPersistence persistence,
     LabelMatch metric)
 {
-    // The scripted fake client replays exactly this call sequence, so these stay at one.
-    const int Rounds = 1;
-    const int CandidatesPerSubmodule = 1;
-    // Demos would add training rows to the prompt; this sample tunes the instruction only.
-    const int BootstrappedDemos = 0;
+    /// <summary>Seed of every random choice MIPROv2 makes: shuffles, tips, search and minibatches.</summary>
+    public const int OptimizerSeed = 17;
+
+    /// <summary>Search trials.</summary>
+    public const int NumTrials = 10;
+
+    /// <summary>Bootstrapped demo sets per submodule.</summary>
+    public const int NumDemoSets = 2;
+
+    /// <summary>Demos in each bootstrapped set.</summary>
+    public const int BootstrappedDemos = 2;
+
+    /// <summary>Instruction proposals per submodule.</summary>
+    public const int InstructionCandidates = 2;
+
+    /// <summary>Rows scored per trial.</summary>
+    public const int MinibatchSize = 4;
+
+    /// <summary>A full run over the dataset happens every this many trials, and at the last trial.</summary>
+    public const int FullEvalEvery = 4;
+
     // Fixed so the bootstrap interval in the report is reproducible.
     const int ReportSeed = 17;
 
@@ -60,9 +85,17 @@ public sealed class PromptTuningPipeline(
         var bound = untuned.Bind(context);
         var baseline = await MeasureAsync(bound, data, ct).ConfigureAwait(false);
 
-        // MiproV2 scores candidates through the runner; BootstrapFewShot alone would ignore the metric.
+        // MiproV2 scores every trial by running the program; the seed makes the search repeatable.
         var optimizer = new MiproV2<SentimentProgram>(
-            RunOneAsync, chat, Rounds, CandidatesPerSubmodule, BootstrappedDemos);
+            RunOneAsync,
+            proposer,
+            candidatesPerSubmodule: InstructionCandidates,
+            maxBootstrappedDemos: BootstrappedDemos,
+            numTrials: NumTrials,
+            numDemoSets: NumDemoSets,
+            minibatchSize: MinibatchSize,
+            fullEvalEvery: FullEvalEvery,
+            seed: OptimizerSeed);
         var tuned = await optimizer.CompileAsync(bound, trainset, metric, context, ct: ct).ConfigureAwait(false);
 
         await persistence.SaveAsync(tuned, programPath, ct).ConfigureAwait(false);
@@ -77,6 +110,7 @@ public sealed class PromptTuningPipeline(
             reloaded,
             baselineInstruction,
             loaded.InstructionOverrides.GetValueOrDefault(SentimentProgram.ClassifierName, baselineInstruction),
+            loaded.DemosBySubmodule.TryGetValue(SentimentProgram.ClassifierName, out var demos) ? demos.Count : 0,
             programPath,
             markdown,
             json);

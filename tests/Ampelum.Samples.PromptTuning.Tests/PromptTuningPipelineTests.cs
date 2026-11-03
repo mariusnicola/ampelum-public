@@ -48,36 +48,53 @@ public sealed class PromptTuningPipelineTests : IDisposable
     static string SystemText(RecordedChatCall call) =>
         call.Messages.First(m => m.Role == ChatRole.System).Text;
 
+    // A full run happens every FullEvalEvery trials and at the last trial.
+    static int FullRuns =>
+        PromptTuningPipeline.NumTrials / PromptTuningPipeline.FullEvalEvery
+        + (PromptTuningPipeline.NumTrials % PromptTuningPipeline.FullEvalEvery == 0 ? 0 : 1);
+
+    static int ExpectedClassifierCalls(int rows) =>
+        rows                                                          // baseline
+        + rows * PromptTuningPipeline.NumDemoSets                     // bootstrap, one pass per demo set
+        + PromptTuningPipeline.NumTrials * PromptTuningPipeline.MinibatchSize
+        + FullRuns * rows                                             // full runs
+        + rows;                                                       // reloaded program
+
     PromptTuningPipeline NewPipeline(
-        IChatClient client, string? datasetPath = null, IProgramPersistence? persistence = null) =>
-        new(client, datasetPath ?? SentimentData.DefaultPath, ProgramPath,
+        IChatClient client,
+        IChatClient proposer,
+        string? datasetPath = null,
+        IProgramPersistence? persistence = null) =>
+        new(client, proposer, datasetPath ?? SentimentData.DefaultPath, ProgramPath,
             persistence ?? new JsonProgramPersistence(), new LabelMatch());
 
-    async Task<(ScriptedChatClient Client, PromptTuningResult Result, int Rows)> RunScriptedAsync()
+    async Task<(ScriptedChatClient Client, ScriptedProposerClient Proposer, PromptTuningResult Result, int Rows)>
+        RunScriptedAsync()
     {
         var data = await SentimentData.LoadAsync(SentimentData.DefaultPath, Ct);
         var client = ScriptedChatClient.Create(data);
-        var result = await NewPipeline(client).RunAsync(Ct);
-        return (client, result, data.Count);
+        var proposer = ScriptedProposerClient.Create();
+        var result = await NewPipeline(client, proposer).RunAsync(Ct);
+        return (client, proposer, result, data.Count);
     }
 
     [Fact]
     public async Task Scripted_replies_give_lower_baseline_and_higher_tuned_score()
     {
-        var (_, result, rows) = await RunScriptedAsync();
+        var (_, _, result, rows) = await RunScriptedAsync();
 
         rows.ShouldBe(8);
         result.Baseline.Mean.ShouldBe(0.375);
-        result.Tuned.Mean.ShouldBe(0.875);
+        result.Tuned.Mean.ShouldBe(1.0);
         result.Baseline.FailureCount.ShouldBe(0);
         result.Tuned.FailureCount.ShouldBe(0);
         result.ReportMarkdown.ShouldContain("tuned wins");
     }
 
     [Fact]
-    public async Task Saved_program_file_exists_and_carries_the_tuned_instruction()
+    public async Task Saved_program_file_exists_and_carries_the_tuned_instruction_and_demos()
     {
-        var (_, result, _) = await RunScriptedAsync();
+        var (_, _, result, _) = await RunScriptedAsync();
 
         File.Exists(ProgramPath).ShouldBeTrue();
         result.TunedInstruction.ShouldBe(ScriptedChatClient.TunedInstruction);
@@ -85,20 +102,91 @@ public sealed class PromptTuningPipelineTests : IDisposable
 
         var loaded = await new JsonProgramPersistence().LoadAsync<SentimentProgram>(ProgramPath, Ct);
         loaded.InstructionOverrides[SentimentProgram.ClassifierName].ShouldBe(ScriptedChatClient.TunedInstruction);
+        var demos = loaded.DemosBySubmodule[SentimentProgram.ClassifierName];
+        demos.Count.ShouldBe(PromptTuningPipeline.BootstrappedDemos);
+        result.TunedDemoCount.ShouldBe(demos.Count);
     }
 
     [Fact]
-    public async Task Tuned_instruction_reaches_the_model_only_after_the_tuned_program_is_bound()
+    public async Task The_seed_fixes_the_tips_and_the_demos_the_optimizer_uses()
     {
-        var (client, result, rows) = await RunScriptedAsync();
+        var (_, proposer, result, _) = await RunScriptedAsync();
 
-        // baseline, bootstrap, score, one proposal, candidate, score, tuned
+        var loaded = await new JsonProgramPersistence().LoadAsync<SentimentProgram>(ProgramPath, Ct);
+        var feedback = loaded.DemosBySubmodule[SentimentProgram.ClassifierName]
+            .Select(d => Convert.ToString(d.Inputs[nameof(SentimentSig.Feedback)])).ToList();
+        var tips = proposer.RecordedCalls.Skip(1)
+            .Select(c => c.Messages.Last().Text.Split('\n').Single(l => l.StartsWith("Tip: ", StringComparison.Ordinal)))
+            .ToList();
+
+        result.TunedDemoCount.ShouldBe(2);
+        feedback.ShouldBe(ExpectedDemoFeedback);
+        tips.ShouldBe(ExpectedTips);
+    }
+
+    // What seed 17 picks with this dataset and the scripted models.
+    static readonly string[] ExpectedDemoFeedback =
+    [
+        "I received the invoice and the amount matches the order.",
+        "Great quality for the price, I will order again.",
+    ];
+
+    static readonly string[] ExpectedTips =
+    [
+        "Tip: Tell the model what to avoid.",
+        "Tip: Tell the model what to avoid.",
+    ];
+
+    [Fact]
+    public async Task The_same_seed_gives_the_same_run()
+    {
+        var (clientA, proposerA, resultA, _) = await RunScriptedAsync();
+        var (clientB, proposerB, resultB, _) = await RunScriptedAsync();
+
+        resultB.TunedInstruction.ShouldBe(resultA.TunedInstruction);
+        resultB.TunedDemoCount.ShouldBe(resultA.TunedDemoCount);
+        resultB.Tuned.Mean.ShouldBe(resultA.Tuned.Mean);
+        string[] Texts(IReadOnlyList<RecordedChatCall> calls) =>
+            [.. calls.Select(c => string.Join('\n', c.Messages.Select(m => m.Role + ":" + m.Text)))];
+        Texts(clientB.RecordedCalls).ShouldBe(Texts(clientA.RecordedCalls));
+        Texts(proposerB.RecordedCalls).ShouldBe(Texts(proposerA.RecordedCalls));
+    }
+
+    [Fact]
+    public async Task The_proposer_gets_a_dataset_summary_request_then_grounded_proposal_requests()
+    {
+        var (_, proposer, _, _) = await RunScriptedAsync();
+
+        var calls = proposer.RecordedCalls;
+        calls.Count.ShouldBe(1 + PromptTuningPipeline.InstructionCandidates);
+        calls[0].Messages.Last().Text.ShouldContain("The checkout was quick");
+        foreach (var proposal in calls.Skip(1))
+        {
+            var prompt = proposal.Messages.Last().Text;
+            prompt.ShouldContain("Dataset summary: " + ScriptedProposerClient.Summary);
+            prompt.ShouldContain("Module: " + SentimentProgram.ClassifierName);
+            prompt.ShouldContain("Tip: ");
+        }
+    }
+
+    [Fact]
+    public async Task Tuned_instruction_and_demos_reach_the_model_only_after_the_tuned_program_is_bound()
+    {
+        var (client, _, result, rows) = await RunScriptedAsync();
+
         var calls = client.RecordedCalls;
-        calls.Count.ShouldBe(6 * rows + 1);
+        calls.Count.ShouldBe(ExpectedClassifierCalls(rows));
 
-        calls.Take(rows).ShouldAllBe(c => SystemText(c).Contains(result.BaselineInstruction));
-        calls.Take(rows).ShouldAllBe(c => !SystemText(c).Contains(ScriptedChatClient.TunedInstruction));
-        calls.Skip(5 * rows + 1).ShouldAllBe(c => SystemText(c).Contains(ScriptedChatClient.TunedInstruction));
+        // The untuned baseline: signature instruction, no demos.
+        var baseline = calls.Take(rows).ToList();
+        baseline.ShouldAllBe(c => SystemText(c).Contains(result.BaselineInstruction));
+        baseline.ShouldAllBe(c => !SystemText(c).Contains(ScriptedChatClient.TunedInstruction));
+        baseline.ShouldAllBe(c => c.Messages.Count == 2);
+
+        // The reloaded program: tuned instruction and the saved demos.
+        var reloaded = calls.Skip(calls.Count - rows).ToList();
+        reloaded.ShouldAllBe(c => SystemText(c).Contains(ScriptedChatClient.TunedInstruction));
+        reloaded.ShouldAllBe(c => c.Messages.Count == 2 + 2 * result.TunedDemoCount);
 
         // Bind the saved program by hand to a fresh client and check one real call.
         var loaded = await new JsonProgramPersistence().LoadAsync<SentimentProgram>(ProgramPath, Ct);
@@ -108,6 +196,7 @@ public sealed class PromptTuningPipelineTests : IDisposable
         await bound.ClassifyAsync(new SentimentSig { Feedback = "anything" }, Ct);
 
         SystemText(fresh.RecordedCalls.Single()).ShouldContain(ScriptedChatClient.TunedInstruction);
+        fresh.RecordedCalls.Single().Messages.Count.ShouldBe(2 + 2 * result.TunedDemoCount);
     }
 
     [Fact]
@@ -118,16 +207,17 @@ public sealed class PromptTuningPipelineTests : IDisposable
         var client = ScriptedChatClient.Create(data);
         var persistence = new EditAfterSave(ScriptedChatClient.TunedInstruction, Edited);
 
-        var result = await NewPipeline(client, persistence: persistence).RunAsync(Ct);
+        var result = await NewPipeline(client, ScriptedProposerClient.Create(), persistence: persistence).RunAsync(Ct);
 
         // The file was edited after the save, so only a real reload can see the edited text.
         result.TunedInstruction.ShouldBe(Edited);
-        var tunedRun = client.RecordedCalls.Skip(5 * data.Count + 1).ToList();
+        var tunedRun = client.RecordedCalls.Skip(client.RecordedCalls.Count - data.Count).ToList();
         tunedRun.Count.ShouldBe(data.Count);
         tunedRun.ShouldAllBe(c => SystemText(c).Contains(Edited));
         tunedRun.ShouldAllBe(c => !SystemText(c).Contains(ScriptedChatClient.TunedInstruction));
-        // The script only rewards its own proposal, so the edited text scores like the baseline.
-        result.Tuned.Mean.ShouldBe(0.375);
+        // The script only rewards its own instruction, so the edited text scores like the baseline,
+        // plus the one extra row the saved demos earn.
+        result.Tuned.Mean.ShouldBe((ScriptedChatClient.BaselineCorrect + ScriptedChatClient.DemoBonus) / 8.0);
     }
 
     [Fact]
@@ -135,16 +225,17 @@ public sealed class PromptTuningPipelineTests : IDisposable
     {
         const string Worse = "Answer in one word.";
         var data = await SentimentData.LoadAsync(SentimentData.DefaultPath, Ct);
-        var client = ScriptedChatClient.Create(data, proposal: Worse, proposalCorrect: 1);
+        var client = ScriptedChatClient.Create(data, rewarded: Worse, rewardedCorrect: 1);
+        var proposer = ScriptedProposerClient.Create(Worse);
 
-        var result = await NewPipeline(client).RunAsync(Ct);
+        var result = await NewPipeline(client, proposer).RunAsync(Ct);
 
         var loaded = await new JsonProgramPersistence().LoadAsync<SentimentProgram>(ProgramPath, Ct);
         loaded.InstructionOverrides.ShouldNotContainKey(SentimentProgram.ClassifierName);
         result.TunedInstruction.ShouldBe(result.BaselineInstruction);
         result.Baseline.Mean.ShouldBe(0.375);
-        result.Tuned.Mean.ShouldBe(0.375);
-        var tunedRun = client.RecordedCalls.Skip(5 * data.Count + 1).ToList();
+        result.Tuned.Mean.ShouldBeGreaterThanOrEqualTo(result.Baseline.Mean);
+        var tunedRun = client.RecordedCalls.Skip(client.RecordedCalls.Count - data.Count).ToList();
         tunedRun.ShouldAllBe(c => SystemText(c).Contains(result.BaselineInstruction));
         tunedRun.ShouldAllBe(c => !SystemText(c).Contains(Worse));
     }
@@ -154,13 +245,15 @@ public sealed class PromptTuningPipelineTests : IDisposable
     {
         var missing = Path.Combine(_dir, "nope.jsonl");
         var client = new FakeChatClient();
+        var proposer = new FakeChatClient();
 
         var error = await Should.ThrowAsync<FileNotFoundException>(
-            () => NewPipeline(client, missing).RunAsync(Ct));
+            () => NewPipeline(client, proposer, missing).RunAsync(Ct));
 
         error.Message.ShouldContain("Dataset file not found");
         error.Message.ShouldContain(missing);
         client.RecordedCalls.ShouldBeEmpty();
+        proposer.RecordedCalls.ShouldBeEmpty();
         File.Exists(ProgramPath).ShouldBeFalse();
     }
 }

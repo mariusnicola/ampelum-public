@@ -5,58 +5,70 @@ using SignalGrid.Ampelum.Testing;
 namespace Ampelum.Samples.PromptTuning;
 
 /// <summary>
-/// A scripted <see cref="IChatClient"/> for <see cref="PromptTuningPipeline"/>. Each reply is chosen
-/// from the prompt it receives: a classification call gets the right label for the first
-/// N dataset rows, where N depends on whether the proposed instruction is in the system text.
-/// A call that is not about a dataset row is the instruction proposal and gets the proposed text.
-/// The scores it produces come from this script, not from any model.
+/// A scripted classifier <see cref="IChatClient"/> for <see cref="PromptTuningPipeline"/>. Every call
+/// is a classification of one dataset row. The reply is the right label for the first N rows and a
+/// wrong label for the rest, where N depends on the instruction in the system text and on whether
+/// the prompt carries demonstrations. The scores it produces come from this script, not from any model.
 /// </summary>
 public sealed class ScriptedChatClient : IChatClient
 {
-    /// <summary>Rows answered correctly when the proposed instruction is absent.</summary>
+    /// <summary>Rows answered correctly with the signature's own instruction.</summary>
     public const int BaselineCorrect = 3;
 
-    /// <summary>Rows answered correctly when the default proposed instruction is present.</summary>
+    /// <summary>Rows answered correctly when <see cref="TunedInstruction"/> is in the system text.</summary>
     public const int TunedCorrect = 7;
 
-    /// <summary>Instruction the scripted proposer returns by default.</summary>
+    /// <summary>Rows answered correctly when <see cref="WeakInstruction"/> is in the system text.</summary>
+    public const int WeakCorrect = 1;
+
+    /// <summary>Extra rows answered correctly when the prompt carries at least one demonstration.</summary>
+    public const int DemoBonus = 1;
+
+    /// <summary>Instruction the scripted classifier rewards by default.</summary>
     public const string TunedInstruction =
         "Read the customer feedback and answer with exactly one label: positive, negative or neutral. " +
         "Judge the overall tone, and treat a complaint inside otherwise polite text as negative.";
 
+    /// <summary>Instruction the scripted classifier punishes.</summary>
+    public const string WeakInstruction = "Answer in one word.";
+
     readonly FakeChatClient _inner = new();
     readonly IReadOnlyList<LabeledExample<SentimentSig>> _data;
     readonly List<string> _labels;
-    readonly string _proposal;
-    readonly int _proposalCorrect;
+    readonly string _rewarded;
+    readonly int _rewardedCorrect;
     readonly int _baselineCorrect;
     readonly object _gate = new();
 
     ScriptedChatClient(
         IReadOnlyList<LabeledExample<SentimentSig>> data,
-        string proposal,
-        int proposalCorrect,
+        string rewarded,
+        int rewardedCorrect,
         int baselineCorrect)
     {
         _data = data;
-        _proposal = proposal;
-        _proposalCorrect = proposalCorrect;
+        _rewarded = rewarded;
+        _rewardedCorrect = rewardedCorrect;
         _baselineCorrect = baselineCorrect;
         _labels = data.Select(e => e.Expected.Sentiment).Distinct().Order().ToList();
     }
 
     /// <summary>Creates the client. Rows after the first N get a wrong label.</summary>
+    /// <param name="data">The labeled rows the pipeline classifies.</param>
+    /// <param name="rewarded">Instruction that earns <paramref name="rewardedCorrect"/> right answers.</param>
+    /// <param name="rewardedCorrect">Right answers when <paramref name="rewarded"/> is in the system text.</param>
+    /// <param name="baselineCorrect">Right answers when it is not.</param>
     public static ScriptedChatClient Create(
         IReadOnlyList<LabeledExample<SentimentSig>> data,
-        string proposal = TunedInstruction,
-        int proposalCorrect = TunedCorrect,
+        string rewarded = TunedInstruction,
+        int rewardedCorrect = TunedCorrect,
         int baselineCorrect = BaselineCorrect)
     {
         ArgumentNullException.ThrowIfNull(data);
-        ArgumentException.ThrowIfNullOrWhiteSpace(proposal);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(proposalCorrect, data.Count);
+        ArgumentException.ThrowIfNullOrWhiteSpace(rewarded);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(rewardedCorrect, data.Count);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(baselineCorrect, data.Count);
-        return new ScriptedChatClient(data, proposal, proposalCorrect, baselineCorrect);
+        return new ScriptedChatClient(data, rewarded, rewardedCorrect, baselineCorrect);
     }
 
     /// <summary>Every call the pipeline made, in order.</summary>
@@ -96,12 +108,17 @@ public sealed class ScriptedChatClient : IChatClient
         for (var i = 0; i < _data.Count && row < 0; i++)
             if (user.Contains(_data[i].Inputs.Feedback, StringComparison.Ordinal))
                 row = i;
-
         if (row < 0)
-            return _proposal;
+            throw new InvalidOperationException("The scripted client only answers dataset rows.");
 
         var system = messages.FirstOrDefault(m => m.Role == ChatRole.System)?.Text ?? "";
-        var correct = system.Contains(_proposal, StringComparison.Ordinal) ? _proposalCorrect : _baselineCorrect;
+        var correct = system.Contains(_rewarded, StringComparison.Ordinal) ? _rewardedCorrect
+            : system.Contains(WeakInstruction, StringComparison.Ordinal) ? WeakCorrect
+            : _baselineCorrect;
+        // The adapter sends one system message, then a user and an assistant message per demo, then the row.
+        if (messages.Count > 2)
+            correct = Math.Min(correct + DemoBonus, _data.Count);
+
         var right = _data[row].Expected.Sentiment;
         var label = row < correct ? right : _labels.First(l => l != right);
         return new ChatAdapter().FormatResponse(

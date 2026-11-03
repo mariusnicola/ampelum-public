@@ -1,4 +1,11 @@
 ﻿#nullable enable
+*REMOVED*Ampelum.Optimizers.MiproV2<TProgram>.MiproV2(System.Func<TProgram!, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! instructionProposerClient, int maxRounds = 3, int candidatesPerSubmodule = 3, int maxBootstrappedDemos = 4) -> void
+Ampelum.Optimizers.MiproV2<TProgram>.MiproV2(System.Func<TProgram!, Ampelum.Example!, Ampelum.AmpelumContext!, System.Threading.CancellationToken, System.Threading.Tasks.Task<Ampelum.Example!>!>! programRunner, Microsoft.Extensions.AI.IChatClient! instructionProposerClient, int maxRounds = 3, int candidatesPerSubmodule = 3, int maxBootstrappedDemos = 4, int? numTrials = null, int numDemoSets = 3, int minibatchSize = 25, int fullEvalEvery = 5, int seed = 0, System.Collections.Generic.IReadOnlyList<Ampelum.Example!>? valset = null) -> void
+Ampelum.Optimizers.MiproV2<TProgram>.NumTrials.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.NumDemoSets.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.MinibatchSize.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.FullEvalEvery.get -> int
+Ampelum.Optimizers.MiproV2<TProgram>.Seed.get -> int
 Ampelum.AmpelumContext.WithoutHook<THook>() -> Ampelum.AmpelumContext!
 [AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage
 [AMPELUM_V09_PREVIEW]Ampelum.Agents.AgentMessage.<Clone>$() -> Ampelum.Agents.AgentMessage!

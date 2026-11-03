@@ -26,29 +26,6 @@ public sealed class CoverageCloseTests
         opt.MaxBootstrappedDemos.ShouldBe(9);
     }
 
-    // â”€â”€ MIPROv2 candidateScore > bestScore branch (lines 106/107) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    [Fact]
-    public async Task MiproV2_BetterCandidate_OverridesBest()
-    {
-        // Phase-1 bootstrap path uses no-op runner producing nothing useful;
-        // first ScoreAsync returns 0 (initial bestScore == 0).
-        // Phase-2 round produces a candidate; metric returns 1.0, so candidateScore > 0.
-        var proposer = new FakeChatClient();
-        proposer.EnqueueText("Better instruction.");
-
-        var opt = new MiproV2<FakeProg>(
-            (_, ex, _, _) => Task.FromResult(ex),
-            proposer, maxRounds: 1, candidatesPerSubmodule: 1);
-
-        var result = await opt.CompileAsync(
-            new FakeProg(), MakeTrainset(1),
-            new IncreasingMetric(),
-            TestHelpers.MakeContext(),
-            null, TestContext.Current.CancellationToken);
-
-        result.Score.ShouldNotBeNull();
-    }
-
     // â”€â”€ BootstrapFewShotWithRandomSearch property getters (24, 27) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     [Fact]
     public void BfsRandomSearch_PropertyGetters_ReturnCtorValues()
@@ -296,19 +273,6 @@ public sealed class CoverageCloseTests
     sealed class TrueMetric : IMetric
     {
         public double Score(object actual, object expected, SignatureMetadata signature) => 1.0;
-    }
-
-    /// <summary>Returns 0 on first call, 1.0 thereafter â€” exercises the
-    /// candidateScore &gt; bestScore branch of MIPROv2.</summary>
-    sealed class IncreasingMetric : IMetric
-    {
-        int _calls;
-        public double Score(object actual, object expected, SignatureMetadata signature) =>
-            ++_calls switch
-            {
-                <= 1 => 0.0,
-                _ => 1.0,
-            };
     }
 
     sealed class FakeEmbedder : IEmbeddingGenerator<string, Embedding<float>>

@@ -1,19 +1,68 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using Microsoft.Extensions.AI;
+using SignalGrid.Ampelum.Exceptions;
+using SignalGrid.Ampelum.Hooks;
 
 namespace SignalGrid.Ampelum.Optimizers;
 
+/// <summary>Fixed tips the instruction proposer is nudged with; one is picked per proposal by the seeded RNG.</summary>
+internal static class MiproV2Tips
+{
+    internal static readonly string[] All =
+    [
+        "Be concise and direct.",
+        "State the expected output format exactly.",
+        "Say how to handle ambiguous or borderline inputs.",
+        "Tell the model what to avoid.",
+        "Name the task and who the answer is for.",
+        "Ask the model to check the edge cases before it answers.",
+    ];
+}
+
 /// <summary>
-/// Simplified MIPROv2 â€” combines BootstrapFewShot demo capture with COPRO-style instruction
-/// proposal in a multi-round loop. Each round runs <see cref="Copro{TProgram}"/> to propose
-/// candidate instruction overrides, scores the candidate against the trainset via
-/// <c>_programRunner</c>, and keeps the highest-scoring instruction set.
-/// Advanced Bayesian heuristics (numTrials, seed, maxLabeledDemos) are deferred to v0.5d.
+/// MIPROv2 prompt optimizer. It builds two pools of candidates per submodule and searches the
+/// combinations with a seeded Tree-structured Parzen Estimator.
+/// <list type="number">
+///   <item><description>
+///     Demo candidates: <c>numDemoSets</c> bootstrapped demo sets, each from
+///     <see cref="BootstrapFewShot{TProgram}"/> over a seed-shuffled trainset, plus the empty
+///     (zero-shot) set as candidate 0.
+///   </description></item>
+///   <item><description>
+///     Instruction candidates: the current instruction as candidate 0, plus
+///     <c>candidatesPerSubmodule</c> proposals. One proposer call first summarizes a sample of the
+///     trainset. Each proposal prompt carries that summary, the submodule name, one candidate demo
+///     set rendered as examples and one tip picked by the seeded RNG. Every proposer call runs
+///     through <see cref="Hooks.HookedLmCall"/> with a module name starting <c>MIPROv2.</c>.
+///   </description></item>
+///   <item><description>
+///     Search: each trial picks one instruction and one demo set per submodule. The first
+///     <c>max(1, numTrials / 5)</c> trials are random, the rest come from the TPE sampler. A trial
+///     is scored on a seeded random minibatch of the validation set.
+///   </description></item>
+///   <item><description>
+///     Full evaluation: every <c>fullEvalEvery</c> trials, and at the last trial, the combination
+///     with the best mean minibatch score is scored on the whole validation set. The returned
+///     program is the best full-evaluation combination.
+///   </description></item>
+/// </list>
+/// A runner or metric exception on one example scores 0 for that example and is counted (activity
+/// tag <c>optimizer.runner_errors</c> and the <c>RunnerErrors</c> extra of every progress report).
+/// Cancellation propagates. The same seed with a deterministic model gives the same result.
 /// </summary>
 /// <typeparam name="TProgram">The user program type.</typeparam>
 public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
     where TProgram : class
 {
+    const string SingleName = "__single__";
+    const int SummarySampleSize = 10;
+    const int DemoSalt = 1_000;
+    const int SummarySalt = 10;
+    const int TipSalt = 20;
+    const int TpeSalt = 30;
+    const int MinibatchSalt = 1_000_000;
+
     static readonly SignatureMetadata _placeholderMeta =
         new(typeof(object), "", [], []);
 
@@ -22,39 +71,82 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
     readonly int _maxRounds;
     readonly int _candidatesPerSubmodule;
     readonly int _maxBootstrappedDemos;
+    readonly int _numTrials;
+    readonly int _numDemoSets;
+    readonly int _minibatchSize;
+    readonly int _fullEvalEvery;
+    readonly int _seed;
+    readonly IReadOnlyList<Example>? _valset;
 
-    /// <summary>Maximum proposal rounds.</summary>
+    /// <summary>Search trials used when <c>numTrials</c> is not given.</summary>
     public int MaxRounds => _maxRounds;
 
-    /// <summary>Instruction candidates per submodule per round.</summary>
+    /// <summary>Instruction proposals per submodule (the current instruction is one more candidate).</summary>
     public int CandidatesPerSubmodule => _candidatesPerSubmodule;
 
-    /// <summary>Maximum bootstrapped demos per submodule.</summary>
+    /// <summary>Maximum bootstrapped demos per demo set.</summary>
     public int MaxBootstrappedDemos => _maxBootstrappedDemos;
+
+    /// <summary>Number of search trials.</summary>
+    public int NumTrials => _numTrials;
+
+    /// <summary>Number of bootstrapped demo sets per submodule (the empty set is one more candidate).</summary>
+    public int NumDemoSets => _numDemoSets;
+
+    /// <summary>Examples in each trial's minibatch.</summary>
+    public int MinibatchSize => _minibatchSize;
+
+    /// <summary>A full validation run happens every this many trials, and at the last trial.</summary>
+    public int FullEvalEvery => _fullEvalEvery;
+
+    /// <summary>Seed for every random choice: shuffles, tips, the sampler and the minibatches.</summary>
+    public int Seed => _seed;
 
     /// <summary>Construct a MIPROv2 optimizer.</summary>
     /// <param name="programRunner">Runs the program against an example, returning the produced outputs.</param>
-    /// <param name="instructionProposerClient">Chat client used by the inner COPRO step.</param>
-    /// <param name="maxRounds">Number of propose+score rounds.</param>
-    /// <param name="candidatesPerSubmodule">Instruction candidates per submodule each round.</param>
-    /// <param name="maxBootstrappedDemos">Bootstrap-phase demo cap per submodule.</param>
+    /// <param name="instructionProposerClient">Chat client that writes the dataset summary and the instruction proposals.</param>
+    /// <param name="maxRounds">Number of search trials when <paramref name="numTrials"/> is null.</param>
+    /// <param name="candidatesPerSubmodule">Instruction proposals per submodule.</param>
+    /// <param name="maxBootstrappedDemos">Demo cap per bootstrapped demo set.</param>
+    /// <param name="numTrials">Search trials. Default: the value of <paramref name="maxRounds"/>.</param>
+    /// <param name="numDemoSets">Bootstrapped demo sets per submodule. Default 3.</param>
+    /// <param name="minibatchSize">Examples scored per trial. Default 25; a smaller validation set is used whole.</param>
+    /// <param name="fullEvalEvery">Full validation run period in trials. Default 5.</param>
+    /// <param name="seed">Seed for every random choice. Default 0.</param>
+    /// <param name="valset">Validation set. Default: the trainset passed to <c>CompileAsync</c>.</param>
     public MiproV2(
         Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>> programRunner,
         IChatClient instructionProposerClient,
         int maxRounds = 3,
         int candidatesPerSubmodule = 3,
-        int maxBootstrappedDemos = 4)
+        int maxBootstrappedDemos = 4,
+        int? numTrials = null,
+        int numDemoSets = 3,
+        int minibatchSize = 25,
+        int fullEvalEvery = 5,
+        int seed = 0,
+        IReadOnlyList<Example>? valset = null)
     {
         ArgumentNullException.ThrowIfNull(programRunner);
         ArgumentNullException.ThrowIfNull(instructionProposerClient);
         ArgumentOutOfRangeException.ThrowIfLessThan(maxRounds, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(candidatesPerSubmodule, 1);
         ArgumentOutOfRangeException.ThrowIfNegative(maxBootstrappedDemos);
+        ArgumentOutOfRangeException.ThrowIfLessThan(numTrials ?? maxRounds, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(numDemoSets, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(minibatchSize, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fullEvalEvery, 1);
         _programRunner = programRunner;
         _proposerClient = instructionProposerClient;
         _maxRounds = maxRounds;
         _candidatesPerSubmodule = candidatesPerSubmodule;
         _maxBootstrappedDemos = maxBootstrappedDemos;
+        _numTrials = numTrials ?? maxRounds;
+        _numDemoSets = numDemoSets;
+        _minibatchSize = minibatchSize;
+        _fullEvalEvery = fullEvalEvery;
+        _seed = seed;
+        _valset = valset;
     }
 
     /// <inheritdoc />
@@ -79,46 +171,85 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
 
         var sw = Stopwatch.StartNew();
 
-        // Phase 1 â€” bootstrap demos via inner BootstrapFewShot.
-        // Adapt the user-supplied program runner to the BootstrapFewShot ProgramRunner shape
-        // (BootstrapFewShot uses the trace sink wired into the ctx, not the returned Example).
-        var bootstrapper = new BootstrapFewShot<TProgram>(
-            async (prog, ex, runCtx, runCt) =>
+        var names = (program is IComposedModule composed)
+            ? composed.Submodules.Keys.ToList()
+            : new List<string> { SingleName };
+        var valset = _valset ?? trainset;
+
+        var demoCandidates = await BuildDemoCandidatesAsync(
+            program, trainset, metric, context, names, ct).ConfigureAwait(false);
+        var instructionCandidates = await BuildInstructionCandidatesAsync(
+            trainset, context, names, demoCandidates, ct).ConfigureAwait(false);
+
+        // Parameter 2i is submodule i's instruction, parameter 2i+1 is its demo set.
+        var categories = new List<int>(names.Count * 2);
+        for (int i = 0; i < names.Count; i++)
+        {
+            categories.Add(instructionCandidates[i].Count);
+            categories.Add(demoCandidates[i].Count);
+        }
+
+        OptimizedProgram<TProgram> Build(int[] choice)
+        {
+            var demos = new Dictionary<string, IReadOnlyList<Example>>();
+            var instructions = new Dictionary<string, string>();
+            for (int i = 0; i < names.Count; i++)
             {
-                _ = await _programRunner(prog, ex, runCtx, runCt).ConfigureAwait(false);
-            },
-            maxBootstrappedDemos: _maxBootstrappedDemos);
-        var bootstrapped = await bootstrapper.CompileAsync(
-            program, trainset, metric, context, null, ct).ConfigureAwait(false);
+                if (choice[2 * i] > 0) instructions[names[i]] = instructionCandidates[i][choice[2 * i]]!;
+                var set = demoCandidates[i][choice[2 * i + 1]];
+                if (set.Count > 0) demos[names[i]] = set;
+            }
+            return new OptimizedProgram<TProgram>(program, demos, instructions)
+            {
+                TrainsetSize = trainset.Count,
+            };
+        }
 
-        var bestInstructions =
-            new Dictionary<string, string>(bootstrapped.InstructionOverrides);
-        double bestScore = await ScoreAsync(bootstrapped, trainset, metric, context, ct).ConfigureAwait(false);
+        var scorer = new Scorer(_programRunner, metric, context);
+        var sampler = new TpeSampler(categories, RandomTrials(_numTrials), Derive(_seed, TpeSalt));
+        var finished = new List<(int[] Choice, double Score)>();
+        var stats = new OrderedDictionary<string, ComboStat>();
+        int[]? fullChoice = null;
+        double fullScore = 0.0;
+        bool fullDone = false;
 
-        // Phase 2 â€” multi-round instruction proposal via COPRO; pick highest-scoring candidate.
-        // Forward the programRunner so COPRO actually executes candidates (rather than
-        // falling back to the degenerate self-comparison eval mode).
-        var copro = new Copro<TProgram>(_proposerClient, _candidatesPerSubmodule, _programRunner);
-        for (int round = 0; round < _maxRounds; round++)
+        for (int trial = 1; trial <= _numTrials; trial++)
         {
             ct.ThrowIfCancellationRequested();
 
-            var candidate = await copro.CompileAsync(
-                bootstrapped.Program, trainset, metric, context, null, ct).ConfigureAwait(false);
+            var choice = sampler.Suggest(finished);
+            var minibatch = Shuffle(valset, Derive(_seed, MinibatchSalt + trial)).Take(_minibatchSize).ToList();
+            double score = await scorer.ScoreAsync(Build(choice), minibatch, ct).ConfigureAwait(false);
+            finished.Add((choice, score));
 
-            double candidateScore = await ScoreAsync(candidate, trainset, metric, context, ct).ConfigureAwait(false);
+            var key = string.Join(',', choice);
+            if (!stats.TryGetValue(key, out var stat))
+                stats[key] = stat = new ComboStat(choice);
+            stat.Sum += score;
+            stat.Count++;
 
-            if (candidateScore > bestScore)
+            if (trial % _fullEvalEvery == 0 || trial == _numTrials)
             {
-                bestScore = candidateScore;
-                bestInstructions = new Dictionary<string, string>(candidate.InstructionOverrides);
+                var top = stats.GetAt(0).Value;
+                foreach (var candidate in stats.Values)
+                    if (candidate.Mean > top.Mean) top = candidate;
+
+                double full = await scorer.ScoreAsync(Build(top.Choice), valset, ct).ConfigureAwait(false);
+                if (!fullDone || full > fullScore)
+                {
+                    fullDone = true;
+                    fullScore = full;
+                    fullChoice = top.Choice;
+                }
             }
 
+            double reported = fullDone ? fullScore : stats.Values.Max(s => s.Mean);
             progress?.Report(new OptimizerProgress(
-                Phase: $"round {round + 1}/{_maxRounds}",
-                Step: round + 1,
-                TotalSteps: _maxRounds,
-                BestScore: bestScore));
+                Phase: "trial",
+                Step: trial,
+                TotalSteps: _numTrials,
+                BestScore: reported,
+                Extras: new Dictionary<string, object?> { ["RunnerErrors"] = scorer.Errors }));
         }
 
         sw.Stop();
@@ -126,34 +257,193 @@ public sealed class MiproV2<TProgram> : IOptimizer<TProgram>
             new KeyValuePair<string, object?>("optimizer.type", nameof(MiproV2<TProgram>)));
         Diagnostics.OptimizerCompileExamples.Record(trainset.Count,
             new KeyValuePair<string, object?>("optimizer.type", nameof(MiproV2<TProgram>)));
-        Diagnostics.OptimizerCompileScore.Record(bestScore,
+        Diagnostics.OptimizerCompileScore.Record(fullScore,
             new KeyValuePair<string, object?>("optimizer.type", nameof(MiproV2<TProgram>)));
 
-        activity?.SetTag("optimizer.final_score", bestScore);
+        activity?.SetTag("optimizer.final_score", fullScore);
+        activity?.SetTag("optimizer.runner_errors", scorer.Errors);
 
-        return bootstrapped with
-        {
-            InstructionOverrides = bestInstructions,
-            Score = bestScore,
-        };
+        return Build(fullChoice!) with { Score = fullScore };
     }
 
-    async Task<double> ScoreAsync(
-        OptimizedProgram<TProgram> optimized,
+    async Task<List<List<IReadOnlyList<Example>>>> BuildDemoCandidatesAsync(
+        TProgram program,
         IReadOnlyList<Example> trainset,
         IMetric metric,
-        AmpelumContext ctx,
+        AmpelumContext context,
+        List<string> names,
         CancellationToken ct)
     {
-        if (trainset.Count == 0) return 0.0;
-        var bound = optimized.Bind(ctx);
-        double sum = 0.0;
-        foreach (var ex in trainset)
+        // Candidate 0 of every submodule is the empty (zero-shot) set.
+        var candidates = names.Select(_ => new List<IReadOnlyList<Example>> { Array.Empty<Example>() }).ToList();
+
+        // BootstrapFewShot reads the trace sink wired into the context, not the returned Example.
+        var bootstrapper = new BootstrapFewShot<TProgram>(
+            async (prog, ex, runCtx, runCt) =>
+            {
+                _ = await _programRunner(prog, ex, runCtx, runCt).ConfigureAwait(false);
+            },
+            maxBootstrappedDemos: _maxBootstrappedDemos);
+
+        for (int d = 0; d < _numDemoSets; d++)
         {
-            ct.ThrowIfCancellationRequested();
-            var actual = await _programRunner(bound, ex, ctx, ct).ConfigureAwait(false);
-            sum += metric.Score(actual.Outputs, ex.Outputs, _placeholderMeta);
+            var shuffled = Shuffle(trainset, Derive(_seed, DemoSalt + d));
+            var set = await bootstrapper.CompileAsync(
+                program, shuffled, metric, context, null, ct).ConfigureAwait(false);
+            for (int i = 0; i < names.Count; i++)
+                candidates[i].Add(DemosFor(set, names[i]));
         }
-        return sum / trainset.Count;
+        return candidates;
+    }
+
+    async Task<List<List<string?>>> BuildInstructionCandidatesAsync(
+        IReadOnlyList<Example> trainset,
+        AmpelumContext context,
+        List<string> names,
+        List<List<IReadOnlyList<Example>>> demoCandidates,
+        CancellationToken ct)
+    {
+        var proposerContext = context with { Chat = _proposerClient };
+
+        var sample = Shuffle(trainset, Derive(_seed, SummarySalt)).Take(SummarySampleSize);
+        var summary = await ProposeAsync(
+            proposerContext,
+            "MIPROv2.SummarizeDataset",
+            "You summarize datasets for a prompt engineer. Reply with two or three sentences.",
+            "Describe what these examples have in common and what the task is:\n" + RenderExamples(sample),
+            "dataset summary",
+            ct).ConfigureAwait(false);
+
+        var tipRng = new Random(Derive(_seed, TipSalt));
+        // Candidate 0 of every submodule is its current instruction (null: no override).
+        var candidates = names.Select(_ => new List<string?> { null }).ToList();
+        for (int i = 0; i < names.Count; i++)
+        {
+            for (int c = 0; c < _candidatesPerSubmodule; c++)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                // Only bootstrapped sets (index 1 and up) are shown as examples.
+                var demoSet = demoCandidates[i][1 + (c % _numDemoSets)];
+                var tip = MiproV2Tips.All[tipRng.Next(MiproV2Tips.All.Length)];
+                var proposal = await ProposeAsync(
+                    proposerContext,
+                    "MIPROv2.ProposeInstruction",
+                    "You are a prompt engineer. Write one improved instruction for a language model module. " +
+                    "Reply with the instruction text only.",
+                    $"Dataset summary: {summary}\n" +
+                    $"Module: {names[i]}\n" +
+                    $"Examples:\n{RenderExamples(demoSet)}\n" +
+                    $"Tip: {tip}\n" +
+                    "Write the instruction.",
+                    $"instruction proposal for submodule '{names[i]}'",
+                    ct).ConfigureAwait(false);
+
+                if (proposal.Length > 0) candidates[i].Add(proposal);
+            }
+        }
+        return candidates;
+    }
+
+    static async Task<string> ProposeAsync(
+        AmpelumContext proposerContext,
+        string moduleName,
+        string system,
+        string user,
+        string what,
+        CancellationToken ct)
+    {
+        var messages = new List<ChatMessage>
+        {
+            new(ChatRole.System, system),
+            new(ChatRole.User, user),
+        };
+        try
+        {
+#pragma warning disable AMPELUM_V09_PREVIEW
+            var response = await HookedLmCall.InvokeAsync(
+                proposerContext, moduleName, messages, cancellationToken: ct).ConfigureAwait(false);
+#pragma warning restore AMPELUM_V09_PREVIEW
+            return response.Text?.Trim() ?? "";
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            throw new OptimizerException($"MIPROv2 proposer failed for {what}.", ex);
+        }
+    }
+
+    static IReadOnlyList<Example> DemosFor(OptimizedProgram<TProgram> set, string name)
+    {
+        if (set.DemosBySubmodule.TryGetValue(name, out var demos)) return demos;
+        // A program without named submodules gets whatever demo list the traces were filed under.
+        return name == SingleName
+            ? set.DemosBySubmodule.Values.FirstOrDefault() ?? []
+            : [];
+    }
+
+    static string RenderExamples(IEnumerable<Example> examples)
+    {
+        var lines = examples.Select(e => $"Input: {RenderFields(e.Inputs)} | Output: {RenderFields(e.Outputs)}").ToList();
+        return lines.Count == 0 ? "(none)" : string.Join('\n', lines);
+    }
+
+    static string RenderFields(IReadOnlyDictionary<string, object?> fields) =>
+        string.Join(", ", fields.Select(kv => $"{kv.Key}={Convert.ToString(kv.Value, CultureInfo.InvariantCulture)}"));
+
+    internal static int RandomTrials(int numTrials) => Math.Max(1, numTrials / 5);
+
+    static int Derive(int seed, int salt) => unchecked(seed * 7919 + salt);
+
+    internal static IReadOnlyList<Example> Shuffle(IReadOnlyList<Example> list, int seed)
+    {
+        var copy = new List<Example>(list);
+        var rng = new Random(seed);
+        for (int i = copy.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (copy[i], copy[j]) = (copy[j], copy[i]);
+        }
+        return copy;
+    }
+
+    sealed class ComboStat(int[] choice)
+    {
+        public int[] Choice { get; } = choice;
+        public double Sum;
+        public int Count;
+        public double Mean => Sum / Count;
+    }
+
+    sealed class Scorer(
+        Func<TProgram, Example, AmpelumContext, CancellationToken, Task<Example>> runner,
+        IMetric metric,
+        AmpelumContext context)
+    {
+        public int Errors { get; private set; }
+
+        public async Task<double> ScoreAsync(
+            OptimizedProgram<TProgram> optimized,
+            IReadOnlyList<Example> examples,
+            CancellationToken ct)
+        {
+            if (examples.Count == 0) return 0.0;
+            var bound = optimized.Bind(context);
+            double sum = 0.0;
+            foreach (var ex in examples)
+            {
+                ct.ThrowIfCancellationRequested();
+                try
+                {
+                    var actual = await runner(bound, ex, context, ct).ConfigureAwait(false);
+                    sum += metric.Score(actual.Outputs, ex.Outputs, _placeholderMeta);
+                }
+                catch (Exception e) when (e is not OperationCanceledException)
+                {
+                    Errors++;
+                }
+            }
+            return sum / examples.Count;
+        }
     }
 }
