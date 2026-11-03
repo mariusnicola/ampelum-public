@@ -14,7 +14,7 @@ namespace SignalGrid.Ampelum.Caching.Semantic;
 /// parsed outputs together with the same metadata for future replays (PSQ-2, v0.9g).
 /// </summary>
 /// <remarks>
-/// Order (51) is just after the PII redaction hook (50), so on a hit that hook's OnBefore has already
+/// Order (52) is just after the PII redaction hook (50) and the replay-mode audit hook (51), so on a hit that hook's OnBefore has already
 /// published the redacted inputs that <see cref="AuditHook"/> records; hooks ordered above 51 do not
 /// run their OnBefore on a hit. When the
 /// <c>HookMetadataKeys.AuditReplaying</c> flag is set, the hook bypasses the cache entirely
@@ -35,7 +35,8 @@ public sealed class SemanticCacheHook : IHook
     /// <inheritdoc/>
     // After PiiRedactionHook (50), so its before step still publishes the redacted inputs on a hit and
     // the audit entry holds them; its after step then runs after this one and cannot reach the stored outputs.
-    public int Order => 51;
+    // After the replay-mode AuditHook (51), which sets the replaying flag this hook checks.
+    public int Order => 52;
 
     /// <inheritdoc/>
     public ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct)

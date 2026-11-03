@@ -67,6 +67,33 @@ public sealed class SemanticCacheHookTests
     }
 
     [Fact]
+    public async Task Replay_ServesTheRecordedOutputs_WhateverOrderTheHooksWereRegisteredIn_AndLeavesTheCacheAlone()
+    {
+        var question = new Dictionary<string, object?> { ["Q"] = "what?" };
+        var sink = new InMemoryAuditSink();
+        var recording = Context(inputs: question);
+        recording.Outputs = Outputs("recorded");
+        await new AuditHook(sink).OnAfterAsync(recording, TestContext.Current.CancellationToken);
+
+        var cache = new InMemorySemanticCache();
+        var key = SemanticCacheKey.Compute("Predict", question);
+        cache.Set(key, new SemanticCacheEntry(Outputs("cached"), "m", 1, 2));
+
+        foreach (var cacheFirst in new[] { true, false })
+        {
+            IHook cacheHook = new SemanticCacheHook(cache);
+            IHook replay = new AuditHook(sink, replayMode: true);
+            var ctx = Context(inputs: question);
+
+            await RunAsync(cacheFirst ? [cacheHook, replay] : [replay, cacheHook], ctx,
+                _ => throw new InvalidOperationException("Replay must not call the model."));
+
+            ctx.Outputs!["A"].ShouldBe("recorded");
+            cache.TryGet(key)!.Outputs["A"].ShouldBe("cached");
+        }
+    }
+
+    [Fact]
     public async Task Miss_StoresTheOutputsAsTheModelAnswered_NotTheRedactedCopy()
     {
         var cache = new InMemorySemanticCache();

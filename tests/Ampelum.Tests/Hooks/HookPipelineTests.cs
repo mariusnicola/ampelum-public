@@ -57,6 +57,25 @@ public sealed class HookPipelineTests
     }
 
     [Fact]
+    public async Task HooksWithTheSameOrder_RunInRegistrationOrderBefore_AndTheReverseAfter()
+    {
+        var log = new List<string>();
+        var pipe = HookPipeline.GetOrCreate(new IHook[]
+        {
+            new RecordingHook(log, "first", order: 51),
+            new RecordingHook(log, "second", order: 51),
+            new RecordingHook(log, "third", order: 51),
+        });
+        await pipe.RunBeforeAsync(NewCtx(), TestContext.Current.CancellationToken);
+        await pipe.RunAfterAsync(NewCtx(), TestContext.Current.CancellationToken);
+        log.ShouldBe(new[]
+        {
+            "before:first", "before:second", "before:third",
+            "after:third", "after:second", "after:first",
+        });
+    }
+
+    [Fact]
     public async Task OnAfter_RunsDescendingByOrder()
     {
         var log = new List<string>();

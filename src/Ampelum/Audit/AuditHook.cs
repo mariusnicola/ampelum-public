@@ -53,6 +53,8 @@ public sealed class AuditHook : IHook
     public async ValueTask OnBeforeAsync(HookContext ctx, CancellationToken ct)
     {
         if (!_replayMode) return;
+        // Tells SemanticCacheHook (ordered just after this hook) to stay out of a replay.
+        ctx.Set(HookMetadataKeys.AuditReplaying, true);
         var index = await EnsureIndexAsync(ct);
         var key = MakeKey(ctx.ModuleName, PersistedInputs(ctx));
         AuditEntry entry;
