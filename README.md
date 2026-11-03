@@ -294,7 +294,6 @@ Written but not called by shipped code
 
 Audit and safety
 
-- `AuditHook` cannot continue an existing chain. It starts from the zero hash, so a second run on the same file breaks at sequence 1.
 - Replay of a question `PiiRedactionHook` changed fails with `AuditReplayMissingException`: entries are written from redacted inputs and the key is built from the original ones.
 - `AuditHook` records model id `unknown` and 0 tokens for `Predict` calls, because it reads a different metadata key from the one they set.
 - `SemanticCacheHook` stops the before-pass on a hit, so `PiiRedactionHook` never runs and the audit entry holds the original text.

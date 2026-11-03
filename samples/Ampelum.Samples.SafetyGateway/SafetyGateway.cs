@@ -55,9 +55,6 @@ public sealed class SafetyGateway : IAsyncDisposable
         var identity = await deps.Identity.VerifyAsync(jwt.Token, ct)
             ?? throw new UnauthorizedAccessException("The agent identity token is invalid or expired.");
         var options = deps.Options;
-        // The audit hook starts every chain from the zero hash, so appending to a used file would break the chain.
-        if (!deps.ReplayAudit && File.Exists(options.AuditPath) && new FileInfo(options.AuditPath).Length > 0)
-            throw new InvalidOperationException($"The audit file {options.AuditPath} already has entries; use a new file per run.");
         var moderationKey = await deps.Secrets.ResolveAsync(options.ModerationKeyAlias, identity.InstanceId, ct);
         var client = new HttpClient(deps.ModerationHandler, disposeHandler: false);
         var moderator = new AuditedModerator(new OpenAiModerator(client, moderationKey, options.ModerationEndpoint));

@@ -120,14 +120,21 @@ public sealed class AuditTests
     }
 
     [Fact]
-    public async Task AuditFileThatAlreadyHasEntries_IsNotAppendedTo()
+    public async Task AuditFileThatAlreadyHasEntries_IsContinuedByANewRun()
     {
         await using var first = await Harness.StartAsync();
         FakeScript.EnqueueAnswer(first.Chat, "One.", 10, 1);
+        FakeScript.EnqueueAnswer(first.Chat, "Two.", 10, 1);
         await first.Gateway.AskAsync("First?", Ct);
+        await first.Gateway.DisposeAsync();
 
-        var error = await Should.ThrowAsync<InvalidOperationException>(() => first.StartGatewayAsync());
+        await using var second = await first.StartGatewayAsync();
+        await second.AskAsync("Second?", Ct);
+        await second.DisposeAsync();
 
-        error.Message.ShouldContain("already has entries");
+        var entries = await first.AuditEntriesAsync();
+        entries.Select(e => e.Sequence).ShouldBe([0L, 1L]);
+        entries[1].PrevHash.ShouldBe(entries[0].EntryHash);
+        (await first.VerifyAuditFileAsync()).IsValid.ShouldBeTrue();
     }
 }

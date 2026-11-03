@@ -22,7 +22,7 @@ public sealed class AuditHook : IHook
     readonly bool _replayMode;
     readonly object _replayGate = new();
     readonly SemaphoreSlim _appendGate = new(1, 1);
-    byte[] _lastAppendedHash = AuditChainHasher.ZeroHash;
+    byte[]? _lastAppendedHash;
     Dictionary<string, Queue<AuditEntry>>? _replayIndex;
 
     /// <summary>Creates a new audit hook bound to <paramref name="sink"/>.</summary>
@@ -88,7 +88,8 @@ public sealed class AuditHook : IHook
         try
         {
             var seq = _sink.NextSequence;
-            var prev = seq == 0 ? AuditChainHasher.ZeroHash : _lastAppendedHash;
+            // A sink that already holds entries (a reopened file) continues from its last entry's hash.
+            var prev = seq == 0 ? AuditChainHasher.ZeroHash : _lastAppendedHash ??= await LastEntryHashAsync(ct);
             var entry = new AuditEntry
             {
                 SchemaVersion = 3,
@@ -117,6 +118,14 @@ public sealed class AuditHook : IHook
     /// <inheritdoc/>
     public ValueTask OnErrorAsync(HookContext ctx, Exception error, CancellationToken ct)
         => ValueTask.CompletedTask;
+
+    async ValueTask<byte[]> LastEntryHashAsync(CancellationToken ct)
+    {
+        var last = AuditChainHasher.ZeroHash;
+        await foreach (var e in _sink.EnumerateAsync(ct))
+            last = e.EntryHash;
+        return last;
+    }
 
     async ValueTask<Dictionary<string, Queue<AuditEntry>>> EnsureIndexAsync(CancellationToken ct)
     {

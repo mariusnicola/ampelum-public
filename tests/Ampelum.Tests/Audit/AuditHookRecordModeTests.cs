@@ -61,6 +61,39 @@ public sealed class AuditHookRecordModeTests
     }
 
     [Fact]
+    public async Task OnAfter_NewHookOnASinkWithEntries_ContinuesTheChain()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"ampelum-audit-{Guid.NewGuid():N}.jsonl");
+        try
+        {
+            for (var run = 0; run < 2; run++)
+            {
+                await using var sink = new JsonFileAuditSink(path);
+                var hook = new AuditHook(sink);
+                for (var i = 0; i < 2; i++)
+                {
+                    var ctx = new HookContext
+                    {
+                        ModuleName = "M",
+                        Inputs = new Dictionary<string, object?> { ["q"] = $"run {run} call {i}" },
+                    };
+                    ctx.Outputs = new Dictionary<string, object?> { ["a"] = "ok" };
+                    await hook.OnAfterAsync(ctx, TestContext.Current.CancellationToken);
+                }
+            }
+
+            await using var reread = new JsonFileAuditSink(path);
+            reread.NextSequence.ShouldBe(4L);
+            var verdict = await AuditChainVerifier.VerifyAsync(reread, TestContext.Current.CancellationToken);
+            verdict.IsValid.ShouldBeTrue(verdict.Reason);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
     public async Task OnAfter_MissingModelId_FallsBackToUnknown()
     {
         var sink = new InMemoryAuditSink();
