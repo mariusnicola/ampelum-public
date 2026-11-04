@@ -29,7 +29,11 @@ public sealed class TaskAgentTests : IDisposable
         _fake.EnqueueStreamingChunks("hello");
         using var agent = new TaskAgent(_ctx, "system", null);
         await agent.StartAsync("do something", TestContext.Current.CancellationToken);
-        agent.Status.ShouldBe(AgentStatus.Running);
+
+        // The loop runs in the background and may already have moved on, so check the transition StartAsync
+        // records before the loop starts, not the status at an arbitrary later moment.
+        agent.Events.TryRead(out var first).ShouldBeTrue();
+        first.ShouldBe(new StatusEvent(AgentStatus.Running, "Starting"));
     }
 
     [Fact]
