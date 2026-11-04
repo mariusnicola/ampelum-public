@@ -3,7 +3,11 @@ using System.Text.Json;
 using Ampelum.Samples.Shared;
 using Ampelum.Samples.TracedPipeline;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging.Abstractions;
 using Shouldly;
+using SignalGrid.Ampelum;
+using SignalGrid.Ampelum.Exceptions;
+using SignalGrid.Ampelum.Optimizers;
 using SignalGrid.Ampelum.Testing;
 using Xunit;
 
@@ -102,6 +106,28 @@ public sealed class TracedPipelineTests : IDisposable
         MeanOf(result, "InferRules").ShouldBe(6 / 8.0);
         result.Variants.ShouldAllBe(v => v.Evaluation.FailureCount == 0);
         result.ComparisonMarkdown.ShouldContain("| Copro | 8/8 | 1.000 |");
+    }
+
+    [Fact]
+    public async Task BootstrapFewShot_over_an_unbound_program_fails_naming_the_cause_instead_of_returning_no_demos()
+    {
+        var data = await SentimentData.LoadAsync(SentimentData.DefaultPath, Ct);
+        var plain = new AmpelumContext(
+            ScriptedChatClient.Create(data), new ChatAdapter(), NullTraceSink.Instance, NullLoggerFactory.Instance);
+        var trainset = data.Take(3).Select(row => Example.From(row.Expected)).ToList();
+        // The program is never bound, so its Predict has no context and every run throws.
+        var optimizer = new BootstrapFewShot<SentimentProgram>(async (program, example, context, ct) =>
+        {
+            var prediction = await program.ClassifyAsync(
+                new SentimentSig { Feedback = Convert.ToString(example.Inputs[nameof(SentimentSig.Feedback)])! }, ct);
+            context.TraceSink.Write(prediction.Trace);
+        });
+
+        var failure = await Should.ThrowAsync<OptimizerException>(() =>
+            optimizer.CompileAsync(new SentimentProgram(), trainset, new LabelMatch(), plain, ct: Ct));
+
+        failure.Message.ShouldStartWith("BootstrapFewShot: the program runner failed on all 3 examples. First error: ");
+        failure.InnerException.ShouldNotBeNull();
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using SignalGrid.Ampelum.Exceptions;
 
 namespace SignalGrid.Ampelum.Optimizers;
 
@@ -71,6 +72,8 @@ public sealed class BootstrapFewShot<TProgram>(
         var sw = Stopwatch.StartNew();
 
         var partitions = new Dictionary<(string ModuleName, Type SigType), List<TraceRecord>>();
+        var failedRuns = 0;
+        Exception? firstError = null;
 
         for (int i = 0; i < trainset.Count; i++)
         {
@@ -88,10 +91,12 @@ public sealed class BootstrapFewShot<TProgram>(
             {
                 throw;
             }
-            catch
+            catch (Exception e)
             {
-                // Failed runs don't contribute demos â€” continue.
+                // A failed run contributes no demos and the others carry on; if all of them fail it is reported below.
                 runFailed = true;
+                failedRuns++;
+                firstError ??= e;
             }
 
             // The run is scored once; a run that passes keeps every trace of every submodule. A run whose
@@ -113,6 +118,13 @@ public sealed class BootstrapFewShot<TProgram>(
                 TotalSteps: trainset.Count,
                 BestScore: 0.0));
         }
+
+        // Some failed runs are tolerated, but a runner that fails on every example (a Predict with no bound context,
+        // say) would otherwise end as labeled demos with no sign of the cause.
+        if (failedRuns > 0 && failedRuns == trainset.Count)
+            throw new OptimizerException(
+                $"BootstrapFewShot: the program runner failed on all {trainset.Count} examples. First error: {firstError!.Message}",
+                firstError);
 
         var demosBySubmodule = new Dictionary<string, IReadOnlyList<Example>>();
 

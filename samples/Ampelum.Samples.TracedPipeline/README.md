@@ -41,6 +41,7 @@ Destinations, all required except the last:
   never reads `PhoenixCredentials`. The sample adds the OpenTelemetry SDK with an OTLP exporter and
   sets the endpoint and key there.
 - `BootstrapFewShot` never calls the metric. It only collects demos from the program's own traces.
+- `BootstrapFewShot` over a program that was never bound fails: its runner throws on every example, and `CompileAsync` throws an `OptimizerException` naming the count and the first error instead of returning labeled demos with no sign of the cause (`BootstrapFewShot_over_an_unbound_program_fails_naming_the_cause_instead_of_returning_no_demos`). The sample binds the program first.
 - `BootstrapFewShotWithRandomSearch` and `Copro` score a candidate against itself when no scoring runner
   is given, so every candidate gets 1.0. The sample always passes one.
 - Those optimizers hand the metric a placeholder `SignatureMetadata`. `LabelMatch` ignores it.

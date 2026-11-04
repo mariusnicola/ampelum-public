@@ -1,3 +1,4 @@
+using SignalGrid.Ampelum.Exceptions;
 using SignalGrid.Ampelum.Optimizers;
 using SignalGrid.Ampelum.Testing;
 using SignalGrid.Ampelum;
@@ -188,6 +189,40 @@ public class BootstrapFewShotTests
         IMetric metric = new LambdaMetric((_, _, _) => 1.0);
         var result = await opt.CompileAsync(new FakeProg(), trainset, metric, ctx, ct: TestContext.Current.CancellationToken);
         result.DemosBySubmodule.Keys.ShouldContain("qa");
+    }
+
+    [Fact]
+    public async Task BootstrapFewShot_RunnerThrowsOnEveryExample_FailsNamingTheCountAndTheFirstError()
+    {
+        var ctx = TestHelpers.MakeContext();
+        var calls = 0;
+        var opt = new BootstrapFewShot<FakeProg>(programRunner: (_, _, _, _) =>
+            throw new InvalidOperationException("no context bound " + ++calls));
+        IMetric metric = new LambdaMetric((_, _, _) => 1.0);
+
+        var failure = await Should.ThrowAsync<OptimizerException>(() =>
+            opt.CompileAsync(new FakeProg(), MakeTrainset(3), metric, ctx, ct: TestContext.Current.CancellationToken));
+
+        failure.Message.ShouldBe("BootstrapFewShot: the program runner failed on all 3 examples. First error: no context bound 1");
+        failure.InnerException.ShouldBeOfType<InvalidOperationException>().Message.ShouldBe("no context bound 1");
+        calls.ShouldBe(3);
+    }
+
+    [Fact]
+    public async Task BootstrapFewShot_RunnerThrowsOnSomeExamples_StillCompilesFromTheRest()
+    {
+        var ctx = TestHelpers.MakeContext();
+        var opt = new BootstrapFewShot<FakeProg>(programRunner: (_, ex, runCtx, _) =>
+        {
+            if (ex.Inputs["q"]?.ToString() == "q0") throw new InvalidOperationException("boom");
+            runCtx.TraceSink.Write(MakeTrace("qa", typeof(QaSig), ex.Inputs, ex.Outputs));
+            return Task.CompletedTask;
+        });
+        IMetric metric = new LambdaMetric((_, _, _) => 1.0);
+
+        var result = await opt.CompileAsync(new FakeProg(), MakeTrainset(3), metric, ctx, ct: TestContext.Current.CancellationToken);
+
+        result.DemosBySubmodule["qa"].Count.ShouldBe(2);
     }
 
     [Fact]

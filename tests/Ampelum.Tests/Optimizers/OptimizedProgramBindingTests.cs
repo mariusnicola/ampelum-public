@@ -93,6 +93,8 @@ public sealed class OptimizedProgramBindingTests
             Kit.RunAsync, new TextModel("a summary", Tuned),
             candidatesPerSubmodule: 1, numTrials: 6, numDemoSets: 1, minibatchSize: 4, fullEvalEvery: 2, seed: 0);
 
+        // The demo bootstrap runs the program as given, so a bare predict needs an ambient context to run in.
+        using var scope = AmpelumContext.Push(Kit.Context(model));
         var result = await optimizer.CompileAsync(
             Predict<KitSig>.FromAmbient(), examples, new AnswerMatch(), Kit.Context(model), ct: Ct);
 
