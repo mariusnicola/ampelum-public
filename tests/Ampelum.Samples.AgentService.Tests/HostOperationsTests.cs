@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
 using SignalGrid.Ampelum.Host.Contracts;
@@ -108,7 +109,7 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
-    public async Task KnownLimit_PromotedPromptIsNotAppliedToForward()
+    public async Task Forward_SendsThePromotedInstruction_AndReportsTheVersionUsed()
     {
         await using var service = await StartAsync();
         const string Sentinel = "SENTINEL-INSTRUCTION-7f3a";
@@ -118,9 +119,117 @@ public sealed class HostOperationsTests
 
         var response = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
 
-        // The forward endpoint only echoes a version id the caller sends; it never loads the active version.
-        response.PromptVersionId.ShouldBeNull();
+        response.PromptVersionId.ShouldBe(version.VersionId);
+        service.SentText(0).ShouldContain(Sentinel);
+    }
+
+    [Fact]
+    public async Task Forward_BeforeAnyPromotion_SendsTheModulesOwnInstruction_AndReportsNoVersion()
+    {
+        await using var service = await StartAsync();
+        const string Sentinel = "SENTINEL-INSTRUCTION-7f3a";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger(Sentinel), Ct);
+        service.EnqueueAnswer("first").EnqueueAnswer("second");
+
+        var before = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        var after = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+
+        before.PromptVersionId.ShouldBeNull();
         service.SentText(0).ShouldNotContain(Sentinel);
+        after.PromptVersionId.ShouldBe(version.VersionId);
+        service.SentText(1).ShouldContain(Sentinel);
+    }
+
+    [Fact]
+    public async Task Forward_UsesTheVersionPromotedLast()
+    {
+        await using var service = await StartAsync();
+        const string First = "SENTINEL-FIRST-91c2";
+        const string Second = "SENTINEL-SECOND-5be8";
+        var module = AgentServiceHost.ModuleName;
+        var one = await service.Client.CreatePromptVersionAsync(module, Challenger(First), Ct);
+        var two = await service.Client.CreatePromptVersionAsync(module, Challenger(Second, parent: one.VersionId), Ct);
+        service.EnqueueAnswer("a").EnqueueAnswer("b");
+
+        await service.Client.PromoteAsync(module, one.VersionId, Ct);
+        var viaOne = await service.Client.ForwardAsync(module, "q", Ct);
+        await service.Client.PromoteAsync(module, two.VersionId, Ct);
+        var viaTwo = await service.Client.ForwardAsync(module, "q", Ct);
+
+        viaOne.PromptVersionId.ShouldBe(one.VersionId);
+        service.SentText(0).ShouldContain(First);
+        viaTwo.PromptVersionId.ShouldBe(two.VersionId);
+        service.SentText(1).ShouldContain(Second);
+        service.SentText(1).ShouldNotContain(First);
+    }
+
+    static async Task<HttpResponseMessage> ForwardWithVersionAsync(ServiceFixture service, string versionId) =>
+        await service.Http.PostAsJsonAsync(
+            $"/modules/{AgentServiceHost.ModuleName}/forward",
+            new ForwardRequest(
+                new Dictionary<string, JsonElement> { ["Question"] = JsonSerializer.SerializeToElement("q") }, versionId),
+            AmpelumHostContractsJsonContext.Default.ForwardRequest, Ct);
+
+    [Fact]
+    public async Task Forward_WithAnExplicitVersionId_SendsThatVersionEvenWhenItIsNotPromoted()
+    {
+        await using var service = await StartAsync();
+        const string Sentinel = "SENTINEL-EXPLICIT-2d47";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger(Sentinel), Ct);
+        service.EnqueueAnswer("answer");
+
+        using var response = await ForwardWithVersionAsync(service, version.VersionId);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var body = (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ForwardResponse, Ct))!;
+        body.PromptVersionId.ShouldBe(version.VersionId);
+        service.SentText(0).ShouldContain(Sentinel);
+    }
+
+    [Fact]
+    public async Task Forward_AfterAVersionedCall_ASecondCallWithoutAVersionSendsTheModulesOwnInstruction()
+    {
+        await using var service = await StartAsync();
+        const string Sentinel = "SENTINEL-ONCE-6a10";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger(Sentinel), Ct);
+        service.EnqueueAnswer("one").EnqueueAnswer("two");
+
+        using var versioned = await ForwardWithVersionAsync(service, version.VersionId);
+        var plain = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "q", Ct);
+
+        service.SentText(0).ShouldContain(Sentinel);
+        plain.PromptVersionId.ShouldBeNull();
+        service.SentText(1).ShouldNotContain(Sentinel);
+    }
+
+    [Fact]
+    public async Task Forward_WhenThePromotedVersionsFileIsGone_Answers400ForwardCallFailed_AndCallsNoModel()
+    {
+        await using var service = await StartAsync();
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        File.Delete(Directory.GetFiles(Path.Combine(service.StorageDir, "prompts"), "*.json", SearchOption.AllDirectories).Single());
+
+        var failure = await Should.ThrowAsync<AgentServiceException>(
+            () => service.Client.ForwardAsync(AgentServiceHost.ModuleName, "q", Ct));
+
+        failure.Status.ShouldBe(HttpStatusCode.BadRequest);
+        failure.Error!.Message.ShouldStartWith("Forward call failed:");
+        service.Model.RecordedCalls.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Forward_WithAnUnknownVersionId_Answers404VersionNotFound_AndCallsNoModel()
+    {
+        await using var service = await StartAsync();
+
+        using var response = await ForwardWithVersionAsync(service, "v-missing");
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        var error = (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ErrorResponse, Ct))!;
+        error.Code.ShouldBe(ErrorCodes.VersionNotFound);
+        service.Model.RecordedCalls.ShouldBeEmpty();
     }
 
     [Fact]

@@ -84,19 +84,27 @@ try
     Console.WriteLine($"Replay:  {replayed.Outputs["Answer"].GetString()}"
         + (serviceModel is null ? "" : $" (model calls before {callsBeforeReplay}, after {serviceModel.RecordedCalls.Count})"));
 
-    // Prompt versions: a challenger is stored, promoted, and then reported as the active version.
+    // Prompt versions: a challenger is stored, promoted, reported as the active version, and the next forward call
+    // sends its instruction to the model and names the version it used.
+    const string Instruction = "Answer in one short sentence.";
     var challenger = await client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, new CreatePromptVersionRequest(
         new Dictionary<string, IReadOnlyList<DemoExample>>
         {
             ["default"] = [Example(Question, answerText)],
         },
-        new Dictionary<string, string> { ["default"] = "Answer in one short sentence." },
+        new Dictionary<string, string> { ["default"] = Instruction },
         Note: "sample"));
     var promoted = await client.PromoteAsync(AgentServiceHost.ModuleName, challenger.VersionId);
     var active = await client.GetActivePromptAsync(AgentServiceHost.ModuleName);
+    var callsBeforePrompted = serviceModel?.RecordedCalls.Count;
+    var prompted = await client.ForwardAsync(AgentServiceHost.ModuleName, Question);
+    // Only the scripted model can be asked what it was sent.
+    var instructionSent = serviceModel is null
+        || serviceModel.RecordedCalls[callsBeforePrompted!.Value].Messages.Any(m => (m.Text ?? "").Contains(Instruction));
     var promptsOk = promoted.ActiveVersionId == challenger.VersionId && active.VersionId == challenger.VersionId
-        && active.Status == PromptStatus.Active;
-    Console.WriteLine($"Prompts: {challenger.VersionId} promoted, active = {active.VersionId}, status {active.Status}");
+        && active.Status == PromptStatus.Active && prompted.PromptVersionId == challenger.VersionId && instructionSent;
+    Console.WriteLine($"Prompts: {challenger.VersionId} promoted, active = {active.VersionId}, status {active.Status}, "
+        + $"forward used {prompted.PromptVersionId}" + (serviceModel is null ? "" : $", instruction sent = {instructionSent}"));
 
     // Optimize is plumbing: the Host scores every run 1.0, so it collects the module's own answers and tunes nothing.
     var run = await client.StartOptimizeAsync(AgentServiceHost.ModuleName, new OptimizeRequest(

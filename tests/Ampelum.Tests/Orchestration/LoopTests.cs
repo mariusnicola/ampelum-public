@@ -56,7 +56,7 @@ public sealed class LoopTests
         }
     }
 
-    sealed class AlwaysBreak :IModule<TestSig, LoopPredicateResult<TestSig>>
+    sealed class AlwaysBreak : IModule<TestSig, LoopPredicateResult<TestSig>>
     {
         public Task<Prediction<LoopPredicateResult<TestSig>>> ForwardAsync(TestSig inputs, CancellationToken ct) =>
             Task.FromResult(Pred(new LoopPredicateResult<TestSig>(false, "break_immediate"), "pred"));
