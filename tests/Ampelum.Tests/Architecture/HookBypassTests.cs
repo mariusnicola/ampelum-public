@@ -30,6 +30,7 @@ public sealed partial class HookBypassTests
         ["src/Ampelum/Retrieval/Patterns/QueryRewriter.cs"] = 1,
         ["src/Ampelum/Retrieval/RagAdvisor.cs"] = 1,
         ["src/Ampelum.Agent/Skills/LlmSkillSelector.cs"] = 1,
+        ["src/Ampelum.Agent.Synthesis/ChatSynthesisInfrastructure.cs"] = 1,
     };
 
     [Fact]

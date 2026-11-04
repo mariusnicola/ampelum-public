@@ -1,12 +1,13 @@
 using System.Text.Json;
 using Microsoft.Extensions.AI;
-using SignalGrid.Ampelum.Agent.Synthesis;
+using SignalGrid.Ampelum.Hooks;
 
-namespace Ampelum.Samples.AgentRuntime;
+namespace SignalGrid.Ampelum.Agent.Synthesis;
 
 /// <summary>
-/// The synthesis package asks the host for this part: one model round trip with validate-and-retry, and a place
-/// to write versioned files. The package ships no implementation, so this is the sample's.
+/// <see cref="ISynthesisInfrastructure"/> on an <see cref="IChatClient"/>: one model round trip per attempt with
+/// validate-and-retry (the rejection reasons go back to the model), versioned files with the previous one moved
+/// to a <c>.history</c> folder, and a metrics sidecar next to each file.
 /// </summary>
 public sealed class ChatSynthesisInfrastructure(IChatClient chat, int maxAttempts = 3) : ISynthesisInfrastructure
 {
@@ -26,7 +27,12 @@ public sealed class ChatSynthesisInfrastructure(IChatClient chat, int maxAttempt
             var asked = errors.Count == 0
                 ? prompt
                 : $"{prompt}\n\nThe previous answer was rejected:\n- {string.Join("\n- ", errors)}\nAnswer again.";
-            var response = await chat.GetResponseAsync([new ChatMessage(ChatRole.User, asked)], cancellationToken: ct).ConfigureAwait(false);
+            ChatMessage[] messages = [new ChatMessage(ChatRole.User, asked)];
+            // With an ambient context the call runs that context's hooks (budget, audit, PII); without one there is no pipeline.
+            var ambient = AmpelumContext.Ambient;
+            var response = ambient is null
+                ? await chat.GetResponseAsync(messages, cancellationToken: ct).ConfigureAwait(false)
+                : await HookedLmCall.InvokeAsync(ambient with { Chat = chat }, "ChatSynthesisInfrastructure.Generate", messages, cancellationToken: ct).ConfigureAwait(false);
             content = StripFences(response.Text);
             errors = [.. validator(content)];
             if (errors.Count == 0)
