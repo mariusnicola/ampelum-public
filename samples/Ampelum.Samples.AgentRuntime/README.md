@@ -35,19 +35,21 @@ Tests: `dotnet test tests/Ampelum.Samples.AgentRuntime.Tests`. They need no key 
 
 ## What the coding sub-agent can reach on this machine
 
-Read from `src/Ampelum.Agent/Execution/SubAgentRunner.cs`. The runner has no shell. It starts no process, makes no network call and reads no environment variable; the file has no code for any of these. Its tools are `read_file`, `write_file`, `list_directory`, `glob` and `grep`, all plain .NET file calls. Its system prompt also names `edit_file`, `build` and `run_tests`, but none of them exists, so a call to one comes back as an error result and nothing runs. The sample's scripted sub-agent therefore runs no shell command, and no test can show a shell command leaving a directory because no command can be run.
+Read from `src/Ampelum.Agent/Execution/SubAgentRunner.cs`. The runner has no shell. It starts no process, makes no network call and reads no environment variable; the file has no code for any of these. Its tools are `read_file`, `write_file`, `list_directory`, `glob` and `grep`, all plain .NET file calls. Its system prompt lists exactly those tools; a call to any other name, such as `build`, comes back as an error result and nothing runs. The sample's scripted sub-agent therefore runs no shell command, and no test can show a shell command leaving a directory because no command can be run.
 
-Limits that do exist, each pinned by a `KnownLimit_...` test in `SubAgentTests.cs`:
+What the runner does, each pinned by a test in `SubAgentTests.cs`:
 
-- The working directory is a prefix and not a fence. A relative path is joined to it, an absolute path is used as given, and `..` is not checked. `write_file` can create or overwrite any file the process user may write, and create missing folders, outside the working directory (`KnownLimit_AbsolutePathWrite_LeavesTheWorkingDirectory`, `KnownLimit_DotDotPathWrite_LeavesTheWorkingDirectory`). The tests only write inside their own temp folder.
-- `read_file` and `grep` read any file the process user may read, outside the working directory too (`KnownLimit_ReadFileAndGrep_ReachFilesOutsideTheWorkingDirectory`). `list_directory` lists and `glob` searches folders outside it too (`KnownLimit_ListDirectory_ListsAFolderOutsideTheWorkingDirectory`, `KnownLimit_Glob_FindsFilesOutsideTheWorkingDirectory`). `write_file` with `append` goes through the same path rule and extends a file outside it (`KnownLimit_WriteFileAppend_ExtendsAFileOutsideTheWorkingDirectory`).
+- Every file tool resolves its path against the working directory and refuses one that lands outside it, whether it was given as an absolute path or with `..` (`AbsolutePathWrite_OutsideTheWorkingDirectory_IsRefused`, `DotDotPathWrite_OutsideTheWorkingDirectory_IsRefused`, `ReadFileAndGrep_OutsideTheWorkingDirectory_AreRefused`, `ListDirectory_OutsideTheWorkingDirectory_IsRefused`, `Glob_OutsideTheWorkingDirectory_IsRefused`, `WriteFileAppend_OutsideTheWorkingDirectory_IsRefused`). The check reads the path text; it does not follow symlinks or junctions. The tests only write inside their own temp folder.
+- The runner runs the tool calls a model makes, even on a plain client (`ARawClient_HasItsToolCallsRunByTheRunner`); a client that already invokes functions is used as it is.
+- The prompt lists the tools that exist (`NoShellOrBuildTool_AndThePromptNamesOnlyTheToolsThatExist`, `ToolCallToABuildTool_IsNotRunAndTheRunnerCarriesOn`).
+- A failed write is not listed in `FilesChanged` (`FailedWrite_IsNotListedAsAChangedFile`). `DONE:` is still the model's word; this is why the sample reads the file back.
+- `SubAgentTask.Tier` picks the client through the `clientForTier` argument of the runner. The fix asks for the capable tier, and on a live model that tier's model id is pinned (`TheFixAsksForTheCapableTier_AndRunsOnTheClientThatTierMapsTo`).
+
+Limits that remain:
+
 - No limit on file size, number of files or bytes written, and no deny list. Only the turn limit bounds a run.
-- The runner offers its tools but does not run the calls a model makes. The chat client it is given must do that. With a plain client, the calls are never run, nothing is written and the run can still end on `DONE:` (`KnownLimit_ChatClientWithoutToolInvocation_NeverRunsTheCallsAndStillReportsDone`). The sample wraps the client in `FunctionInvokingChatClient` for this reason (`IssueFixer.WithToolInvocation`).
-- The tools list does not match the prompt (`KnownLimit_NoShellOrBuildTool_ThePromptStillNamesBuildAndRunTests`, `KnownLimit_ToolCallToABuildTool_IsNotRunAndTheRunnerCarriesOn`).
-- A failed write is still listed in `FilesChanged` (`KnownLimit_FailedWrite_IsStillListedAsAChangedFile`), and paths are listed as the model spelled them, so the sample compares full paths. `DONE:` is the model's word; this is why the sample reads the file back.
 - The tool parameters have no defaults: a call that leaves out an optional one such as `offset` fails with "Function failed". The scripted calls send them as null.
 - The prompt's "Working directory:" line prints the task id, not the directory.
-- `SubAgentTask.Tier` is ignored by the runner; the sample picks the model by the client it passes.
 
 For a live model these file limits apply as they are. The sample gives it the extracted temp copy as the working directory and asks it to touch only `src/Pricing.cs`, which is a request and not a barrier.
 
@@ -65,7 +67,7 @@ For a live model these file limits apply as they are. The sample gives it the ex
 
 ## Limits of the library that this sample works around
 
-- `SubAgentRunner` (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`): no shell, no build or test tool though the prompt names them (`BuildSystemPrompt`), no containment of paths in `Resolve`, tool calls not run unless the client invokes functions, tool parameters without defaults, and the prompt line "Working directory" printing the task id. Details in the section above.
+- `SubAgentRunner` (`src/Ampelum.Agent/Execution/SubAgentRunner.cs`): no shell and no build or test tool, tool parameters without defaults, the prompt line "Working directory" printing the task id, and a path check that reads text and does not follow symlinks. Details in the section above.
 
 - `DurableWorkflowRuntime` pauses for `Approval` and `WaitForSignal` steps, and this sample uses only the first. `Wait` goes to the one shared handler like the other kinds, and the sample's handler returns success for it at once. `Loop` does have continue and max-iteration logic and `Join` has readiness logic, which the sample uses.
 - `PauseAsync` followed by `ResumeAsync` works on the same `DurableAgentRuntime` instance (`Pause_ThenResume_OnTheSameInstance_ReturnsToRunning_AndCanPauseAgain`), and the sample shows it. It also resumes the main run with a fresh instance, which restores the machine from the stored snapshot, as a restarted process would.

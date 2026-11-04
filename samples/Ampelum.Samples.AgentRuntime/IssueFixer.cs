@@ -38,19 +38,22 @@ public sealed class Pricing
         + "Use read_file to look at the file and write_file to save the whole file back. Touch no other file.";
 
     /// <summary>
-    /// The runner offers tools but never runs the calls a model makes; the chat client has to do that. This wraps the
-    /// client so the calls reach the runner's tools.
+    /// Runs the sub-agent in <paramref name="root"/> and checks the file it was asked to change. The fix asks for the
+    /// capable tier; <paramref name="clientForTier"/> maps a tier to a client, and without it <paramref name="client"/> serves every tier.
     /// </summary>
-    public static IChatClient WithToolInvocation(IChatClient inner) => new FunctionInvokingChatClient(inner);
-
-    /// <summary>Runs the sub-agent in <paramref name="root"/> and checks the file it was asked to change.</summary>
-    public static async Task<FixOutcome> FixAsync(string root, IChatClient client, int maxTurns = MaxTurns, CancellationToken ct = default, SessionBudgetMeter? budget = null)
+    public static async Task<FixOutcome> FixAsync(
+        string root,
+        IChatClient client,
+        int maxTurns = MaxTurns,
+        CancellationToken ct = default,
+        SessionBudgetMeter? budget = null,
+        Func<ModelTier, IChatClient>? clientForTier = null)
     {
         var target = Path.Combine(root, PricingFile.Replace('/', Path.DirectorySeparatorChar));
         var before = File.ReadAllText(target);
 
-        var runner = new SubAgentRunner(client, root, Guid.NewGuid().ToString("N"), maxTurns, budget);
-        var run = await runner.RunAsync(new SubAgentTask { Id = "fix-102", Description = Description }, ct).ConfigureAwait(false);
+        var runner = new SubAgentRunner(client, root, Guid.NewGuid().ToString("N"), maxTurns, budget, clientForTier);
+        var run = await runner.RunAsync(new SubAgentTask { Id = "fix-102", Description = Description, Tier = ModelTier.Capable }, ct).ConfigureAwait(false);
 
         var (passed, detail) = Check(run, target, before);
         return new FixOutcome(run, passed, detail);

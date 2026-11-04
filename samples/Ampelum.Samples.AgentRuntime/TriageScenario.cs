@@ -32,7 +32,8 @@ public static class TriageScenario
         TextWriter? log = null,
         TriagePolicy? policy = null,
         CancellationToken ct = default,
-        IChatClient? fixer = null)
+        IChatClient? fixer = null,
+        Func<ModelTier, IChatClient>? fixerForTier = null)
     {
         var root = DemoProject.Extract(Path.Combine(workDirectory, "project"));
         var state = Path.Combine(workDirectory, "state");
@@ -67,7 +68,7 @@ public static class TriageScenario
             FixOutcome? fix = null;
             if (fixer is not null && outcome.ReportPath is not null)
             {
-                fix = await IssueFixer.FixAsync(root, IssueFixer.WithToolInvocation(fixer), ct: ct, budget: second.Budget.Meter).ConfigureAwait(false);
+                fix = await IssueFixer.FixAsync(root, fixer, ct: ct, budget: second.Budget.Meter, clientForTier: fixerForTier).ConfigureAwait(false);
                 log?.WriteLine($"Sub-agent fix of #102: {(fix.Passed ? "[OK]" : "[FAILED]")} {fix.Detail}. Sub-agent summary: {fix.Run.Outcome}");
             }
             return new ScenarioResult(plan, runId, executionId, paused, outcome, fix, inProcess);

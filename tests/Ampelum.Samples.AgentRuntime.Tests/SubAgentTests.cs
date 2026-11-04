@@ -31,7 +31,7 @@ public sealed class SubAgentTests : IDisposable
         var budget = new ModelBudget(new SessionBudget { MaxCallCount = 1 });
         budget.TryReserve().ShouldBeTrue(); // the one call the session may make is already spent
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct, budget: budget.Meter);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct, budget: budget.Meter);
 
         fix.Passed.ShouldBeFalse();
         fix.Run.Outcome.ShouldBe("Session budget exhausted.");
@@ -48,7 +48,7 @@ public sealed class SubAgentTests : IDisposable
         var before = File.ReadAllText(Pricing);
         var model = new FakeFixerModel(FakeFixerModel.PricingFix());
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         before.ShouldNotContain("Math.Round");
         File.ReadAllText(Pricing).ShouldContain("Math.Round");
@@ -67,7 +67,7 @@ public sealed class SubAgentTests : IDisposable
         var before = File.ReadAllText(Pricing);
         var model = new FakeFixerModel([Read(IssueFixer.PricingFile), Say("DONE: fixed it, trust me.")]);
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         fix.Run.Success.ShouldBeTrue();
         File.ReadAllText(Pricing).ShouldBe(before);
@@ -81,7 +81,7 @@ public sealed class SubAgentTests : IDisposable
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeFixerModel([.. FakeFixerModel.PricingFix(), Say("DONE: this message must never be asked for.")]);
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         fix.Run.Success.ShouldBeTrue();
         fix.Run.Outcome.ShouldStartWith("ApplyDiscount now rounds");
@@ -96,7 +96,7 @@ public sealed class SubAgentTests : IDisposable
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeFixerModel(Enumerable.Range(0, 10).Select(_ => Say("Still looking at it.")));
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), maxTurns: 4, ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, maxTurns: 4, ct: ct);
 
         fix.Run.Success.ShouldBeFalse();
         fix.Run.Outcome.ShouldBe("Hit 4-turn limit.");
@@ -111,7 +111,7 @@ public sealed class SubAgentTests : IDisposable
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeFixerModel(Enumerable.Range(0, 20).Select(_ => Say("Thinking.")));
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         IssueFixer.MaxTurns.ShouldBe(6);
         fix.Run.Outcome.ShouldBe("Hit 6-turn limit.");
@@ -148,32 +148,35 @@ public sealed class SubAgentTests : IDisposable
     // The tests below pin what SubAgentRunner can reach. Every path they use sits inside this test's own temp folder.
 
     [Fact]
-    public async Task KnownLimit_AbsolutePathWrite_LeavesTheWorkingDirectory()
+    public async Task AbsolutePathWrite_OutsideTheWorkingDirectory_IsRefused()
     {
         var ct = TestContext.Current.CancellationToken;
         var outside = Path.Combine(_workspace.Directory, "outside", "absolute.txt");
         var model = new FakeFixerModel([Write(outside, "written outside the working directory"), Say("DONE: wrote.")]);
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         fix.Run.Success.ShouldBeTrue();
-        File.ReadAllText(outside).ShouldBe("written outside the working directory");
+        File.Exists(outside).ShouldBeFalse();
         Path.GetFullPath(outside).StartsWith(Path.GetFullPath(_workspace.Root), StringComparison.OrdinalIgnoreCase).ShouldBeFalse();
+        model.Prompts.ShouldContain(p => p.Contains("[result w] ERROR: path is outside the working directory"));
+        fix.Run.FilesChanged.ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task KnownLimit_DotDotPathWrite_LeavesTheWorkingDirectory()
+    public async Task DotDotPathWrite_OutsideTheWorkingDirectory_IsRefused()
     {
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeFixerModel([Write("../outside/dotdot.txt", "written through a parent segment"), Say("DONE: wrote.")]);
 
-        await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
-        File.ReadAllText(Path.Combine(_workspace.Directory, "outside", "dotdot.txt")).ShouldBe("written through a parent segment");
+        File.Exists(Path.Combine(_workspace.Directory, "outside", "dotdot.txt")).ShouldBeFalse();
+        Directory.Exists(Path.Combine(_workspace.Directory, "outside")).ShouldBeFalse();
     }
 
     [Fact]
-    public async Task KnownLimit_ReadFileAndGrep_ReachFilesOutsideTheWorkingDirectory()
+    public async Task ReadFileAndGrep_OutsideTheWorkingDirectory_AreRefused()
     {
         var ct = TestContext.Current.CancellationToken;
         var outside = Path.Combine(_workspace.Directory, "elsewhere");
@@ -187,14 +190,15 @@ public sealed class SubAgentTests : IDisposable
             Say("DONE: read."),
         ]);
 
-        await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
-        model.Prompts.ShouldContain(p => p.Contains("[result r] needle-outside-the-working-directory"));
-        model.Prompts.ShouldContain(p => p.Contains("[result g]") && p.Contains("note.txt:1:"));
+        model.Prompts.ShouldContain(p => p.Contains("[result r] ERROR: path is outside the working directory"));
+        model.Prompts.ShouldContain(p => p.Contains("[result g] ERROR: path is outside the working directory"));
+        model.Prompts.ShouldNotContain(p => p.Contains("[result r] needle-outside"));
     }
 
     [Fact]
-    public async Task KnownLimit_ListDirectory_ListsAFolderOutsideTheWorkingDirectory()
+    public async Task ListDirectory_OutsideTheWorkingDirectory_IsRefused()
     {
         var ct = TestContext.Current.CancellationToken;
         var outside = Path.Combine(_workspace.Directory, "listed");
@@ -206,13 +210,14 @@ public sealed class SubAgentTests : IDisposable
             Say("DONE: listed."),
         ]);
 
-        await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
-        model.Prompts.ShouldContain(p => p.Contains("[result l]") && p.Contains("listed-marker.txt"));
+        model.Prompts.ShouldContain(p => p.Contains("[result l] ERROR: path is outside the working directory"));
+        model.Prompts.ShouldNotContain(p => p.Contains("listed-marker.txt"));
     }
 
     [Fact]
-    public async Task KnownLimit_Glob_FindsFilesOutsideTheWorkingDirectory()
+    public async Task Glob_OutsideTheWorkingDirectory_IsRefused()
     {
         var ct = TestContext.Current.CancellationToken;
         var outside = Path.Combine(_workspace.Directory, "globbed");
@@ -224,13 +229,14 @@ public sealed class SubAgentTests : IDisposable
             Say("DONE: globbed."),
         ]);
 
-        await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
-        model.Prompts.ShouldContain(p => p.Contains("[result g]") && p.Contains("globbed-marker.txt"));
+        model.Prompts.ShouldContain(p => p.Contains("[result g] ERROR: path is outside the working directory"));
+        model.Prompts.ShouldNotContain(p => p.Contains("globbed-marker.txt"));
     }
 
     [Fact]
-    public async Task KnownLimit_WriteFileAppend_ExtendsAFileOutsideTheWorkingDirectory()
+    public async Task WriteFileAppend_OutsideTheWorkingDirectory_IsRefused()
     {
         var ct = TestContext.Current.CancellationToken;
         var outside = Path.Combine(_workspace.Directory, "appended.txt");
@@ -241,30 +247,31 @@ public sealed class SubAgentTests : IDisposable
             Say("DONE: appended."),
         ]);
 
-        await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
-        File.ReadAllText(outside).ShouldBe("first;second;");
+        File.ReadAllText(outside).ShouldBe("first;");
     }
 
     [Fact]
-    public async Task KnownLimit_NoShellOrBuildTool_ThePromptStillNamesBuildAndRunTests()
+    public async Task NoShellOrBuildTool_AndThePromptNamesOnlyTheToolsThatExist()
     {
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeFixerModel([Say("DONE: nothing to do.")]);
 
-        await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         model.ToolNames[0].ShouldBe(["read_file", "write_file", "list_directory", "glob", "grep"], ignoreOrder: true);
-        model.Prompts[0].ShouldContain("Tools: read_file, write_file, edit_file, list_directory, glob, grep, build, run_tests");
+        model.Prompts[0].ShouldContain("Tools: read_file, write_file, list_directory, glob, grep");
+        model.Prompts[0].ShouldNotContain("build");
     }
 
     [Fact]
-    public async Task KnownLimit_ToolCallToABuildTool_IsNotRunAndTheRunnerCarriesOn()
+    public async Task ToolCallToABuildTool_IsNotRunAndTheRunnerCarriesOn()
     {
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeFixerModel([FakeFixerModel.ToolCall("b", "build"), Say("DONE: gave up on the build.")]);
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         fix.Run.Success.ShouldBeTrue();
         model.Prompts.ShouldContain(p => p.Contains("[result b] Error"));
@@ -272,31 +279,50 @@ public sealed class SubAgentTests : IDisposable
     }
 
     [Fact]
-    public async Task KnownLimit_ChatClientWithoutToolInvocation_NeverRunsTheCallsAndStillReportsDone()
+    public async Task ARawClient_HasItsToolCallsRunByTheRunner()
     {
         var ct = TestContext.Current.CancellationToken;
-        var before = File.ReadAllText(Pricing);
         var model = new FakeFixerModel(FakeFixerModel.PricingFix());
 
-        // The raw client: the runner offers tools but does not execute the calls the model asks for.
+        // The client given is the raw scripted model; the runner runs the calls itself.
         var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         fix.Run.Success.ShouldBeTrue();
-        fix.Run.FilesChanged.ShouldBeEmpty();
-        File.ReadAllText(Pricing).ShouldBe(before);
-        fix.Passed.ShouldBeFalse();
+        fix.Run.FilesChanged.Select(Path.GetFullPath).ShouldBe([Pricing]);
+        File.ReadAllText(Pricing).ShouldContain("Math.Round");
+        fix.Passed.ShouldBeTrue(fix.Detail);
     }
 
     [Fact]
-    public async Task KnownLimit_FailedWrite_IsStillListedAsAChangedFile()
+    public async Task TheFixAsksForTheCapableTier_AndRunsOnTheClientThatTierMapsTo()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var fallback = new FakeFixerModel([Say("DONE: the wrong client ran.")]);
+        var capable = new FakeFixerModel(FakeFixerModel.PricingFix());
+        var asked = new List<ModelTier>();
+
+        var fix = await IssueFixer.FixAsync(_workspace.Root, fallback, ct: ct, clientForTier: tier =>
+        {
+            asked.Add(tier);
+            return capable;
+        });
+
+        asked.ShouldBe([ModelTier.Capable]);
+        fallback.Calls.ShouldBe(0);
+        capable.Calls.ShouldBe(3);
+        fix.Passed.ShouldBeTrue(fix.Detail);
+    }
+
+    [Fact]
+    public async Task FailedWrite_IsNotListedAsAChangedFile()
     {
         var ct = TestContext.Current.CancellationToken;
         var directoryAsFile = Path.Combine(_workspace.Root, "src");
         var model = new FakeFixerModel([Write(directoryAsFile, "cannot be written"), Say("DONE: tried.")]);
 
-        var fix = await IssueFixer.FixAsync(_workspace.Root, IssueFixer.WithToolInvocation(model), ct: ct);
+        var fix = await IssueFixer.FixAsync(_workspace.Root, model, ct: ct);
 
         model.Prompts.ShouldContain(p => p.Contains("[result w] ERROR:"));
-        fix.Run.FilesChanged.ShouldBe([directoryAsFile]);
+        fix.Run.FilesChanged.ShouldBeEmpty();
     }
 }

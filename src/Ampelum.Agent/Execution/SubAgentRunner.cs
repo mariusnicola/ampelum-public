@@ -20,20 +20,29 @@ public sealed class SubAgentRunner
     readonly string _sessionId;
     readonly int _maxTurns;
     readonly SessionBudgetMeter? _budget;
+    readonly Func<ModelTier, IChatClient>? _clientForTier;
 
+    // clientForTier picks the client for SubAgentTask.Tier; without it every task runs on chatClient.
     public SubAgentRunner(
         IChatClient chatClient,
         string workingDir,
         string sessionId,
         int maxTurns = DefaultMaxTurns,
-        SessionBudgetMeter? budget = null)
+        SessionBudgetMeter? budget = null,
+        Func<ModelTier, IChatClient>? clientForTier = null)
     {
         _budget = budget;
-        _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
+        _clientForTier = clientForTier;
+        _chatClient = WithToolInvocation(chatClient ?? throw new ArgumentNullException(nameof(chatClient)));
         _workingDir = workingDir ?? throw new ArgumentNullException(nameof(workingDir));
         _sessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
         _maxTurns = maxTurns > 0 ? maxTurns : DefaultMaxTurns;
     }
+
+    // The tool calls a model makes must be run by something. A client that already does (a FunctionInvokingChatClient
+    // anywhere in its stack) is used as it is, so no call is run twice.
+    static IChatClient WithToolInvocation(IChatClient client) =>
+        client.GetService<FunctionInvokingChatClient>() is null ? new FunctionInvokingChatClient(client) : client;
 
     /// <summary>Run a single subagent task. Returns a structured result.</summary>
     public async Task<SubAgentResult> RunAsync(SubAgentTask task, CancellationToken ct = default)
@@ -48,10 +57,11 @@ public sealed class SubAgentRunner
         if (_budget is not null && !_budget.TryReserveCall())
             return BudgetStop(task, filesChanged, warnings);
 
+        var client = _clientForTier is null ? _chatClient : WithToolInvocation(_clientForTier(task.Tier));
         var tools = BuildTools(filesChanged);
         var history = new List<ChatMessage>
         {
-            new(ChatRole.System, BuildSystemPrompt(task)),
+            new(ChatRole.System, BuildSystemPrompt(task, tools)),
         };
 
         var options = new ChatOptions { Tools = tools, ToolMode = ChatToolMode.Auto };
@@ -69,7 +79,7 @@ public sealed class SubAgentRunner
 
                 history.Add(new ChatMessage(ChatRole.User, userText));
 
-                var lmContext = ResolveContext();
+                var lmContext = ResolveContext(client);
                 var chatResponse = await HookedLmCall.InvokeAsync(lmContext, "SubAgentRunner.Turn", history, options, ct)
                     .ConfigureAwait(false);
                 _budget?.AddTokens((chatResponse.Usage?.InputTokenCount ?? 0) + (chatResponse.Usage?.OutputTokenCount ?? 0));
@@ -136,11 +146,11 @@ public sealed class SubAgentRunner
     // subagent's LM calls participate in the same hook pipeline; otherwise Hooks stays null and
     // HookedLmCall.InvokeAsync short-circuits to a plain _chatClient.GetResponseAsync call,
     // matching this method's pre-migration behavior exactly.
-    AmpelumContext ResolveContext()
+    AmpelumContext ResolveContext(IChatClient client)
     {
         var ambient = AmpelumContext.Ambient;
         return new AmpelumContext(
-            _chatClient,
+            client,
             ambient?.Adapter ?? new ChatAdapter(),
             ambient?.TraceSink ?? NullTraceSink.Instance,
             ambient?.LoggerFactory ?? NullLoggerFactory.Instance)
@@ -152,30 +162,39 @@ public sealed class SubAgentRunner
     static int FindDoneMarker(string text) =>
         text.LastIndexOf(CompletionMarker, StringComparison.Ordinal);
 
-    static string BuildSystemPrompt(SubAgentTask task) => $"""
+    static string BuildSystemPrompt(SubAgentTask task, List<AITool> tools) => $"""
 You are a coding subagent. Working directory: {task.Id}
 Task: {task.Description}
-Tools: read_file, write_file, edit_file, list_directory, glob, grep, build, run_tests
+Tools: {string.Join(", ", tools.Select(t => t.Name))}
 When your task is complete, end your final message with:
 DONE: <2-3 sentence summary of what you did and the outcome>
 """;
 
     List<AITool> BuildTools(HashSet<string> filesChanged)
     {
-        string Resolve(string path) =>
-            Path.IsPathRooted(path) ? path : Path.Combine(_workingDir, path);
-
-        void TrackFile(string path) => filesChanged.Add(Resolve(path));
+        // A path is the working directory's own or nothing: absolute paths and ".." are fine while they stay inside.
+        string Resolve(string path)
+        {
+            var root = Path.GetFullPath(_workingDir);
+            var full = Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(root, path));
+            var relative = Path.GetRelativePath(root, full);
+            if (Path.IsPathRooted(relative)
+                || relative == ".."
+                || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                || relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal))
+                throw new UnauthorizedAccessException($"path is outside the working directory: {path}");
+            return full;
+        }
 
         return
         [
             AIFunctionFactory.Create(
                 (string path, int? offset, int? limit) =>
                 {
-                    if (!File.Exists(Resolve(path)))
-                        return $"ERROR: File not found: {path}";
                     try
                     {
+                        if (!File.Exists(Resolve(path)))
+                            return $"ERROR: File not found: {path}";
                         var text = File.ReadAllText(Resolve(path));
                         if (offset.HasValue || limit.HasValue)
                         {
@@ -197,7 +216,6 @@ DONE: <2-3 sentence summary of what you did and the outcome>
             AIFunctionFactory.Create(
                 (string path, string content, bool? append) =>
                 {
-                    TrackFile(path);
                     try
                     {
                         var resolved = Resolve(path);
@@ -207,6 +225,7 @@ DONE: <2-3 sentence summary of what you did and the outcome>
                             File.AppendAllText(resolved, content);
                         else
                             File.WriteAllText(resolved, content);
+                        filesChanged.Add(resolved);
                         return $"OK: wrote {content.Length} bytes to {path}";
                     }
                     catch (Exception ex)

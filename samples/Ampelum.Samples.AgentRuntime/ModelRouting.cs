@@ -16,6 +16,14 @@ public sealed record ModelTiers(string Fast, string Balanced, string Capable, st
         Capable: config.Require("OPENROUTER_MODEL_1"),
         Provider: "openrouter");
 
+    /// <summary>The model id of one tier.</summary>
+    public string For(ModelTier tier) => tier switch
+    {
+        ModelTier.Fast => Fast,
+        ModelTier.Balanced => Balanced,
+        _ => Capable,
+    };
+
     /// <summary>Builds the router: task type rules come from the project policy, everything else gets the balanced tier.</summary>
     public IModelRouter CreateRouter(TriagePolicy policy) => new ConfiguredModelRouter(new ModelRoutingTable
     {

@@ -25,7 +25,9 @@ try
 {
     // The fix runs on the capable tier's model, outside the triage budget; its turn limit bounds it.
     IChatClient fixer = fake ? new FakeFixerModel(FakeFixerModel.PricingFix()) : new PinnedModelClient(chat, tiers.Capable);
-    var result = await TriageScenario.RunAsync(directory, chat, tiers, Console.Out, fixer: fixer);
+    var result = await TriageScenario.RunAsync(
+        directory, chat, tiers, Console.Out, fixer: fixer,
+        fixerForTier: fake ? null : tier => new PinnedModelClient(chat, tiers.For(tier)));
     return result.Outcome.Status == WorkflowExecutionStatus.Succeeded && result.Outcome.ReportPath is not null && result.Fix?.Passed == true ? 0 : 1;
 }
 finally
