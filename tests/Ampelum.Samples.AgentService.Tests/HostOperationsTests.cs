@@ -500,18 +500,55 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
-    public async Task KnownLimit_RebuildIndexForgetsWhichPromptVersionWasPromoted()
+    public async Task RebuildIndex_KeepsWhichPromptVersionWasPromoted_AndForwardStillUsesIt()
     {
         await using var service = await StartAsync();
-        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
+        const string Sentinel = "SENTINEL-REBUILD-2c8d";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger(Sentinel), Ct);
         await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
 
         await service.Client.RebuildIndexAsync(Ct);
 
-        // The promotion is only in the index, not in the file, so the rebuilt version is a challenger again.
-        (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().Status.ShouldBe(PromptStatus.Challenger);
-        var noActive = await Should.ThrowAsync<AgentServiceException>(() => service.Client.GetActivePromptAsync(AgentServiceHost.ModuleName, Ct));
-        noActive.Status.ShouldBe(HttpStatusCode.NotFound);
+        (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().Status.ShouldBe(PromptStatus.Active);
+        (await service.Client.GetActivePromptAsync(AgentServiceHost.ModuleName, Ct)).VersionId.ShouldBe(version.VersionId);
+        service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
+        var response = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+        response.PromptVersionId.ShouldBe(version.VersionId);
+        service.SentText(0).ShouldContain(Sentinel);
+    }
+
+    [Fact]
+    public async Task RebuildIndex_KeepsWhichPromptVersionWasPromoted_AndStreamStillUsesIt()
+    {
+        await using var service = await StartAsync();
+        const string Sentinel = "SENTINEL-REBUILD-STREAM-5a1f";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger(Sentinel), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+
+        await service.Client.RebuildIndexAsync(Ct);
+
+        service.EnqueueStreamingAnswer("Delivery takes 3 to 5 business days.");
+        var frames = await service.Client.StreamAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+        service.SentText(0).ShouldContain(Sentinel);
+        frames.Single(f => f.Event == "final").Data.GetProperty("promptVersionId").GetString().ShouldBe(version.VersionId);
+    }
+
+    [Fact]
+    public async Task RebuildIndex_KeepsThePreviousActiveVersionRetired()
+    {
+        await using var service = await StartAsync();
+        var first = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief.", note: "first"), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, first.VersionId, Ct);
+        var second = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be formal.", parent: first.VersionId), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, second.VersionId, Ct);
+
+        await service.Client.RebuildIndexAsync(Ct);
+
+        var versions = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions;
+        versions.Single(v => v.VersionId == first.VersionId).Status.ShouldBe(PromptStatus.Retired);
+        versions.Single(v => v.VersionId == first.VersionId).Note.ShouldBe("first");
+        versions.Single(v => v.VersionId == second.VersionId).Status.ShouldBe(PromptStatus.Active);
+        versions.Single(v => v.VersionId == second.VersionId).ParentVersionId.ShouldBe(first.VersionId);
     }
 
     [Fact]

@@ -92,6 +92,85 @@ public sealed class IndexRebuilderTests
         (await store.ListByModuleAsync("unknown", TestContext.Current.CancellationToken)).ShouldHaveSingleItem().VersionId.ShouldBe("v-top");
     }
 
+    static string WritePromptFileWithMeta(TempStorageFixture fix, string relativePath, string meta)
+    {
+        var path = Path.Combine(fix.PromptDir, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, $$$"""{"_meta":{{{meta}}},"demoAssignments":{},"instructionOverrides":{"default":"Be brief."}}""");
+        return path;
+    }
+
+    [Fact]
+    public async Task Rebuild_ReadsStatusModuleVersionParentAndNote_FromTheFilesMeta()
+    {
+        using var fix = new TempStorageFixture();
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "file-name.json"),
+            """{"versionId":"v-meta","moduleName":"modB","status":"active","createdAt":"2026-03-04T05:06:07+00:00","parentVersionId":"v-parent","note":"kept"}""");
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        var row = (await store.ListByModuleAsync("modB", TestContext.Current.CancellationToken)).ShouldHaveSingleItem();
+        row.VersionId.ShouldBe("v-meta");
+        row.Status.ShouldBe("active");
+        row.ParentVersionId.ShouldBe("v-parent");
+        row.Note.ShouldBe("kept");
+        row.CreatedAt.ShouldBe(new DateTimeOffset(2026, 3, 4, 5, 6, 7, TimeSpan.Zero));
+        (await store.GetActiveAsync("modB", TestContext.Current.CancellationToken))!.VersionId.ShouldBe("v-meta");
+        (await store.ListByModuleAsync("modA", TestContext.Current.CancellationToken)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Rebuild_AnOptimizerFile_IsListedUnderItsOwnModuleAndVersionId()
+    {
+        using var fix = new TempStorageFixture();
+        // The optimizer writes {module}-{versionId}.json straight into the prompt folder.
+        WritePromptFileWithMeta(fix, "modA-v-opt1.json",
+            """{"versionId":"v-opt1","moduleName":"modA","status":"challenger","createdAt":"2026-03-04T05:06:07+00:00","parentVersionId":null,"note":null}""");
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.ListByModuleAsync("modA", TestContext.Current.CancellationToken)).ShouldHaveSingleItem().VersionId.ShouldBe("v-opt1");
+        (await store.ListByModuleAsync("unknown", TestContext.Current.CancellationToken)).ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Rebuild_AFileWithoutMeta_FallsBackToItsFolderAndName_AsAChallenger()
+    {
+        using var fix = new TempStorageFixture();
+        WritePromptFile(fix, Path.Combine("modA", "v-old.json"), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        WritePromptFile(fix, Path.Combine("modA", "v-garbled.json"), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        File.WriteAllText(Path.Combine(fix.PromptDir, "modA", "v-garbled.json"), "{ not json");
+        var sut = MakeSut(fix);
+
+        var summary = await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        summary.PromptVersionsIndexed.ShouldBe(2);
+        var rows = await new PromptVersionStore(TestData.Factory(fix.Options)).ListByModuleAsync("modA", TestContext.Current.CancellationToken);
+        rows.Select(r => r.VersionId).ShouldBe(["v-garbled", "v-old"], ignoreOrder: true);
+        rows.ShouldAllBe(r => r.Status == "challenger");
+    }
+
+    [Fact]
+    public async Task Rebuild_TwoFilesClaimingActive_KeepsTheNewestAsActiveAndRetiresTheOther()
+    {
+        using var fix = new TempStorageFixture();
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "v-old.json"),
+            """{"versionId":"v-old","moduleName":"modA","status":"active","createdAt":"2026-01-01T00:00:00+00:00","parentVersionId":null,"note":null}""");
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "v-new.json"),
+            """{"versionId":"v-new","moduleName":"modA","status":"active","createdAt":"2026-02-01T00:00:00+00:00","parentVersionId":null,"note":null}""");
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.GetActiveAsync("modA", TestContext.Current.CancellationToken))!.VersionId.ShouldBe("v-new");
+        (await store.TryGetByIdAsync("v-old", TestContext.Current.CancellationToken))!.Status.ShouldBe("retired");
+    }
+
     [Fact]
     public async Task Rebuild_PromptVersions_CarryTheirFilesWriteTime_SoTheyKeepTheirOrder()
     {

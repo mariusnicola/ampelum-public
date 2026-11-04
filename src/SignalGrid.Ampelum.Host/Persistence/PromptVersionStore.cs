@@ -76,9 +76,10 @@ public sealed class PromptVersionStore : IPromptVersionStore
         using var cmd = conn.CreateCommand();
         cmd.CommandText = """
             INSERT INTO prompt_versions(version_id, module_name, status, created_at, parent_version_id, file_path, note)
-            VALUES(@vid, @mod, 'challenger', @cat, @pvid, @fp, @note);
+            VALUES(@vid, @mod, @status, @cat, @pvid, @fp, @note);
             """;
         cmd.Parameters.AddWithValue("@vid", row.VersionId);
+        cmd.Parameters.AddWithValue("@status", row.Status);
         cmd.Parameters.AddWithValue("@mod", row.ModuleName);
         cmd.Parameters.AddWithValue("@cat", row.CreatedAt.ToString("O"));
         cmd.Parameters.AddWithValue("@pvid", (object?)row.ParentVersionId ?? DBNull.Value);

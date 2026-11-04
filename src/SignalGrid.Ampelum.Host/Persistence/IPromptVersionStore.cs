@@ -18,7 +18,7 @@ public interface IPromptVersionStore
     /// <summary>Tries to get a prompt version by its ID; returns null if not found.</summary>
     ValueTask<PromptVersionRow?> TryGetByIdAsync(string versionId, CancellationToken ct);
 
-    /// <summary>Inserts a new challenger prompt version.</summary>
+    /// <summary>Inserts a prompt version with the status its row carries; a new version is a challenger.</summary>
     ValueTask InsertChallengerAsync(PromptVersionRow row, CancellationToken ct);
 
     /// <summary>

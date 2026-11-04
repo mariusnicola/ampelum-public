@@ -152,6 +152,14 @@ internal static class PromptsEndpoint
         var versionId = "v-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss-fff") + "-" + Guid.NewGuid().ToString("N")[..6];
         var promptDir = options.Value.Storage.PromptDir;
         var filePath = Path.Combine(promptDir, moduleName, $"{versionId}.json");
+        var row = new PromptVersionRow(
+            versionId,
+            moduleName,
+            PromptStatus.Challenger,
+            DateTimeOffset.UtcNow,
+            req.ParentVersionId,
+            filePath,
+            req.Note);
 
         try
         {
@@ -162,12 +170,14 @@ internal static class PromptsEndpoint
                 instructionOverrides = req.InstructionOverrides,
             };
             // Camel case, the names every reader of a prompt file expects (PromptVersionFileShape, RowToVersion).
-            var json = JsonSerializer.Serialize(promptContent, new JsonSerializerOptions
+            var node = JsonSerializer.SerializeToNode(promptContent, new JsonSerializerOptions
             {
                 WriteIndented = false,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            });
-            await File.WriteAllTextAsync(filePath, json, ct);
+            })!.AsObject();
+            // The file carries the version's own state so rebuild-index can restore it.
+            node["_meta"] = PromptVersionFileReader.MetaNode(row, PromptStatus.Challenger);
+            await PromptVersionFileReader.WriteNodeAsync(filePath, node, ct);
         }
         catch (Exception ex)
         {
@@ -176,15 +186,6 @@ internal static class PromptsEndpoint
                 $"Failed to write prompt file: {ex.Message}",
                 traceId);
         }
-
-        var row = new PromptVersionRow(
-            versionId,
-            moduleName,
-            PromptStatus.Challenger,
-            DateTimeOffset.UtcNow,
-            req.ParentVersionId,
-            filePath,
-            req.Note);
 
         await store.InsertChallengerAsync(row, ct);
 
@@ -261,6 +262,12 @@ internal static class PromptsEndpoint
                 ex.Message,
                 traceId);
         }
+
+        // The index is promoted first; the files follow so rebuild-index sees the same statuses.
+        await PromptVersionFileReader.WriteStatusAsync(versionRow, PromptStatus.Active, ct);
+        if (result.PreviousActiveVersionId is not null
+            && await store.TryGetByIdAsync(result.PreviousActiveVersionId, ct) is { } previous)
+            await PromptVersionFileReader.WriteStatusAsync(previous, PromptStatus.Retired, ct);
 
         var response = new PromoteResponse(moduleName, result.NewActiveVersionId, result.PreviousActiveVersionId);
         request.HttpContext.Response.Headers.Append("X-Ampelum-Trace-Id", traceId);

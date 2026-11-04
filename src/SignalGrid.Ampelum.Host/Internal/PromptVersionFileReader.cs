@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using SignalGrid.Ampelum.Host.Persistence;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -39,6 +41,37 @@ internal static class PromptVersionFileReader
             await JsonSerializer.SerializeAsync(fs, shape,
                 AmpelumHostJsonContext.Default.PromptVersionFileShape, ct);
         File.Move(tmp, path, overwrite: true);
+    }
+
+    /// <summary>The "_meta" block for a version: the same fields the optimizer writes.</summary>
+    public static JsonObject MetaNode(PromptVersionRow row, string status) => new()
+    {
+        ["versionId"] = row.VersionId,
+        ["moduleName"] = row.ModuleName,
+        ["status"] = status,
+        ["createdAt"] = JsonValue.Create(row.CreatedAt),
+        ["parentVersionId"] = row.ParentVersionId,
+        ["note"] = row.Note,
+    };
+
+    /// <summary>Writes the file by temp file and move, so a reader never sees half a file.</summary>
+    public static async ValueTask WriteNodeAsync(string path, JsonObject node, CancellationToken ct)
+    {
+        var tmp = path + ".tmp";
+        await File.WriteAllTextAsync(tmp, node.ToJsonString(), ct);
+        File.Move(tmp, path, overwrite: true);
+    }
+
+    /// <summary>
+    /// Records the version's status in its file's "_meta" block and leaves the rest of the file as it is.
+    /// A file that is gone is skipped.
+    /// </summary>
+    public static async ValueTask WriteStatusAsync(PromptVersionRow row, string status, CancellationToken ct)
+    {
+        if (!File.Exists(row.FilePath)) return;
+        var node = JsonNode.Parse(await File.ReadAllTextAsync(row.FilePath, ct))!.AsObject();
+        node["_meta"] = MetaNode(row, status);
+        await WriteNodeAsync(row.FilePath, node, ct);
     }
 
     /// <summary>
