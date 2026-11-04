@@ -20,21 +20,51 @@ public sealed class MessageCollectionConverter : JsonConverter<MessageCollection
     }
 }
 
+/// <summary>
+/// Reads an enum from its name (any case, with or without "-" or "_", so "input-required" is InputRequired) or from
+/// its number, and writes the number as before. A name that is not one of the enum's own fails.
+/// </summary>
+internal sealed class NameOrNumberEnumConverter<T> : JsonConverter<T> where T : struct, Enum
+{
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out var number))
+            return (T)Enum.ToObject(typeof(T), number);
+
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var name = reader.GetString()!.Replace("-", "", StringComparison.Ordinal).Replace("_", "", StringComparison.Ordinal);
+            if (Enum.TryParse<T>(name, ignoreCase: true, out var value) && Enum.IsDefined(value))
+                return value;
+        }
+
+        throw new JsonException($"'{reader.GetString() ?? reader.TokenType.ToString()}' is not a {typeof(T).Name}.");
+    }
+
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) =>
+        writer.WriteNumberValue(Convert.ToInt32(value));
+}
+
 /// <summary>JSON-RPC HTTP client for the A2A protocol (v1.0).</summary>
 public sealed class A2AClient : IDisposable
 {
     private readonly HttpClient _http;
+    private readonly bool _ownsHttp;
     private readonly JsonSerializerOptions _json;
 
+    /// <param name="http">
+    /// The HTTP client to use. A client passed in belongs to the caller and is not disposed by <see cref="Dispose"/>.
+    /// </param>
     public A2AClient(HttpClient? http = null)
     {
+        _ownsHttp = http is null;
         _http = http ?? new HttpClient();
         _json = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             WriteIndented = false,
-            Converters = { new MessageCollectionConverter() },
+            Converters = { new MessageCollectionConverter(), new NameOrNumberEnumConverter<TaskState>(), new NameOrNumberEnumConverter<MessageRole>() },
         };
     }
 
@@ -46,8 +76,20 @@ public sealed class A2AClient : IDisposable
         var cardUrl = baseUrl.TrimEnd('/') + A2AMethods.AgentCardPath;
         var response = await _http.GetAsync(cardUrl, ct);
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<A2AAgentCard>(_json, ct);
+        var card = await response.Content.ReadFromJsonAsync<A2AAgentCard>(_json, ct);
+
+        // The card says where tasks go. A card that names another origin than the one it came from would take every task there.
+        if (card is not null && !SameOrigin(baseUrl, card.Url))
+            throw new InvalidOperationException($"The agent card from {cardUrl} names {card.Url}, which is not the same scheme, host and port.");
+        return card;
     }
+
+    private static bool SameOrigin(string baseUrl, string cardUrl) =>
+        Uri.TryCreate(baseUrl, UriKind.Absolute, out var a)
+        && Uri.TryCreate(cardUrl, UriKind.Absolute, out var b)
+        && a.Scheme == b.Scheme
+        && string.Equals(a.Host, b.Host, StringComparison.OrdinalIgnoreCase)
+        && a.Port == b.Port;
 
     /// <summary>Send a message to an A2A agent and get the task result.</summary>
     public async Task<A2AResponse> SendMessageAsync(
@@ -195,5 +237,8 @@ public sealed class A2AClient : IDisposable
         return result ?? throw new InvalidOperationException("A2A response was null");
     }
 
-    public void Dispose() => _http.Dispose();
+    public void Dispose()
+    {
+        if (_ownsHttp) _http.Dispose();
+    }
 }

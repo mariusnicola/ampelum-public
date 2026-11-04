@@ -83,7 +83,7 @@ public sealed class LibraryDefectTests
     }
 
     [Fact]
-    public async Task A2AClient_FailsOnStringStatesThatOtherAgentsSend()
+    public async Task A2AClient_ReadsStringStatesThatOtherAgentsSend()
     {
         const string stateAsString = """
             {"jsonrpc":"2.0","id":"1","result":{"task":{"id":"t","state":"completed","messages":[],
@@ -92,11 +92,13 @@ public sealed class LibraryDefectTests
         using var client = new A2AClient(new HttpClient(new StubHandler(stateAsString)));
         var message = new A2AMessage { Id = "m", Role = MessageRole.User, Parts = [new A2APart { Text = "x" }] };
 
-        await Should.ThrowAsync<JsonException>(() => client.SendMessageAsync("http://127.0.0.1:1/rpc", message, ct: TestContext.Current.CancellationToken));
+        var response = await client.SendMessageAsync("http://127.0.0.1:1/rpc", message, ct: TestContext.Current.CancellationToken);
+
+        response.Result!.Task!.State.ShouldBe(TaskState.Completed);
     }
 
     [Fact]
-    public async Task A2AClient_FailsOnStringRolesThatOtherAgentsSend()
+    public async Task A2AClient_ReadsStringRolesThatOtherAgentsSend()
     {
         const string roleAsString = """
             {"jsonrpc":"2.0","id":"1","result":{"task":{"id":"t","state":3,
@@ -106,7 +108,9 @@ public sealed class LibraryDefectTests
         using var client = new A2AClient(new HttpClient(new StubHandler(roleAsString)));
         var message = new A2AMessage { Id = "m", Role = MessageRole.User, Parts = [new A2APart { Text = "x" }] };
 
-        await Should.ThrowAsync<JsonException>(() => client.SendMessageAsync("http://127.0.0.1:1/rpc", message, ct: TestContext.Current.CancellationToken));
+        var response = await client.SendMessageAsync("http://127.0.0.1:1/rpc", message, ct: TestContext.Current.CancellationToken);
+
+        response.Result!.Task!.Messages.Single().Role.ShouldBe(MessageRole.Agent);
     }
 
     [Fact]
@@ -120,14 +124,26 @@ public sealed class LibraryDefectTests
     }
 
     [Fact]
-    public async Task A2AClient_DoesNotCheckThatTheCardNamesTheHostItCameFrom()
+    public async Task A2AClient_RefusesACardThatNamesAnotherHostThanTheOneItCameFrom()
     {
         const string card = """{"name":"n","description":"d","version":"1","url":"http://203.0.113.9/steal"}""";
         using var client = new A2AClient(new HttpClient(new StubHandler(card)));
 
-        var fetched = await client.FetchAgentCardAsync("http://127.0.0.1:1", TestContext.Current.CancellationToken);
+        var ex = await Should.ThrowAsync<InvalidOperationException>(() =>
+            client.FetchAgentCardAsync("http://127.0.0.1:1", TestContext.Current.CancellationToken));
 
-        fetched!.Url.ShouldBe("http://203.0.113.9/steal");
+        ex.Message.ShouldContain("http://203.0.113.9/steal");
+    }
+
+    [Fact]
+    public async Task A2AClient_Dispose_LeavesTheCallersHttpClientUsable()
+    {
+        using var http = new HttpClient(new StubHandler("""{"name":"n","description":"d","version":"1","url":"http://127.0.0.1:1/rpc"}"""));
+        new A2AClient(http).Dispose();
+
+        var card = await new A2AClient(http).FetchAgentCardAsync("http://127.0.0.1:1", TestContext.Current.CancellationToken);
+
+        card!.Name.ShouldBe("n");
     }
 
     [Fact]

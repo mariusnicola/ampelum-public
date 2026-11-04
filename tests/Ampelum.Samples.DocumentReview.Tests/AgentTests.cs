@@ -50,7 +50,7 @@ public sealed class AgentTests
         var ex = await Should.ThrowAsync<InvalidOperationException>(() =>
             rig.Desk.EscalateAsync([Hard], SupplierDocuments.Question, TestContext.Current.CancellationToken));
 
-        ex.Message.ShouldContain("Nothing was sent");
+        ex.Message.ShouldContain("http://127.0.0.1:9999/rpc");
         rig.Agent.Calls.ShouldBeEmpty();
     }
 

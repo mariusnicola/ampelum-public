@@ -74,16 +74,16 @@ Each of these is pinned by a test in `LibraryDefectTests.cs` unless it says it w
 - The scheme name `"bearer"` is matched without regard to case.
 - `VerifyAsync` catches every exception and returns null (line 94 to 97), so a malformed token and a bug look the same.
 - `VerifyCapabilitiesAsync` only checks that the identity's scope contains the names asked for. It says nothing about the card.
-- The sample also compares the card's URL with the configured agent URL, because the client does not.
+- The card's URL is checked against the host the card came from by the client itself (see the A2A client section).
 
 **A2A client** (`src/Ampelum.Agent/A2A/`):
 
-- `A2AClient.FetchAgentCardAsync` does not check that the card's `Url` belongs to the host the card came from (`A2AClient.cs` line 47). Pinned.
-- The client serializes enums as numbers (role, task state), and `A2ATask` requires `CreatedAt` and `UpdatedAt` (`A2ATask.cs`). A response with `"state":"completed"` or without timestamps fails with a `JsonException`. The public protocol sends strings, as far as I know; I had no network to check the specification text, so the tests pin only that the client rejects them. Because of this the fake agent sends numbers.
+- `A2AClient.FetchAgentCardAsync` throws `InvalidOperationException` when the card's `Url` is not on the scheme, host and port the card came from, or is not an absolute URL. The sample relies on it and no longer compares URLs itself. Pinned (`A2AClient_RefusesACardThatNamesAnotherHostThanTheOneItCameFrom`).
+- The client reads a role or task state from its name (any case; `input-required` and `input_required` read as InputRequired) or from its number (`A2AClient_ReadsStringStatesThatOtherAgentsSend`, `A2AClient_ReadsStringRolesThatOtherAgentsSend`). A name that is none of the enum's own still fails with a `JsonException`. It still writes both as numbers, and `A2ATask` still requires `CreatedAt` and `UpdatedAt` (`A2ATask.cs`), so a response without timestamps fails. The public protocol sends strings, as far as I know; I had no network to check the specification text. The fake agent still sends numbers.
 - The method name `tasks/send` and the card path `/.well-known/agent-card` (`A2AMessageRequest.cs` lines 61 and 69) look like an older draft. Not verified against the current specification, so treat as a suspicion.
 - `DefaultA2ATaskExecutor` sends its outgoing message with `MessageRole.Agent` (line 183), not the user role. Pinned.
 - A JSON-RPC error comes back as a value in `A2AResponse.Error`, not as an exception. Callers have to read it; `DefaultA2ATaskExecutor` does, `A2AClient` does not. The sample reads it (`ReviewDesk.ToVerdict`).
-- `A2AClient.Dispose` disposes the `HttpClient` it was given (line 198). Disposing the client while sharing the `HttpClient` breaks the other user. Read from code.
+- `A2AClient.Dispose` disposes the `HttpClient` only when the client made it itself; one passed in stays the caller's, and the sample disposes its own (`A2AClient_Dispose_LeavesTheCallersHttpClientUsable`).
 - `ListTasksAsync` puts the page token in `Id` and the status filter in `HistoryLength` (lines 177 and 178). Read from code, not used here.
 
 **`PdfLoader`** (`src/Ampelum.Retrieval/Loaders/PdfLoader.cs`): a file it cannot open, corrupt or not a PDF at all, produces no documents and no error (lines 30 to 32). An empty result cannot tell an empty PDF from a broken one. The sample treats zero pages as a problem and says so in its output.

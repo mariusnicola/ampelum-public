@@ -154,7 +154,7 @@ dotnet run --project samples/Ampelum.Samples.ChatFrontend -c Release -- --fake
 dotnet test tests/Ampelum.Samples.ChatFrontend.Tests
 ```
 
-**Document review** (`samples/Ampelum.Samples.DocumentReview`). A team that receives supplier contracts reads the PDFs with `PdfLoader`, ranks the clauses that matter for a question with the Cohere or Voyage reranker, and sends the ones the ranking is unsure about to a remote reviewer agent through `A2AClient`. The same run queues bulk overnight summaries through `OpenAIBatchSubmitter` and cancels a batch when a document is withdrawn. Under `--fake` one scripted HTTP handler per service plays the vendor, written from the library's own tests rather than vendor docs. The README lists the defects found on the way, among them that the A2A card verifier checks no capabilities and accepts a token issued to another agent. The live path has never been run.
+**Document review** (`samples/Ampelum.Samples.DocumentReview`). A team that receives supplier contracts reads the PDFs with `PdfLoader`, ranks the clauses that matter for a question with the Cohere or Voyage reranker, and sends the ones the ranking is unsure about to a remote reviewer agent through `A2AClient`. The same run queues bulk overnight summaries through `OpenAIBatchSubmitter` and cancels a batch when a document is withdrawn. Under `--fake` one scripted HTTP handler per service plays the vendor, written from the library's own tests rather than vendor docs. The README lists the defects found on the way, among them that the A2A client wrote role and state only as numbers and required timestamps in a task. The live path has never been run.
 
 ```bash
 dotnet run --project samples/Ampelum.Samples.DocumentReview -c Release -- --fake
@@ -263,7 +263,7 @@ MCP
 
 A2A, loaders and batch
 
-- `A2AClient` does not check that the card's URL belongs to the host it came from, and `Dispose` disposes the `HttpClient` it was given (`src/Ampelum.Agent/A2A/A2AClient.cs`).
+- `A2AClient` writes the message role and task state as numbers, not as the names other agents expect, and `A2ATask` requires `CreatedAt` and `UpdatedAt`, so a response without them fails with a `JsonException` (`src/Ampelum.Agent/A2A/A2AClient.cs`, `A2ATask.cs`).
 - `PdfLoader` yields zero pages and no error for a corrupt file or a non-PDF (`src/Ampelum.Retrieval/Loaders/PdfLoader.cs`).
 - `OpenAIBatchSubmitter` maps the `cancelling` state to `Cancelled`, and `StreamResultsAsync` throws when the batch has no output file.
 
