@@ -165,8 +165,10 @@ The test asserts the flawed behaviour, so it fails once the library is fixed and
 
 - `Loop` counts every predicate check as an iteration, and labels a stop on the last allowed check as
   `max_iterations`. The sample sets the loop bound two above the pass limit and counts body runs itself.
-- A reloaded index hands metadata back as JSON elements, so a store side equality filter matches nothing.
-  The sample filters on the returned documents instead.
+- A reloaded index hands metadata back as plain values (string, bool, null, and a number as int, long or
+  double), so a store side equality filter matches it (`A_reloaded_index_still_matches_a_store_side_metadata_filter`).
+  The file does not record the original type: a long that fits in an int comes back as int, and a whole
+  number written as a double comes back as int. An array or object stays a `JsonElement`.
 
 A bare `Predict` ignores an instruction override that `OptimizedProgram.Bind` gives it: `Bind` sets no
 submodule name for a program that is not an `IComposedModule`, and `Predict` only reads an override under its

@@ -89,7 +89,7 @@ public sealed class KnownLimitTests
     }
 
     [Fact]
-    public async Task KnownLimit_a_reloaded_index_no_longer_matches_a_store_side_metadata_filter()
+    public async Task A_reloaded_index_still_matches_a_store_side_metadata_filter()
     {
         var embedder = new HashingEmbeddingGenerator();
         var store = new InMemoryVectorStore();
@@ -109,6 +109,6 @@ public sealed class KnownLimitTests
         await VectorIndexSerializer.LoadAsync(restored, buffer, Ct);
 
         (await store.QueryAsync(query, 1, filter, Ct)).Count.ShouldBe(1);
-        (await restored.QueryAsync(query, 1, filter, Ct)).Count.ShouldBe(0);
+        (await restored.QueryAsync(query, 1, filter, Ct)).Count.ShouldBe(1);
     }
 }

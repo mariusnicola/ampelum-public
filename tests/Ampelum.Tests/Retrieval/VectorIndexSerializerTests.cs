@@ -26,6 +26,68 @@ public sealed class VectorIndexSerializerTests
         qr.Single().Document.Metadata["k"]!.ToString().ShouldBe("v");
     }
 
+    static async Task<InMemoryVectorStore> Reloaded(IReadOnlyDictionary<string, object?> metadata)
+    {
+        var store = new InMemoryVectorStore();
+        await store.UpsertAsync(
+            [new RetrievedDocument("a", "alpha", 0, metadata)],
+            [new ReadOnlyMemory<float>([1f, 0f])],
+            TestContext.Current.CancellationToken);
+        using var ms = new MemoryStream();
+        await VectorIndexSerializer.SaveAsync(store, ms, TestContext.Current.CancellationToken);
+        ms.Position = 0;
+        var restored = new InMemoryVectorStore();
+        await VectorIndexSerializer.LoadAsync(restored, ms, TestContext.Current.CancellationToken);
+        return restored;
+    }
+
+    [Fact]
+    public async Task Load_HandsMetadataBackAsPlainValues_NotAsJsonElements()
+    {
+        var restored = await Reloaded(new Dictionary<string, object?>
+        {
+            ["source"] = "history",
+            ["year"] = 2024,
+            ["big"] = 5_000_000_000L,
+            ["ratio"] = 0.5,
+            ["ok"] = true,
+            ["off"] = false,
+            ["none"] = null,
+        });
+
+        var hit = (await restored.QueryAsync(new ReadOnlyMemory<float>([1f, 0f]), 1, ct: TestContext.Current.CancellationToken)).Single();
+
+        hit.Document.Metadata["source"].ShouldBe("history");
+        hit.Document.Metadata["year"].ShouldBe(2024);
+        hit.Document.Metadata["big"].ShouldBe(5_000_000_000L);
+        hit.Document.Metadata["ratio"].ShouldBe(0.5);
+        hit.Document.Metadata["ok"].ShouldBe(true);
+        hit.Document.Metadata["off"].ShouldBe(false);
+        hit.Document.Metadata["none"].ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Load_AStoreSideEqualityFilterMatchesTheReloadedDocument()
+    {
+        var restored = await Reloaded(new Dictionary<string, object?> { ["source"] = "history", ["year"] = 2024 });
+        var query = new ReadOnlyMemory<float>([1f, 0f]);
+        var ct = TestContext.Current.CancellationToken;
+
+        (await restored.QueryAsync(query, 1, new Dictionary<string, object?> { ["source"] = "history" }, ct)).Count.ShouldBe(1);
+        (await restored.QueryAsync(query, 1, new Dictionary<string, object?> { ["year"] = 2024 }, ct)).Count.ShouldBe(1);
+        (await restored.QueryAsync(query, 1, new Dictionary<string, object?> { ["source"] = "style" }, ct)).Count.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task Load_AnArrayOrObjectInMetadata_StaysAJsonElement()
+    {
+        var restored = await Reloaded(new Dictionary<string, object?> { ["tags"] = new[] { "a", "b" } });
+
+        var hit = (await restored.QueryAsync(new ReadOnlyMemory<float>([1f, 0f]), 1, ct: TestContext.Current.CancellationToken)).Single();
+
+        hit.Document.Metadata["tags"].ShouldBeOfType<System.Text.Json.JsonElement>().GetArrayLength().ShouldBe(2);
+    }
+
     [Fact]
     public async Task SaveLoad_TwoRounds_ProducesIdenticalBytes()
     {

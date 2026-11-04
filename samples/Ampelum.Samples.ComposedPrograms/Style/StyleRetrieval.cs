@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using SignalGrid.Ampelum.Retrieval;
 using SignalGrid.Ampelum.Retrieval.Filtering;
@@ -48,8 +47,8 @@ public static class StyleRetrieval
 
 /// <summary>
 /// Restricts a retriever to documents whose metadata matches a predicate. The check runs on the returned
-/// documents, because a restored index hands metadata back as JSON elements that a store-side
-/// equality filter no longer matches.
+/// documents, over-fetching so enough survive it; the metadata of a restored index is plain values, so
+/// it matches the same as before the save.
 /// </summary>
 public sealed class FilteredRetriever(IRetriever inner, FilterPredicate predicate, int candidateFactor = 4) : IRetriever
 {
@@ -57,13 +56,8 @@ public sealed class FilteredRetriever(IRetriever inner, FilterPredicate predicat
         string query, int topK, IReadOnlyDictionary<string, object?>? filters = null, CancellationToken ct = default)
     {
         var candidates = await inner.RetrieveAsync(query, topK * candidateFactor, filters, ct).ConfigureAwait(false);
-        return candidates.Where(d => predicate.Matches(Plain(d.Metadata))).Take(topK).ToList();
+        return candidates.Where(d => predicate.Matches(d.Metadata)).Take(topK).ToList();
     }
-
-    static Dictionary<string, object?> Plain(IReadOnlyDictionary<string, object?> metadata) =>
-        metadata.ToDictionary(
-            pair => pair.Key,
-            pair => pair.Value is JsonElement { ValueKind: JsonValueKind.String } text ? text.GetString() : pair.Value);
 }
 
 /// <summary>Rewrites the query with a model, then searches with the rewrite.</summary>

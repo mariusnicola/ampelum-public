@@ -60,7 +60,8 @@ public static class VectorIndexSerializer
             var id = br.ReadString();
             var text = br.ReadString();
             var metaJson = br.ReadString();
-            var meta = JsonSerializer.Deserialize<Dictionary<string, object?>>(metaJson) ?? new();
+            var meta = (JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(metaJson) ?? new())
+                .ToDictionary(pair => pair.Key, pair => PlainValue(pair.Value));
             var len = br.ReadInt32();
             var vec = new float[len];
             for (int j = 0; j < len; j++)
@@ -72,4 +73,18 @@ public static class VectorIndexSerializer
         }
         await mem.UpsertAsync(docs, vecs, ct).ConfigureAwait(false);
     }
+
+    // A store-side filter compares with Equals, which a JsonElement never satisfies. A string, a bool, null and a
+    // number come back as string, bool, null and int (or long, or double); an array or object stays a JsonElement.
+    static object? PlainValue(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString(),
+        JsonValueKind.True => true,
+        JsonValueKind.False => false,
+        JsonValueKind.Null => null,
+        JsonValueKind.Number when value.TryGetInt32(out var i) => i,
+        JsonValueKind.Number when value.TryGetInt64(out var l) => l,
+        JsonValueKind.Number => value.GetDouble(),
+        _ => value.Clone(),
+    };
 }
