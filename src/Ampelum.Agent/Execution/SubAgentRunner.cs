@@ -173,18 +173,26 @@ DONE: <2-3 sentence summary of what you did and the outcome>
     List<AITool> BuildTools(HashSet<string> filesChanged)
     {
         // A path is the working directory's own or nothing: absolute paths and ".." are fine while they stay inside.
-        string Resolve(string path)
+        bool Inside(string fullPath)
         {
-            var root = Path.GetFullPath(_workingDir);
-            var full = Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(root, path));
-            var relative = Path.GetRelativePath(root, full);
-            if (Path.IsPathRooted(relative)
+            var relative = Path.GetRelativePath(Path.GetFullPath(_workingDir), Path.GetFullPath(fullPath));
+            return !(Path.IsPathRooted(relative)
                 || relative == ".."
                 || relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
-                || relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal))
+                || relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal));
+        }
+
+        string Resolve(string path)
+        {
+            var full = Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(Path.GetFullPath(_workingDir), path));
+            if (!Inside(full))
                 throw new UnauthorizedAccessException($"path is outside the working directory: {path}");
             return full;
         }
+
+        // A search pattern may carry a "..\" of its own, so what a search found is checked again: a result outside
+        // the working directory is dropped, whatever the pattern held.
+        IEnumerable<string> InsideOnly(IEnumerable<string> found) => found.Where(f => Inside(f));
 
         return
         [
@@ -243,9 +251,9 @@ DONE: <2-3 sentence summary of what you did and the outcome>
                         var resolved = Resolve(path);
                         if (!Directory.Exists(resolved))
                             return $"ERROR: Directory not found: {path}";
-                        var entries = string.IsNullOrEmpty(pattern)
+                        var entries = InsideOnly(string.IsNullOrEmpty(pattern)
                             ? Directory.GetFileSystemEntries(resolved)
-                            : Directory.GetFileSystemEntries(resolved, pattern);
+                            : Directory.GetFileSystemEntries(resolved, pattern));
                         return string.Join("\n", entries.Select(e =>
                         {
                             var isDir = Directory.Exists(e);
@@ -268,7 +276,7 @@ DONE: <2-3 sentence summary of what you did and the outcome>
                         var root = basePath is null ? _workingDir : Resolve(basePath);
                         if (!Directory.Exists(root))
                             return $"ERROR: Directory not found: {basePath ?? _workingDir}";
-                        var matches = System.IO.Directory.GetFiles(root, pattern, SearchOption.AllDirectories);
+                        var matches = InsideOnly(Directory.GetFiles(root, pattern, SearchOption.AllDirectories)).ToArray();
                         return matches.Length == 0
                             ? "No files matched."
                             : string.Join("\n", matches.Select(f => Path.GetRelativePath(_workingDir, f)));
@@ -288,9 +296,9 @@ DONE: <2-3 sentence summary of what you did and the outcome>
                         var root = basePath is null ? _workingDir : Resolve(basePath);
                         if (!Directory.Exists(root))
                             return $"ERROR: Directory not found";
-                        var files = string.IsNullOrEmpty(fileGlob)
+                        var files = InsideOnly(string.IsNullOrEmpty(fileGlob)
                             ? Directory.GetFiles(root, "*", SearchOption.AllDirectories)
-                            : Directory.GetFiles(root, fileGlob, SearchOption.AllDirectories);
+                            : Directory.GetFiles(root, fileGlob, SearchOption.AllDirectories));
                         var results = new List<string>();
                         foreach (var f in files)
                         {

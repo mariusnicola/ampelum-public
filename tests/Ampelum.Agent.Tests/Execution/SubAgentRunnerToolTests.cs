@@ -104,6 +104,44 @@ public sealed class SubAgentRunnerToolTests : IDisposable
     }
 
     [Fact]
+    public async Task SearchPatternsWithDotDot_NeverReturnANameOrContentFromOutsideTheWorkingDirectory()
+    {
+        var outside = Path.Combine(_base, "out");
+        var sibling = Path.Combine(_base, "work2"); // same name prefix as the working directory
+        Directory.CreateDirectory(outside);
+        Directory.CreateDirectory(sibling);
+        File.WriteAllText(Path.Combine(outside, "o.txt"), "SECRET-OUT");
+        File.WriteAllText(Path.Combine(sibling, "s.txt"), "SECRET-SIB");
+        File.WriteAllText(Path.Combine(_work, "in.txt"), "SECRET-IN");
+        var toOut = Path.Combine("..", "out", "*.txt");
+        var toSibling = Path.Combine("..", "work2", "*.txt");
+        var chat = new FakeChatClient()
+            .EnqueueRaw(Call("grep", ("pattern", "SECRET"), ("basePath", null), ("fileGlob", toOut)))
+            .EnqueueRaw(Call("grep", ("pattern", "SECRET"), ("basePath", null), ("fileGlob", toSibling)))
+            .EnqueueRaw(Call("glob", ("pattern", toOut), ("basePath", null)))
+            .EnqueueRaw(Call("glob", ("pattern", toSibling), ("basePath", null)))
+            .EnqueueRaw(Call("list_directory", ("path", "."), ("pattern", Path.Combine("..", "out", "*"))))
+            .EnqueueRaw(Call("list_directory", ("path", "."), ("pattern", Path.Combine("..", "work2", "*"))))
+            .EnqueueRaw(Call("grep", ("pattern", "SECRET"), ("basePath", null), ("fileGlob", "*.txt")))
+            .EnqueueText("DONE: tried");
+        var runner = new SubAgentRunner(chat, _work, "s1");
+
+        await runner.RunAsync(Task1(), TestContext.Current.CancellationToken);
+
+        var results = ToolResults(chat);
+        results.Length.ShouldBe(7);
+        foreach (var result in results[..6])
+        {
+            result.ShouldNotContain("SECRET-OUT");
+            result.ShouldNotContain("SECRET-SIB");
+            result.ShouldNotContain("o.txt");
+            result.ShouldNotContain("s.txt");
+        }
+        // A search that stays inside still finds the working directory's own file.
+        results[6].ShouldContain("in.txt:1: SECRET-IN");
+    }
+
+    [Fact]
     public async Task APathInsideTheWorkingDirectory_IsAllowed_AbsoluteOrWithADotDotThatStaysInside()
     {
         Directory.CreateDirectory(Path.Combine(_work, "sub"));

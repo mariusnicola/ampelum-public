@@ -87,6 +87,49 @@ public sealed class CodeIndexerCallTests : IDisposable
     }
 
     [Fact]
+    public void ExpressionBodiedMethods_EndAtTheirOwnStatement_SoTheirEdgesHoldOnlyTheirOwnCalls()
+    {
+        const string source = """
+            namespace Shop;
+
+            public sealed class Calc
+            {
+                public int Gen() => Tuple(1);
+
+                public int Arr(int x)
+                    => Nul(x)
+                        + Log(x);
+
+                public int Block()
+                {
+                    return Local(2);
+                }
+
+                public int Ctor(int a) : base(b => b)
+                {
+                    return Other(a);
+                }
+            }
+            """;
+        var file = Path.Combine(_dir, "Calc.cs");
+        File.WriteAllText(file, source);
+
+        var result = new CodeIndexer().Extract(file);
+
+        var methods = result.Symbols.Where(s => s.Kind == SymbolKind.Method).ToDictionary(s => s.Name);
+        methods["Gen"].LineEnd.ShouldBe(5);
+        methods["Arr"].LineEnd.ShouldBe(9);
+        methods["Block"].LineEnd.ShouldBe(14);
+        methods["Ctor"].LineEnd.ShouldBe(19); // "=>" inside the parentheses is a lambda, not a body
+        var edges = result.Edges!.Where(e => e.EdgeType == EdgeType.Call).GroupBy(e => e.SrcName)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.TgtName).Order().ToArray());
+        edges["Gen"].ShouldBe(["Tuple"]);
+        edges["Arr"].ShouldBe(["Log", "Nul"]);
+        edges["Block"].ShouldBe(["Local"]);
+        edges["Ctor"].ShouldBe(["Other"]);
+    }
+
+    [Fact]
     public void ARecordWithAPrimaryConstructor_StaysOneRecordSymbol()
     {
         var result = Index();

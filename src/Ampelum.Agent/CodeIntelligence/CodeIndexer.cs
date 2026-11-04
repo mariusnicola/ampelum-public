@@ -115,6 +115,9 @@ public sealed class CodeIndexer
     /// <summary>Finds the actual symbol boundary by tracking brace depth from the declaration line.</summary>
     private static (int LineStart, int LineEnd) FindBounds(string[] lines, int matchLine, Match match)
     {
+        var statementEnd = FindStatementEnd(lines, matchLine);
+        if (statementEnd > 0) return (matchLine, statementEnd);
+
         int depth = 0;
         int endLine = matchLine;
 
@@ -135,6 +138,42 @@ public sealed class CodeIndexer
         if (depth != 0) endLine = lines.Length;
 
         return (matchLine, endLine);
+    }
+
+    /// <summary>
+    /// A member with no braces of its own ends at its own semicolon: "Name(...) => expr;" (the expression may span
+    /// lines) or a bodyless "Name(...);". Returns that line, or 0 when the member has a block body or none is found,
+    /// which leaves the brace tracking to decide. A "=>" inside parentheses is a lambda, not a body.
+    /// </summary>
+    private static int FindStatementEnd(string[] lines, int matchLine)
+    {
+        int parens = 0, braces = 0, closedAt = -1;
+        var expression = false;
+
+        for (int i = matchLine - 1; i < lines.Length; i++)
+        {
+            var line = lines[i];
+            for (int c = 0; c < line.Length; c++)
+            {
+                var ch = line[c];
+                if (ch == '(') parens++;
+                else if (ch == ')') { parens--; if (parens == 0 && closedAt < 0) closedAt = i; }
+                else if (expression)
+                {
+                    if (ch == '{') braces++;
+                    else if (ch == '}') braces--;
+                    else if (ch == ';' && braces == 0 && parens == 0) return i + 1;
+                }
+                else if (ch == '{' && parens == 0) return 0;
+                else if (ch == '=' && parens == 0 && c + 1 < line.Length && line[c + 1] == '>') { expression = true; c++; }
+                else if (ch == ';' && parens == 0 && (closedAt < 0 || i == closedAt)) return i + 1;
+            }
+
+            // The body starts on the signature's last line or the one after it; further on, this is not a member this method reads.
+            if (!expression && closedAt >= 0 && i > closedAt) return 0;
+        }
+
+        return 0;
     }
 
     /// <summary>Extracts import/using edges from source lines.</summary>
