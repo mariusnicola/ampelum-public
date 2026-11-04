@@ -470,7 +470,8 @@ public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContex
                 "Use an adapter that supports streaming (e.g. ChatAdapter) or call ForwardAsync instead.");
 
         var logger = GetOrCreateLogger(resolved.LoggerFactory);
-        demos ??= [];
+        if (demos is null or { Count: 0 })
+            demos = resolved.DefaultDemos ?? [];
 
         using var activity = Diagnostics.Source.StartActivity("SignalGrid.Ampelum.module.forward");
         activity?.SetTag("SignalGrid.Ampelum.module", nameof(Predict));
