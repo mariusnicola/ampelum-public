@@ -46,7 +46,17 @@ public sealed class LoopTests
             Task.FromResult(Pred(new LoopPredicateResult<TestSig>(true), "pred"));
     }
 
-    sealed class AlwaysBreak : IModule<TestSig, LoopPredicateResult<TestSig>>
+    sealed class CountingContinue : IModule<TestSig, LoopPredicateResult<TestSig>>
+    {
+        public int Calls;
+        public Task<Prediction<LoopPredicateResult<TestSig>>> ForwardAsync(TestSig inputs, CancellationToken ct)
+        {
+            Calls++;
+            return Task.FromResult(Pred(new LoopPredicateResult<TestSig>(true), "pred"));
+        }
+    }
+
+    sealed class AlwaysBreak :IModule<TestSig, LoopPredicateResult<TestSig>>
     {
         public Task<Prediction<LoopPredicateResult<TestSig>>> ForwardAsync(TestSig inputs, CancellationToken ct) =>
             Task.FromResult(Pred(new LoopPredicateResult<TestSig>(false, "break_immediate"), "pred"));
@@ -143,6 +153,28 @@ public sealed class LoopTests
 
         result.Value.Iterations.ShouldBe(5);
         result.Value.Reason.ShouldBe("max_iterations");
+    }
+
+    [Fact]
+    public async Task APredicateThatNeverStops_IsCalledMaxIterationsPlusOneTimes()
+    {
+        var predicate = new CountingContinue();
+        var loop = new Loop<TestSig>(predicate, new CountingBody(), maxIterations: 4);
+
+        await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
+
+        predicate.Calls.ShouldBe(5);
+    }
+
+    [Fact]
+    public async Task APredicateThatStopsWithTheReasonMaxIterations_IsReadAsNotConverged()
+    {
+        var loop = new Loop<TestSig>(new BreakWithReason("max_iterations"), new CountingBody());
+
+        var result = await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
+
+        result.Value.Reason.ShouldBe("max_iterations");
+        result.Trace.Metadata[SignalGrid.Ampelum.Composition.TraceKeys.LoopConverged].ShouldBe(false);
     }
 
     [Fact]
