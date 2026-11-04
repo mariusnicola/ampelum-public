@@ -12,7 +12,6 @@ using AmpelumHostContractsJsonContext = SignalGrid.Ampelum.Host.Contracts.Ampelu
 using SignalGrid.Ampelum.Host.ModuleRegistry;
 using SignalGrid.Ampelum.Host.Persistence;
 using SignalGrid.Ampelum.Host.Tracing;
-using SignalGrid.Ampelum.Optimizers;
 
 namespace SignalGrid.Ampelum.Host.Endpoints;
 
@@ -120,26 +119,18 @@ internal static class ForwardEndpoint
         }
 
         // The version the caller names, or else the module's active one; none means the module's own prompt.
-        PromptVersionRow? version;
-        if (req.PromptVersionId is { } wantedVersion)
-        {
-            version = await prompts.TryGetByIdAsync(wantedVersion, ct);
-            if (version is null || version.ModuleName != moduleName)
-                return ApiErrors.NotFound(
-                    ErrorCodes.VersionNotFound,
-                    $"Version '{wantedVersion}' not found.",
-                    traceId);
-        }
-        else
-        {
-            version = await prompts.GetActiveAsync(moduleName, ct);
-        }
+        var (version, versionMissing) = await PromptVersionSelector.FindAsync(prompts, moduleName, req.PromptVersionId, ct);
+        if (versionMissing)
+            return ApiErrors.NotFound(
+                ErrorCodes.VersionNotFound,
+                $"Version '{req.PromptVersionId}' not found.",
+                traceId);
 
         try
         {
             object inner = ((dynamic)slot.Current).Inner;
-            if (version is not null)
-                inner = await ApplyVersionAsync(inner, version, ct);
+            if (version is not null && await PromptVersionSelector.InstructionAsync(version, ct) is { } instruction)
+                inner = PromptVersionSelector.Apply((dynamic)inner, instruction);
             dynamic predict = inner;
             var prediction = await predict.ForwardAsync((dynamic)typedSig, null, ct);
 
@@ -176,28 +167,5 @@ internal static class ForwardEndpoint
                 $"Forward call failed: {ex.Message}",
                 traceId);
         }
-    }
-
-    // The registered module is a single Predict under the submodule name "default", the key a prompt version's
-    // instruction overrides use. The Predict is rebound for this call only, so the registered one stays as it is.
-    const string DefaultSubmodule = "default";
-
-    static async Task<object> ApplyVersionAsync(object inner, PromptVersionRow version, CancellationToken ct)
-    {
-        var shape = await PromptVersionFileReader.ReadAsync(version.FilePath, ct);
-        if (!shape.InstructionOverrides.TryGetValue(DefaultSubmodule, out var instruction)
-            || string.IsNullOrWhiteSpace(instruction))
-            return inner;
-
-        var context = ((IBoundContext)inner).BoundContext
-            ?? AmpelumContext.Ambient
-            ?? throw new InvalidOperationException("The module has no AmpelumContext to apply the prompt version to.");
-        var name = context.SubmoduleName ?? DefaultSubmodule;
-        var bound = context with
-        {
-            SubmoduleName = name,
-            InstructionOverrides = new Dictionary<string, string> { [name] = instruction },
-        };
-        return ((dynamic)inner).WithContext(bound);
     }
 }

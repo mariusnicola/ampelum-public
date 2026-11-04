@@ -124,6 +124,21 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
+    public async Task Stream_SendsThePromotedInstruction_AndTheFinalFrameNamesTheVersion()
+    {
+        await using var service = await StartAsync();
+        const string Sentinel = "SENTINEL-STREAM-4e9b";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger(Sentinel), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        service.EnqueueStreamingAnswer("Delivery takes 3 to 5 business days.");
+
+        var frames = await service.Client.StreamAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+
+        service.SentText(0).ShouldContain(Sentinel);
+        frames.Single(f => f.Event == "final").Data.GetProperty("promptVersionId").GetString().ShouldBe(version.VersionId);
+    }
+
+    [Fact]
     public async Task Forward_BeforeAnyPromotion_SendsTheModulesOwnInstruction_AndReportsNoVersion()
     {
         await using var service = await StartAsync();

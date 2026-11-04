@@ -45,7 +45,7 @@ public static class FakeScript
 
     /// <summary>
     /// One answer for the service module, for a forward call and for a stream call, in the wire format the module's
-    /// adapter parses, one for the forward call made after a prompt version is promoted, then one more per optimizer
+    /// adapter parses, one each for a forward call and a stream call made after a prompt version is promoted, then one more per optimizer
     /// training example, which the Host runs through the module once each.
     /// </summary>
     public static FakeChatClient ServiceModel(string answer = ServiceAnswer, int optimizeExamples = 0)
@@ -53,7 +53,8 @@ public static class FakeScript
         var model = new FakeChatClient()
             .EnqueueOutputs(new AnswerSignature { Question = "", Answer = answer })
             .EnqueueStreamingOutputs(new AnswerSignature { Question = "", Answer = answer })
-            .EnqueueOutputs(new AnswerSignature { Question = "", Answer = answer });
+            .EnqueueOutputs(new AnswerSignature { Question = "", Answer = answer })
+            .EnqueueStreamingOutputs(new AnswerSignature { Question = "", Answer = answer });
         for (var i = 0; i < optimizeExamples; i++)
             model.EnqueueOutputs(new AnswerSignature { Question = "", Answer = answer });
         return model;

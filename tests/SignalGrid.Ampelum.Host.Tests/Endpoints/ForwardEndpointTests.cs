@@ -1,8 +1,10 @@
 #pragma warning disable AMPELUM_V09_PREVIEW
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
 using SignalGrid.Ampelum.Host.Contracts;
+using SignalGrid.Ampelum.Host.Persistence;
 using SignalGrid.Ampelum.Host.Tests.Fixtures;
 using Xunit;
 
@@ -74,6 +76,29 @@ public sealed class ForwardEndpointTests : IAsyncLifetime
         var body = JsonSerializer.Deserialize<ErrorResponse>(json, AmpelumHostContractsJsonContext.Default.ErrorResponse);
         body.ShouldNotBeNull();
         body.Code.ShouldBe("bad_request");
+    }
+
+    [Fact]
+    public async Task POST_modules_forward_404_VersionOfAnotherModule_CallsNoModel()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var store = _factory.Services.GetRequiredService<IPromptVersionStore>();
+        await store.InsertChallengerAsync(
+            new PromptVersionRow("v-of-other-module", "Other", PromptStatus.Challenger, DateTimeOffset.UtcNow, null, "/no/such/file.json", null),
+            ct);
+        var request = new ForwardRequest(
+            Inputs: new Dictionary<string, JsonElement> { { "Q", JsonSerializer.SerializeToElement("test") } },
+            PromptVersionId: "v-of-other-module");
+
+        var response = await _factory.HttpClient.PostAsJsonAsync("/modules/Fake/forward", request,
+            AmpelumHostContractsJsonContext.Default.ForwardRequest, cancellationToken: ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NotFound);
+        var body = JsonSerializer.Deserialize<ErrorResponse>(
+            await response.Content.ReadAsStringAsync(ct), AmpelumHostContractsJsonContext.Default.ErrorResponse);
+        body.ShouldNotBeNull();
+        body.Code.ShouldBe("version_not_found");
+        _factory.FakeChatClient.RecordedCalls.ShouldBeEmpty();
     }
 
     [Fact]

@@ -8,6 +8,7 @@ using Shouldly;
 using SignalGrid.Ampelum.Hooks;
 using SignalGrid.Ampelum.Host.Contracts;
 using SignalGrid.Ampelum.Host.Tests.Fixtures;
+using SignalGrid.Ampelum.Testing;
 using Xunit;
 
 namespace SignalGrid.Ampelum.Host.Tests.Endpoints;
@@ -120,6 +121,126 @@ public sealed class StreamEndpointTests : IAsyncLifetime
         frames.Select(f => f.Event).ShouldBe(["final", "done"]);
         frames[0].Data.GetProperty("outputs").GetProperty("A").GetString().ShouldBe("from hook");
         factory.FakeChatClient.RecordedCalls.ShouldBeEmpty();
+    }
+
+    static async Task<string> CreateVersionAsync(HttpClient client, string instruction, CancellationToken ct)
+    {
+        var request = new CreatePromptVersionRequest(
+            new Dictionary<string, IReadOnlyList<DemoExample>>(),
+            new Dictionary<string, string> { ["default"] = instruction });
+        var response = await client.PostAsJsonAsync("/prompts/Fake", request,
+            AmpelumHostContractsJsonContext.Default.CreatePromptVersionRequest, cancellationToken: ct);
+        response.EnsureSuccessStatusCode();
+        return (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.PromptVersion, ct))!.VersionId;
+    }
+
+    static async Task PromoteAsync(HttpClient client, string versionId, CancellationToken ct) =>
+        (await client.PostAsJsonAsync("/prompts/Fake/promote", new PromoteRequest(versionId),
+            AmpelumHostContractsJsonContext.Default.PromoteRequest, cancellationToken: ct)).EnsureSuccessStatusCode();
+
+    static async Task<HttpResponseMessage> StreamWithVersionAsync(HttpClient client, string? versionId, CancellationToken ct) =>
+        await client.PostAsJsonAsync("/modules/Fake/stream",
+            new ForwardRequest(
+                new Dictionary<string, JsonElement> { { "Q", JsonSerializer.SerializeToElement("test") } }, versionId),
+            AmpelumHostContractsJsonContext.Default.ForwardRequest, cancellationToken: ct);
+
+    static string SentText(FakeChatClient model, int call) =>
+        string.Join("\n", model.RecordedCalls[call].Messages.Select(m => m.Text));
+
+    [Fact]
+    public async Task POST_stream_SendsThePromotedInstruction_AndFinalNamesTheVersion()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        const string Sentinel = "SENTINEL-STREAM-INSTRUCTION-3c9e";
+        var versionId = await CreateVersionAsync(_factory.HttpClient, Sentinel, ct);
+        await PromoteAsync(_factory.HttpClient, versionId, ct);
+        _factory.FakeChatClient.EnqueueStreamingChunks("[[ ## A ## ]]\n", "Hel", "lo");
+
+        var (response, frames) = await PostStreamAsync(_factory.HttpClient, ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+        SentText(_factory.FakeChatClient, 0).ShouldContain(Sentinel);
+        frames.Single(f => f.Event == "final").Data.GetProperty("promptVersionId").GetString().ShouldBe(versionId);
+    }
+
+    [Fact]
+    public async Task POST_stream_WithoutAVersion_SendsTheModulesOwnInstruction_AndFinalNamesNoVersion()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        const string Sentinel = "SENTINEL-STREAM-NOT-PROMOTED-77d1";
+        await CreateVersionAsync(_factory.HttpClient, Sentinel, ct);
+        _factory.FakeChatClient.EnqueueStreamingChunks("[[ ## A ## ]]\n", "Hello");
+
+        var (_, frames) = await PostStreamAsync(_factory.HttpClient, ct);
+
+        SentText(_factory.FakeChatClient, 0).ShouldNotContain(Sentinel);
+        var final = frames.Single(f => f.Event == "final").Data;
+        (final.TryGetProperty("promptVersionId", out var named) && named.ValueKind != JsonValueKind.Null).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task POST_stream_WithAnExplicitVersionId_SendsThatVersionEvenWhenItIsNotPromoted()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        const string Sentinel = "SENTINEL-STREAM-EXPLICIT-a4f0";
+        var versionId = await CreateVersionAsync(_factory.HttpClient, Sentinel, ct);
+        _factory.FakeChatClient.EnqueueStreamingChunks("[[ ## A ## ]]\n", "Hello");
+
+        using var response = await StreamWithVersionAsync(_factory.HttpClient, versionId, ct);
+        var frames = ParseFrames(await response.Content.ReadAsStringAsync(ct));
+
+        SentText(_factory.FakeChatClient, 0).ShouldContain(Sentinel);
+        frames.Single(f => f.Event == "final").Data.GetProperty("promptVersionId").GetString().ShouldBe(versionId);
+    }
+
+    [Fact]
+    public async Task POST_stream_WithAnUnknownVersionId_Answers404VersionNotFound_AndCallsNoModel()
+    {
+        var ct = TestContext.Current.CancellationToken;
+
+        using var response = await StreamWithVersionAsync(_factory.HttpClient, "v-missing", ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NotFound);
+        response.Content.Headers.ContentType?.MediaType.ShouldNotBe("text/event-stream");
+        var error = (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ErrorResponse, ct))!;
+        error.Code.ShouldBe("version_not_found");
+        _factory.FakeChatClient.RecordedCalls.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task POST_stream_WithAVersionOfAnotherModule_Answers404VersionNotFound_AndCallsNoModel()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await _factory.Services.GetRequiredService<SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore>().InsertChallengerAsync(
+            new SignalGrid.Ampelum.Host.Persistence.PromptVersionRow(
+                "v-of-other-module", "Other", PromptStatus.Challenger, DateTimeOffset.UtcNow, null, "/no/such/file.json", null),
+            ct);
+
+        using var response = await StreamWithVersionAsync(_factory.HttpClient, "v-of-other-module", ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.NotFound);
+        var error = (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ErrorResponse, ct))!;
+        error.Code.ShouldBe("version_not_found");
+        _factory.FakeChatClient.RecordedCalls.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task POST_stream_WhenThePromotedVersionsFileIsGone_Answers400StreamFailed_AndCallsNoModel()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var versionId = await CreateVersionAsync(_factory.HttpClient, "Be brief.", ct);
+        await PromoteAsync(_factory.HttpClient, versionId, ct);
+        var row = (await _factory.Services.GetRequiredService<SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore>()
+            .TryGetByIdAsync(versionId, ct))!;
+        File.Delete(row.FilePath);
+
+        using var response = await StreamWithVersionAsync(_factory.HttpClient, null, ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.ShouldNotBe("text/event-stream");
+        var error = (await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ErrorResponse, ct))!;
+        error.Message.ShouldStartWith("Stream failed:");
+        _factory.FakeChatClient.RecordedCalls.ShouldBeEmpty();
     }
 
     sealed class FailingMidStreamChatClient(Exception failure) : IChatClient

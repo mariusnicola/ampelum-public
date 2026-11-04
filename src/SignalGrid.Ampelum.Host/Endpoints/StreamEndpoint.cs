@@ -8,6 +8,7 @@ using SignalGrid.Ampelum.Host.Contracts;
 using SignalGrid.Ampelum.Host.ErrorHandling;
 using SignalGrid.Ampelum.Host.Internal;
 using SignalGrid.Ampelum.Host.ModuleRegistry;
+using SignalGrid.Ampelum.Host.Persistence;
 using SignalGrid.Ampelum.Host.Sse;
 using SignalGrid.Ampelum.Host.Tracing;
 using SignalGrid.Ampelum;
@@ -31,6 +32,7 @@ internal static class StreamEndpoint
         string moduleName,
         HttpRequest request,
         IModuleRegistry registry,
+        IPromptVersionStore prompts,
         IOptions<AmpelumHostOptions> options,
         ILogger<object> logger,
         CancellationToken ct)
@@ -153,6 +155,37 @@ internal static class StreamEndpoint
             return;
         }
 
+        // Same version rules as forward: the one the caller names, else the active one. Both failures are answered
+        // as plain JSON, before the event stream starts.
+        var (version, versionMissing) = await PromptVersionSelector.FindAsync(prompts, moduleName, req.PromptVersionId, ct);
+        if (versionMissing)
+        {
+            request.HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+            await request.HttpContext.Response.WriteAsJsonAsync(
+                new ErrorResponse(traceId, ErrorCodes.VersionNotFound, $"Version '{req.PromptVersionId}' not found.", null),
+                AmpelumHostJsonContext.Default.ErrorResponse,
+                cancellationToken: ct);
+            return;
+        }
+
+        string? instruction = null;
+        if (version is not null)
+        {
+            try
+            {
+                instruction = await PromptVersionSelector.InstructionAsync(version, ct);
+            }
+            catch (Exception ex)
+            {
+                request.HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                await request.HttpContext.Response.WriteAsJsonAsync(
+                    new ErrorResponse(traceId, ErrorCodes.BadRequest, $"Stream failed: {ex.Message}", null),
+                    AmpelumHostJsonContext.Default.ErrorResponse,
+                    cancellationToken: ct);
+                return;
+            }
+        }
+
         var sseWriter = new SseWriter(
             request.HttpContext.Response,
             logger,
@@ -165,7 +198,7 @@ internal static class StreamEndpoint
             var run = typeof(StreamEndpoint)
                 .GetMethod(nameof(RunStreamAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
                 .MakeGenericMethod(sigType);
-            await (Task)run.Invoke(null, new object[] { slot.Current, typedSig!, sseWriter, traceId, ct })!;
+            await (Task)run.Invoke(null, new object?[] { slot.Current, typedSig!, sseWriter, traceId, instruction, version?.VersionId, ct })!;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -204,12 +237,15 @@ internal static class StreamEndpoint
         TSig inputs,
         SseWriter sseWriter,
         string traceId,
+        string? instruction,
+        string? versionId,
         CancellationToken ct) where TSig : ISignature
     {
+        var predict = instruction is null ? adapter.Inner : PromptVersionSelector.Apply(adapter.Inner, instruction);
         int eventId = 0;
         var outputNames = SignatureMetadataCache.For<TSig>().Outputs.Select(o => o.Name).ToHashSet(StringComparer.Ordinal);
         TraceRecord? finalTrace = null;
-        await foreach (var update in adapter.Inner.StreamAsync(inputs, null, ct).WithCancellation(ct))
+        await foreach (var update in predict.StreamAsync(inputs, null, ct).WithCancellation(ct))
         {
             if (update.IsFinal)
             {
@@ -244,7 +280,7 @@ internal static class StreamEndpoint
                 CostCents: 0m,
                 DurationMs: finalTrace.Duration.TotalMilliseconds),
             modelId,
-            null);
+            versionId);
         var finalJson = JsonSerializer.Serialize(finalPayload, AmpelumHostJsonContext.Default.SseFinalPayload);
         await sseWriter.WriteEventAsync(SseEvents.Final, finalJson, eventId++, ct);
 
