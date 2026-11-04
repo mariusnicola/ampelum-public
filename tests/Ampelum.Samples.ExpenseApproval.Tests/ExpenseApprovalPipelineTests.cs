@@ -279,7 +279,7 @@ public sealed class ExpenseApprovalPipelineTests : IDisposable
     }
 
     [Fact]
-    public void LoadDefinition_AddsTheEvaluationPlanAndThresholdTheYamlCannotExpress()
+    public void LoadDefinition_TakesTheEvaluationPlanAndThresholdFromTheYaml()
     {
         var definition = ExpenseApprovalPipeline.LoadDefinition();
 

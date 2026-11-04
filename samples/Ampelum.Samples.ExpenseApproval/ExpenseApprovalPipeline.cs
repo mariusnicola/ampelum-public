@@ -31,7 +31,6 @@ public sealed class ExpenseApprovalPipeline
     public const string ReceiptMetric = "receipt_matches";
 
     const string WorkflowResource = "expense-approval.yml";
-    const string ThresholdInput = "threshold";
     const string TextInput = "text";
     const string LimitInput = "limit";
     const string KeyArgument = "idempotency_key";
@@ -71,9 +70,7 @@ public sealed class ExpenseApprovalPipeline
     }
 
     /// <summary>
-    /// Compiles the embedded workflow YAML. The YAML compiler has no field for a metric threshold or an evaluation plan,
-    /// so both are added here: the plan observes the objective's metrics, and the evaluate step's <c>threshold</c> input
-    /// is the threshold of each.
+    /// Compiles the embedded workflow YAML. The YAML itself declares the metric's threshold and the evaluation plan.
     /// </summary>
     public static WorkflowDefinition LoadDefinition()
     {
@@ -84,17 +81,7 @@ public sealed class ExpenseApprovalPipeline
         if (!result.Success || result.Artifact is null)
             throw new InvalidOperationException("Workflow YAML did not compile: " + string.Join("; ", result.Errors));
 
-        var definition = result.Artifact.Definition;
-        var evaluate = definition.Steps.Single(step => step.Kind == WorkflowStepKind.Evaluate);
-        if (evaluate.Inputs is null || !evaluate.Inputs.TryGetValue(ThresholdInput, out var raw)
-            || !double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var threshold))
-            throw new InvalidOperationException($"Evaluate step '{evaluate.StepId}' needs a numeric '{ThresholdInput}' input.");
-        var metrics = definition.Objective!.Metrics.Select(metric => metric with { Threshold = threshold }).ToList();
-        return definition with
-        {
-            Objective = new WorkflowObjective(metrics),
-            EvaluationPlan = new WorkflowEvaluationPlan([.. metrics.Select(metric => metric.MetricId)]),
-        };
+        return result.Artifact.Definition;
     }
 
     /// <summary>

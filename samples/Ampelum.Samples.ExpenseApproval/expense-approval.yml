@@ -5,6 +5,9 @@ objective:
   metrics:
     - id: receipt_matches
       direction: maximize
+      threshold: 1
+evaluation:
+  metrics: [receipt_matches]
 risk:
   max_effect_class: additive
 steps:
@@ -40,8 +43,6 @@ steps:
   - id: check
     kind: evaluate
     depends_on: [receipt, extract]
-    inputs:
-      threshold: "1"
   - id: announce
     kind: emit_event
     depends_on: [check]

@@ -54,7 +54,7 @@ The live path (a real model) has never been run.
 
 Library notes, for the step kinds:
 
-- `src/Ampelum.Agent.Yaml/WorkflowYamlCompiler.cs:311` sets `EvaluationPlan: null`, and `MetricYamlDto` (`WorkflowYamlDto.cs:27 to 31`) has no threshold, so YAML cannot declare either. `ExpenseApprovalPipeline.LoadDefinition` adds both to the compiled definition; the threshold is the evaluate step's `threshold` input in the YAML.
+- The workflow YAML declares the metric's `threshold` and an `evaluation` section that lists the metrics the `Evaluate` step must return; `expense-approval.yml` shows both, and `ExpenseApprovalPipeline.LoadDefinition` adds nothing to the compiled definition.
 - A rejected `Approval` step normally fails the execution in the same write. When completed steps still owe compensations, `DecideAsync` leaves the execution `Running` and the next `ResumeAsync` compensates, then fails it (`DurableWorkflowRuntime.cs`, `DecideAsync`). This sample has no approval step.
 - The `node.evaluated` audit line (every observed metric with its value and threshold result) and the `event.expense.settled` line are written by the same write that settles their node. That is atomic only on a transactional store such as `SqliteWorkflowPersistence` or `PostgresWorkflowPersistence`; with `InMemoryWorkflowStateStore` and a separate sink a crash between the two writes loses the line.
 

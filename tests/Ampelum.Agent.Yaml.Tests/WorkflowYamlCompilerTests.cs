@@ -560,6 +560,105 @@ public sealed class WorkflowYamlCompilerTests
         result.Errors.ShouldContain(e => e.Contains("did not parse"));
     }
 
+    const string EvaluateWorkflow = """
+        id: scored
+        version: 1.0.0
+        objective:
+          metrics:
+            - id: quality
+              direction: maximize
+              threshold: 0.8
+            - id: cost
+              direction: minimize
+        {0}
+        steps:
+          - id: judge
+            kind: evaluate
+        """;
+
+    [Fact]
+    public void Compile_MetricThreshold_ReachesTheObjective()
+    {
+        var result = WorkflowYamlCompiler.Compile(string.Format(EvaluateWorkflow, ""));
+
+        result.Success.ShouldBeTrue(string.Join("; ", result.Errors));
+        var metrics = result.Artifact!.Definition.Objective!.Metrics;
+        metrics.Single(m => m.MetricId == "quality").Threshold.ShouldBe(0.8);
+        metrics.Single(m => m.MetricId == "cost").Threshold.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Compile_EvaluationSection_BecomesTheEvaluationPlan()
+    {
+        var result = WorkflowYamlCompiler.Compile(string.Format(EvaluateWorkflow, "evaluation:\n  metrics: [quality, cost]"));
+
+        result.Success.ShouldBeTrue(string.Join("; ", result.Errors));
+        var plan = result.Artifact!.Definition.EvaluationPlan.ShouldNotBeNull();
+        plan.MetricIds.ShouldBe(["quality", "cost"]);
+        plan.Enabled.ShouldBeTrue();
+    }
+
+    [Fact]
+    public void Compile_EvaluationSection_CanBeSwitchedOff()
+    {
+        var result = WorkflowYamlCompiler.Compile(string.Format(EvaluateWorkflow, "evaluation:\n  enabled: false\n  metrics: [quality]"));
+
+        result.Success.ShouldBeTrue(string.Join("; ", result.Errors));
+        result.Artifact!.Definition.EvaluationPlan.ShouldNotBeNull().Enabled.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Compile_WithoutEvaluationSection_LeavesNoPlan()
+    {
+        var result = WorkflowYamlCompiler.Compile(string.Format(EvaluateWorkflow, ""));
+
+        result.Artifact!.Definition.EvaluationPlan.ShouldBeNull();
+    }
+
+    [Theory]
+    [InlineData("evaluation:\n  metrics: [quality, speed]", "'speed'")]
+    [InlineData("evaluation:\n  metrics: []", "at least one metric")]
+    [InlineData("evaluation:\n  enabled: true", "at least one metric")]
+    [InlineData("evaluation:\n  metrics: [quality, quality]", "'quality' more than once")]
+    [InlineData("evaluation:\n  metrics: [\"\"]", "blank")]
+    public void Compile_BadEvaluationSection_IsRejectedWithAReason(string section, string expected)
+    {
+        var result = WorkflowYamlCompiler.Compile(string.Format(EvaluateWorkflow, section));
+
+        result.Success.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.Contains(expected));
+    }
+
+    [Fact]
+    public void Compile_EvaluationSectionWithoutObjectiveMetrics_IsRejected()
+    {
+        var result = WorkflowYamlCompiler.Compile("""
+            id: scored
+            version: 1.0.0
+            evaluation:
+              metrics: [quality]
+            steps:
+              - id: judge
+                kind: evaluate
+            """);
+
+        result.Success.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.Contains("'quality'"));
+    }
+
+    [Theory]
+    [InlineData(".nan")]
+    [InlineData(".inf")]
+    public void Compile_NonFiniteThreshold_IsRejected(string value)
+    {
+        var yaml = string.Format(EvaluateWorkflow, "").Replace("threshold: 0.8", "threshold: " + value);
+
+        var result = WorkflowYamlCompiler.Compile(yaml);
+
+        result.Success.ShouldBeFalse();
+        result.Errors.ShouldContain(e => e.Contains("'quality'") && e.Contains("threshold"));
+    }
+
     [Fact]
     public void Compile_FullSpecExampleYaml_Succeeds()
     {

@@ -224,9 +224,33 @@ public static class WorkflowYamlCompiler
                     errors.Add($"Objective metric '{metric.Id}' declares direction '{metric.Direction}'; expected 'maximize' or 'minimize'.");
                     continue;
                 }
-                mapped.Add(new WorkflowObjectiveMetric(metric.Id, metric.Direction));
+                if (metric.Threshold is { } threshold && !double.IsFinite(threshold))
+                {
+                    errors.Add($"Objective metric '{metric.Id}' declares a threshold that is not a finite number.");
+                    continue;
+                }
+                mapped.Add(new WorkflowObjectiveMetric(metric.Id, metric.Direction, metric.Threshold));
             }
             objective = new WorkflowObjective(mapped);
+        }
+
+        WorkflowEvaluationPlan? evaluationPlan = null;
+        if (dto.Evaluation is { } evaluation)
+        {
+            var planned = new List<string>();
+            foreach (var id in evaluation.Metrics ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(id)) { errors.Add("The evaluation section lists a blank metric id."); continue; }
+                if (planned.Contains(id, StringComparer.Ordinal)) { errors.Add($"The evaluation section lists metric '{id}' more than once."); continue; }
+                if (objective is null || !objective.Metrics.Any(metric => metric.MetricId == id))
+                {
+                    errors.Add($"The evaluation section lists metric '{id}', which the objective does not declare.");
+                    continue;
+                }
+                planned.Add(id);
+            }
+            if ((evaluation.Metrics ?? []).Count == 0) errors.Add("The evaluation section must list at least one metric.");
+            evaluationPlan = new WorkflowEvaluationPlan(planned, evaluation.Enabled ?? true);
         }
 
         WorkflowPolicyBinding? policy = null;
@@ -308,7 +332,7 @@ public static class WorkflowYamlCompiler
             Objective: objective,
             Policy: policy,
             ContextRequests: contextRequests,
-            EvaluationPlan: null,
+            EvaluationPlan: evaluationPlan,
             Optimization: optimization,
             Inputs: inputDefinitions,
             Outputs: outputDefinitions,

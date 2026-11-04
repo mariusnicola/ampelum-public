@@ -10,6 +10,7 @@ internal sealed class WorkflowYamlDto
     public string? Name { get; set; }
     public string? Description { get; set; }
     public ObjectiveYamlDto? Objective { get; set; }
+    public EvaluationYamlDto? Evaluation { get; set; }
     public RiskYamlDto? Risk { get; set; }
     public ContextYamlDto? Context { get; set; }
     public List<TriggerYamlDto>? Triggers { get; set; }
@@ -28,6 +29,13 @@ internal sealed class MetricYamlDto
 {
     public string? Id { get; set; }
     public string? Direction { get; set; }
+    public double? Threshold { get; set; }
+}
+
+internal sealed class EvaluationYamlDto
+{
+    public bool? Enabled { get; set; }
+    public List<string?>? Metrics { get; set; }
 }
 
 internal sealed class RiskYamlDto
