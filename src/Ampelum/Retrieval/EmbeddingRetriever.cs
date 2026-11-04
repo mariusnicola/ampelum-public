@@ -58,6 +58,7 @@ public sealed class EmbeddingRetriever : IRetriever
         Diagnostics.RetrieverQueryHits.Record(results.Count,
             new KeyValuePair<string, object?>("retriever.type", nameof(EmbeddingRetriever)));
 
-        return results.Select(r => r.Document).ToList();
+        // The store's score is the only similarity there is; the document carries the score it was indexed with.
+        return results.Select(r => r.Document with { Score = r.Score }).ToList();
     }
 }

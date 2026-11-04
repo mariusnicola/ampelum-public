@@ -72,7 +72,7 @@ public sealed class KnownLimitTests
     }
 
     [Fact]
-    public async Task KnownLimit_EmbeddingRetriever_returns_score_zero_so_a_score_floor_drops_everything()
+    public async Task EmbeddingRetriever_keeps_the_stores_score_so_a_score_floor_keeps_a_close_match()
     {
         var embedder = new HashingEmbeddingGenerator();
         var store = new InMemoryVectorStore();
@@ -84,8 +84,8 @@ public sealed class KnownLimitTests
         var floored = await new ScoreThresholdRetriever(new EmbeddingRetriever(embedder, store), 0.6)
             .RetrieveAsync("Fixed a login redirect loop", 1, ct: Ct);
 
-        plain.Single().Score.ShouldBe(0.0);
-        floored.ShouldBeEmpty();
+        plain.Single().Score.ShouldBe(1.0, 1e-6);
+        floored.Single().Id.ShouldBe("a");
     }
 
     [Fact]

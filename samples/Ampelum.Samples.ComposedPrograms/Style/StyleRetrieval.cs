@@ -22,7 +22,7 @@ public static class StyleRetrieval
         IVectorStore store, double minScore)
     {
         IRetriever Floor(IRetriever inner) => new ScoreThresholdRetriever(inner, minScore);
-        var all = Floor(new ScoredEmbeddingRetriever(embedder, store));
+        var all = Floor(new EmbeddingRetriever(embedder, store));
         return mode switch
         {
             RetrievalMode.Direct => all,
@@ -43,21 +43,6 @@ public static class StyleRetrieval
             }),
             _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown retrieval mode."),
         };
-    }
-}
-
-/// <summary>
-/// Embeds the query and asks the store. Unlike EmbeddingRetriever it keeps the similarity on each
-/// returned document, which is what a score floor needs.
-/// </summary>
-public sealed class ScoredEmbeddingRetriever(IEmbeddingGenerator<string, Embedding<float>> embedder, IVectorStore store) : IRetriever
-{
-    public async Task<IReadOnlyList<RetrievedDocument>> RetrieveAsync(
-        string query, int topK, IReadOnlyDictionary<string, object?>? filters = null, CancellationToken ct = default)
-    {
-        var vector = await embedder.GenerateVectorAsync(query, cancellationToken: ct).ConfigureAwait(false);
-        var hits = await store.QueryAsync(vector, topK, filters, ct).ConfigureAwait(false);
-        return hits.Select(hit => hit.Document with { Score = hit.Score }).ToList();
     }
 }
 

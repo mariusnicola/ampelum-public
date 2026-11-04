@@ -165,8 +165,6 @@ The test asserts the flawed behaviour, so it fails once the library is fixed and
 
 - `Loop` counts every predicate check as an iteration, and labels a stop on the last allowed check as
   `max_iterations`. The sample sets the loop bound two above the pass limit and counts body runs itself.
-- `EmbeddingRetriever` returns documents with score 0, so a score floor drops all of them. The sample
-  uses its own `ScoredEmbeddingRetriever`.
 - A reloaded index hands metadata back as JSON elements, so a store side equality filter matches nothing.
   The sample filters on the returned documents instead.
 

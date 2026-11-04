@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using SignalGrid.Ampelum;
 using SignalGrid.Ampelum.Retrieval;
+using SignalGrid.Ampelum.Retrieval.Filtering;
 using SignalGrid.Ampelum.Testing;
 using Microsoft.Extensions.AI;
 using Shouldly;
@@ -41,6 +42,33 @@ public sealed class EmbeddingRetrieverTests
         var results = await retriever.RetrieveAsync("cats", topK: 1, ct: ct);
         results.Count.ShouldBe(1);
         results[0].Id.ShouldBe("cats");
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_KeepsTheStoresScoreOnEachDocument()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var store = await MakeStore(ct);
+        var retriever = new EmbeddingRetriever(MakeEmbedder(), store);
+
+        var results = await retriever.RetrieveAsync("cats", topK: 2, ct: ct);
+
+        // The in-memory store scores (cosine + 1) / 2: the same vector is 1, an orthogonal one is 0.5.
+        results.Select(r => r.Id).ShouldBe(["cats", "dogs"]);
+        results[0].Score.ShouldBe(1.0, 1e-9);
+        results[1].Score.ShouldBe(0.5, 1e-9);
+    }
+
+    [Fact]
+    public async Task RetrieveAsync_AScoreFloor_KeepsTheDocumentsAtOrAboveIt()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var store = await MakeStore(ct);
+        var floored = new ScoreThresholdRetriever(new EmbeddingRetriever(MakeEmbedder(), store), 0.9);
+
+        var results = await floored.RetrieveAsync("cats", topK: 2, ct: ct);
+
+        results.Select(r => r.Id).ShouldBe(["cats"]);
     }
 
     [Fact]

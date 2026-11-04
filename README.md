@@ -312,7 +312,7 @@ Retrieval and vector stores
 - `HybridRetriever` passes a fixed `k: 60` to reciprocal rank fusion, so a configured value has no effect (`src/Ampelum/Retrieval/Hybrid/HybridRetriever.cs`).
 - The pgvector backend interpolates the table name and the filter key into SQL. Filter values are parameters, so treat table names and filter keys as trusted input.
 - Qdrant replaces a non-UUID id with an MD5-derived UUID and returns that, so the original id is lost. Non-canonical UUID forms come back canonical.
-- `InMemoryVectorStore` returns documents with their indexed score, so scores read 0 through `EmbeddingRetriever`. pgvector returns metadata as `JsonElement`, the other adapters as strings.
+- `EmbeddingRetriever` puts the score the vector store computed on each document, so a score floor works; the scale is the store's own (`InMemoryVectorStore` gives (cosine + 1) / 2, other adapters their own). pgvector returns metadata as `JsonElement`, the other adapters as strings.
 - `PineconeOptions.Environment` is required and unused.
 
 Tools
