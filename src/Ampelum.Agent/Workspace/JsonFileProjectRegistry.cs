@@ -3,7 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace SignalGrid.Ampelum.Agent;
 
-/// <summary>Portfolio registry that persists workspace metadata to a JSON file.
+/// <summary>Portfolio registry that persists workspace metadata to a JSON file: label, root, weight, escalation
+/// policy, blast radius and allowed tool ids.
 /// Service instances (TokenStore, SecretStore, Skills) are always reconstructed fresh —
 /// they are session-local and never serialized.</summary>
 public sealed class JsonFileProjectRegistry : IProjectPortfolio
@@ -78,6 +79,14 @@ public sealed class JsonFileProjectRegistry : IProjectPortfolio
         EscalationMode = ws.EscalationPolicy.Mode,
         MaxAutoApproveTier = ws.EscalationPolicy.MaxAutoApproveTier,
         BlockList = ws.EscalationPolicy.BlockList.ToList(),
+        BlastRadius = new BlastRadiusDto
+        {
+            Paths = ws.MaxBlastRadius.AllowedResourcePaths.ToList(),
+            Tools = ws.MaxBlastRadius.AllowedToolNames.ToList(),
+            Domains = ws.MaxBlastRadius.AllowedDomains.ToList(),
+            MaxAllowedTier = ws.MaxBlastRadius.MaxAllowedTier,
+        },
+        AllowedToolIds = ws.AllowedToolIds.ToList(),
     };
 
     private static WorkspaceContext Reconstruct(WorkspaceDto dto)
@@ -99,7 +108,17 @@ public sealed class JsonFileProjectRegistry : IProjectPortfolio
             RootPath = dto.RootPath,
             PriorityWeight = dto.PriorityWeight,
             EscalationPolicy = policy,
-            MaxBlastRadius = new BlastRadiusScope(),
+            // A file written before the scopes were stored has neither, and gets the empty defaults.
+            MaxBlastRadius = dto.BlastRadius is { } radius
+                ? new BlastRadiusScope
+                {
+                    AllowedResourcePaths = new HashSet<string>(radius.Paths),
+                    AllowedToolNames = new HashSet<string>(radius.Tools),
+                    AllowedDomains = new HashSet<string>(radius.Domains),
+                    MaxAllowedTier = radius.MaxAllowedTier,
+                }
+                : new BlastRadiusScope(),
+            AllowedToolIds = new HashSet<string>(dto.AllowedToolIds),
             TokenStore = new InMemoryTokenStore(),
             SecretStore = new InMemorySecretStore(),
             Skills = new SkillRegistry(),
@@ -122,5 +141,15 @@ public sealed class JsonFileProjectRegistry : IProjectPortfolio
         public EscalationMode EscalationMode { get; set; } = EscalationMode.AutoApprove;
         public DangerTier MaxAutoApproveTier { get; set; } = DangerTier.Destructive;
         public List<string> BlockList { get; set; } = new();
+        public BlastRadiusDto? BlastRadius { get; set; }
+        public List<string> AllowedToolIds { get; set; } = new();
+    }
+
+    private sealed class BlastRadiusDto
+    {
+        public List<string> Paths { get; set; } = new();
+        public List<string> Tools { get; set; } = new();
+        public List<string> Domains { get; set; } = new();
+        public DangerTier MaxAllowedTier { get; set; } = DangerTier.Destructive;
     }
 }

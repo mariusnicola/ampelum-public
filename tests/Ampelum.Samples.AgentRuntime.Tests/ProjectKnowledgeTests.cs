@@ -37,6 +37,27 @@ public sealed class ProjectKnowledgeTests : IDisposable
     }
 
     [Fact]
+    public void Workspace_TakesItsBlastRadiusAndToolsFromTheRegistryFile_NotFromTheDomainProfile()
+    {
+        var file = Path.Combine(_workspace.State, "portfolio.json");
+        var skills = new TriageSkills(_workspace.Root);
+        TriageWorkspace.Open(new JsonFileProjectRegistry(file), _workspace.Root, skills);
+
+        // Narrow what the file stores; a profile rebuilt on load would ignore this.
+        var stored = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(file))!;
+        var workspace = stored["workspaces"]![0]!;
+        workspace["allowedToolIds"] = new System.Text.Json.Nodes.JsonArray(TriageTools.Audit);
+        workspace["blastRadius"]!["tools"] = new System.Text.Json.Nodes.JsonArray(TriageTools.Audit);
+        File.WriteAllText(file, stored.ToJsonString());
+
+        var reloaded = TriageWorkspace.Open(new JsonFileProjectRegistry(file), _workspace.Root, skills);
+
+        reloaded.AllowedToolIds.ShouldBe([TriageTools.Audit]);
+        reloaded.MaxBlastRadius.ContainsTool(TriageTools.PostReport).ShouldBeFalse();
+        reloaded.MaxBlastRadius.ContainsTool(TriageTools.Audit).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Registries_RefuseTheSameWorkspaceTwice_AndForgetOneThatIsDeregistered()
     {
         var registry = new InMemoryProjectRegistry();

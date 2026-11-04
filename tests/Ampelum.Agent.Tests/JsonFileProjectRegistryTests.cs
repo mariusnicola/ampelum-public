@@ -44,6 +44,46 @@ public class JsonFileProjectRegistryTests : IDisposable
     }
 
     [Fact]
+    public void RoundTrip_RestoresTheBlastRadiusAndTheAllowedTools()
+    {
+        var registry1 = new JsonFileProjectRegistry(_path);
+        registry1.Register(MakeWorkspace("scoped") with
+        {
+            MaxBlastRadius = new BlastRadiusScope
+            {
+                AllowedResourcePaths = new HashSet<string> { "/work/src/" },
+                AllowedToolNames = new HashSet<string> { "audit" },
+                AllowedDomains = new HashSet<string> { "example.test" },
+                MaxAllowedTier = DangerTier.Safe,
+            },
+            AllowedToolIds = new HashSet<string> { "audit", "post_report" },
+        });
+
+        var ws = new JsonFileProjectRegistry(_path).Get(WorkspaceId.New("scoped")).ShouldNotBeNull();
+
+        ws.MaxBlastRadius.AllowedResourcePaths.ShouldBe(["/work/src/"]);
+        ws.MaxBlastRadius.AllowedToolNames.ShouldBe(["audit"]);
+        ws.MaxBlastRadius.AllowedDomains.ShouldBe(["example.test"]);
+        ws.MaxBlastRadius.MaxAllowedTier.ShouldBe(DangerTier.Safe);
+        ws.AllowedToolIds.ShouldBe(["audit", "post_report"], ignoreOrder: true);
+    }
+
+    [Fact]
+    public void Load_FileWrittenBeforeScopesWereStored_GivesTheEmptyDefaults()
+    {
+        File.WriteAllText(_path, """
+            { "workspaces": [ { "id": "old", "label": "old", "rootPath": "", "priorityWeight": 50, "escalationMode": "abortTask" } ] }
+            """);
+
+        var ws = new JsonFileProjectRegistry(_path).Get(WorkspaceId.New("old")).ShouldNotBeNull();
+
+        ws.MaxBlastRadius.AllowedResourcePaths.ShouldBeEmpty();
+        ws.MaxBlastRadius.AllowedToolNames.ShouldBeEmpty();
+        ws.MaxBlastRadius.MaxAllowedTier.ShouldBe(DangerTier.Destructive);
+        ws.AllowedToolIds.ShouldBeEmpty();
+    }
+
+    [Fact]
     public void Register_DuplicateId_Throws()
     {
         var registry = new JsonFileProjectRegistry(_path);

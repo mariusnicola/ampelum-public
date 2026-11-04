@@ -13,7 +13,7 @@ public static class TriageWorkspace
 
     /// <summary>
     /// Registers the project on first use and finds it again on later use. The registry file keeps label, root,
-    /// weight and escalation mode; scopes and stores are rebuilt every time, from the domain profile and the project policy.
+    /// weight, escalation mode, blast radius and allowed tools; the stores and skills are session-local and built fresh.
     /// </summary>
     public static WorkspaceContext Open(IProjectPortfolio registry, string root, TriageSkills skills)
     {
@@ -27,6 +27,7 @@ public static class TriageWorkspace
                 Label = Label,
                 RootPath = root,
                 MaxBlastRadius = profile.BuildBlastRadius(root),
+                AllowedToolIds = new HashSet<string> { TriageTools.Audit, TriageTools.PostReport },
                 TokenStore = new InMemoryTokenStore(),
                 SecretStore = new InMemorySecretStore(),
                 Skills = skills.Registry,
@@ -35,12 +36,8 @@ public static class TriageWorkspace
             registry.Register(stored);
         }
 
-        return stored with
-        {
-            MaxBlastRadius = profile.BuildBlastRadius(stored.RootPath),
-            AllowedToolIds = new HashSet<string> { TriageTools.Audit, TriageTools.PostReport },
-            Skills = skills.Registry,
-        };
+        // The blast radius and the allowed tools come from the registry file; only the session-local skills are attached.
+        return stored with { Skills = skills.Registry };
     }
 
     /// <summary>
