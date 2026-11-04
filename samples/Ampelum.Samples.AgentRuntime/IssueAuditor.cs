@@ -136,6 +136,7 @@ public sealed class IssueAuditor(
     static string FormatFacts(IssueFacts found) =>
         string.Join('\n', new[] { "Types:" }.Concat(found.Symbols)
             .Concat(["Imports:"]).Concat(found.Imports)
+            .Concat(["Calls:"]).Concat(found.Calls)
             .Concat(["Convention findings:"]).Concat(found.Violations));
 
     // Every project file is a piece of evidence. A caller may only use files under a folder it holds a read permission for.

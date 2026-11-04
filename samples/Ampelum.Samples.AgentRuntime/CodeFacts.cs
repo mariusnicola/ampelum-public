@@ -8,7 +8,8 @@ public sealed record IssueFacts(
     IReadOnlyList<string> Symbols,
     IReadOnlyList<string> Imports,
     IReadOnlyList<string> Violations,
-    IReadOnlyList<string> Files);
+    IReadOnlyList<string> Files,
+    IReadOnlyList<string> Calls);
 
 /// <summary>
 /// Indexes the project's source folder (type symbols and import edges, no embeddings) and checks its files against the
@@ -78,6 +79,15 @@ public sealed class CodeFacts : IDisposable
             .Distinct()
             .Order()
             .ToArray();
+        // Only calls to methods the project itself defines: calls into the framework would bury the useful ones.
+        var projectMethods = _store.GetAllSymbols().Where(s => s.Kind is SymbolKind.Method or SymbolKind.Function).Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
+        var calls = files
+            .SelectMany(_graph.GetEdgesForFile)
+            .Where(e => e.EdgeType == EdgeType.Call && projectMethods.Contains(e.TgtName))
+            .Select(e => $"{e.SrcName} calls {e.TgtName} in {Relative(e.SrcFile)}")
+            .Distinct()
+            .Order()
+            .ToArray();
         var violations = new List<string>();
         foreach (var file in files)
         {
@@ -91,7 +101,8 @@ public sealed class CodeFacts : IDisposable
             [.. matches.Select(s => $"{s.Kind} {s.Name} in {Relative(s.File)}").Order()],
             imports,
             violations,
-            [.. files.Select(Relative)]);
+            [.. files.Select(Relative)],
+            calls);
     }
 
     /// <summary>Path relative to the project root, with forward slashes.</summary>

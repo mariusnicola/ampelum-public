@@ -6,6 +6,7 @@ namespace SignalGrid.Ampelum.Agent.CodeIntelligence;
 /// <summary>Extracts symbols from source files using regex fallback when tree-sitter is unavailable.</summary>
 public sealed class CodeIndexer
 {
+    private const int MethodPattern = 1;
     private static readonly Regex[] PatternCache = CreatePatterns();
     private static readonly HashSet<string> SourceExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -16,7 +17,10 @@ public sealed class CodeIndexer
 
     private static Regex[] CreatePatterns() => [
         new(@"^\s*(public|private|internal|protected|static|sealed|abstract|partial|readonly)?\s*(public|private|internal|protected|static|sealed|abstract|partial|readonly)?\s*(class|interface|struct|enum|record)\s+(\w+)", RegexOptions.Multiline | RegexOptions.Compiled),
-        new(@"^\s*(public|private|internal|protected|static|sealed|abstract|virtual|override|async)?\s*(public|private|internal|protected|static|sealed|abstract|virtual|override|async)?\s*(\w+[<>])?\s+(\w+)\s*\(.*\)\s*\{?", RegexOptions.Multiline | RegexOptions.Compiled),
+        // MethodPattern: optional modifiers, a return type (plain, generic or array), the name, then a parameter list.
+        // Keywords that start a statement or a type declaration are refused, so "return Foo(x);" is no method and
+        // "record Money(int X)" stays a record. [ \t] instead of \s keeps the match on the declaration line.
+        new(@"^[ \t]*(?:(?:public|private|internal|protected|static|sealed|abstract|virtual|override|async|extern|unsafe)[ \t]+)*(?!(?:return|new|await|throw|else|if|for|foreach|while|switch|using|lock|catch|yield|var|case|goto|do|try|finally|fixed|checked|unchecked|class|interface|struct|enum|record|def|fn|func|function|namespace|impl|trait|type)\b)[\w.?]+(?:<[^()\r\n]*>)?(?:\[\])*[ \t]+(\w+)(?:<[^()\r\n]*>)?[ \t]*\(.*\)", RegexOptions.Multiline | RegexOptions.Compiled),
         new(@"^\s*(async\s+)?def\s+(\w+)\s*\(.*\):", RegexOptions.Multiline | RegexOptions.Compiled),
         new(@"^\s*class\s+(\w+)(\(.*\))?:", RegexOptions.Multiline | RegexOptions.Compiled),
         new(@"^\s*func\s+(\([^)]*\)\s*)?(\w+)\s*\(.*?\)\s*(\([^)]*\)|\w+)?\s*\{?", RegexOptions.Multiline | RegexOptions.Compiled),
@@ -39,14 +43,17 @@ public sealed class CodeIndexer
             var lines = source.Split('\n');
             var symbols = new List<Symbol>();
 
-            foreach (var regex in PatternCache)
+            for (var patternIndex = 0; patternIndex < PatternCache.Length; patternIndex++)
             {
-                foreach (Match match in regex.Matches(source))
+                foreach (Match match in PatternCache[patternIndex].Matches(source))
                 {
                     var lineIdx = source[..match.Index].Count(c => c == '\n');
                     var line = lineIdx + 1; // 1-indexed
                     var name = match.Groups.Values.LastOrDefault(g => g.Success && g.Index > match.Groups[0].Index && !int.TryParse(g.Value, out _))?.Value ?? "?";
-                    var kind = InferKind(match, ext);
+                    // The method pattern's text holds no kind word of its own; a name such as GetEnumerator must not read as an enum.
+                    var kind = patternIndex == MethodPattern
+                        ? (ext is ".cs" or ".java" or ".kt" ? SymbolKind.Method : SymbolKind.Function)
+                        : InferKind(match, ext);
                     var sig = lines[lineIdx].Trim();
                     var (lineStart, lineEnd) = FindBounds(lines, line, match);
                     var hash = Symbol.ComputeHash(source, lineStart, lineEnd);

@@ -81,10 +81,12 @@ public sealed class ProjectKnowledgeTests : IDisposable
         var order = await facts.GatherAsync(Issue(101, "Order total is wrong for an empty cart"), TestContext.Current.CancellationToken);
         var notifier = await facts.GatherAsync(Issue(103, "Notifier calls the model with a raw call"), TestContext.Current.CancellationToken);
 
-        order.Symbols.ShouldBe(["Class OrderService in src/OrderService.cs"]);
+        order.Symbols.ShouldBe(["Class OrderService in src/OrderService.cs", "Method Total in src/OrderService.cs"]);
+        order.Calls.ShouldBe(["Total calls ApplyDiscount in src/OrderService.cs"]);
         order.Violations.ShouldContain(v => v.StartsWith("src/OrderService.cs: max-file-lines (warning)", StringComparison.Ordinal));
         order.Violations.ShouldContain(v => v.StartsWith("src/OrderService.cs: no-dynamic (warning)", StringComparison.Ordinal));
         notifier.Symbols.ShouldBe(["Class Notifier in src/Notifier.cs"]);
+        notifier.Calls.ShouldBeEmpty();
         notifier.Imports.ShouldBe(["src/Notifier.cs imports Microsoft.Extensions.AI"]);
         notifier.Violations.ShouldContain(v => v.StartsWith("src/Notifier.cs: no-bare-llm-prompts (error)", StringComparison.Ordinal));
     }
@@ -108,7 +110,7 @@ public sealed class ProjectKnowledgeTests : IDisposable
 
         var pricing = await facts.GatherAsync(Issue(102, "Pricing.ApplyDiscount never rounds"), TestContext.Current.CancellationToken);
 
-        pricing.Symbols.ShouldBe(["Class Pricing in src/Pricing.cs"]);
+        pricing.Symbols.ShouldBe(["Class Pricing in src/Pricing.cs", "Method ApplyDiscount in src/Pricing.cs"]);
         pricing.Violations.ShouldNotContain(v => v.Contains("Pricing.cs", StringComparison.Ordinal));
     }
 
