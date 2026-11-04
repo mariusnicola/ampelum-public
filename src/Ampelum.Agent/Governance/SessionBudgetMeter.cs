@@ -26,6 +26,10 @@ public sealed class SessionBudgetMeter(SessionBudget limits)
     /// <summary>True when the next call would be refused.</summary>
     public bool IsExhausted { get { lock (_gate) return limits.IsExhausted(_calls, _tokens, _outputBytes); } }
 
+    /// <summary>True when a limit other than the call count is used up: tokens, output bytes or duration. A run that
+    /// already holds its call checks this between its own steps, since the call count cannot stop it.</summary>
+    public bool IsExhaustedExceptCalls { get { lock (_gate) return limits.IsExhausted(0, _tokens, _outputBytes); } }
+
     /// <summary>Claims one call. Returns false, and counts a refusal, when no room is left.</summary>
     public bool TryReserveCall()
     {
@@ -39,6 +43,14 @@ public sealed class SessionBudgetMeter(SessionBudget limits)
             _calls++;
             return true;
         }
+    }
+
+    /// <summary>Gives back a call claimed with <see cref="TryReserveCall"/> that turned out not to run, so it does
+    /// not count. Another caller may have been refused in the meantime.</summary>
+    public void ReleaseCall()
+    {
+        lock (_gate)
+            if (_calls > 0) _calls--;
     }
 
     /// <summary>Adds the tokens a finished call used.</summary>

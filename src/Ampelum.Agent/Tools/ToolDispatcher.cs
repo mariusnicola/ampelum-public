@@ -141,8 +141,9 @@ public class ToolDispatcher : IToolDispatcher
             return result;
         }
 
-        // Counted here, after policy and confirmation, so a call that never reaches its handler for those reasons
-        // does not use up the budget, and before an observation token is consumed.
+        // Claimed here, after policy and confirmation and before an observation token is consumed, so a refusal for
+        // budget never consumes a token. A call rejected for its token gives the claim back below, so only a call
+        // that reaches its handler counts.
         if (_budget is not null && !_budget.TryReserveCall())
         {
             var blocked = PolicyDecision.Blocked("Session budget exhausted.");
@@ -160,11 +161,13 @@ public class ToolDispatcher : IToolDispatcher
         }
         catch (MissingObservationTokenException ex)
         {
+            _budget?.ReleaseCall();
             await AuditAsync(toolName, caller, safeArgs, PolicyDecision.Blocked(ex.Message), null, correlation, "observation.token.rejected", correlation.ConfirmationId, null).ConfigureAwait(false);
             throw;
         }
         catch (InvalidOperationException ex)
         {
+            _budget?.ReleaseCall();
             var blocked = PolicyDecision.Blocked(ex.Message);
             var result = Failure(toolName, ex.Message);
             await AuditAsync(toolName, caller, safeArgs, blocked, result, correlation, "observation.token.rejected", correlation.ConfirmationId, ExtractTokenId(effectiveManifest, args)).ConfigureAwait(false);

@@ -76,7 +76,11 @@ public sealed class FileTrustStore : IAgentTrustStore
     private static TrustLevel Read(string path)
     {
         using var doc = JsonDocument.Parse(File.ReadAllBytes(path));
-        return Enum.Parse<TrustLevel>(doc.RootElement.GetProperty("level").GetString()!);
+        var text = doc.RootElement.TryGetProperty("level", out var level) && level.ValueKind == JsonValueKind.String ? level.GetString() : null;
+        // Matched against the defined names only: Enum.Parse would also take "99" or "-1" and return an undefined level.
+        if (text is null || !Enum.GetNames<TrustLevel>().Contains(text, StringComparer.Ordinal))
+            throw new InvalidDataException($"Trust file '{Path.GetFileName(path)}' holds a level that is not one of {string.Join(", ", Enum.GetNames<TrustLevel>())}.");
+        return Enum.Parse<TrustLevel>(text);
     }
 
     private string PathFor((string agentType, string domain) key) =>

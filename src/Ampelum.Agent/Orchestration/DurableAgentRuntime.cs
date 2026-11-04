@@ -112,9 +112,6 @@ public sealed class DurableAgentRuntime : IDurableAgentRuntime
             ? session.Snapshot.PendingInterrupt.NextPhase ?? session.Snapshot.CurrentPhase
             : input.NextPhase;
 
-        session.Machine.ResolveEscalation();
-        session.Machine.AdvancePhase(nextPhase);
-
         await PersistAsync(
             session,
             WorkflowState.Running,
@@ -122,6 +119,10 @@ public sealed class DurableAgentRuntime : IDurableAgentRuntime
             input.Reason,
             pendingInterrupt: null,
             ct).ConfigureAwait(false);
+
+        // Moved after the save, as in PauseAsync: a save that throws leaves the machine as it was, so a retry can resolve it.
+        session.Machine.ResolveEscalation();
+        session.Machine.AdvancePhase(nextPhase);
 
         await EmitAsync(session, DurableRunEventKind.Resumed, input.Reason, ct).ConfigureAwait(false);
         await EmitAsync(session, DurableRunEventKind.CheckpointSaved, "Resume checkpoint saved", ct).ConfigureAwait(false);

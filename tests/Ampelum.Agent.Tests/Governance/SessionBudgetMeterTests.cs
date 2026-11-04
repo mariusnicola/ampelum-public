@@ -104,6 +104,36 @@ public sealed class ToolDispatcherBudgetTests
     }
 
     [Fact]
+    public async Task CallRejectedForItsObservationToken_DoesNotUseUpTheBudget_OnTheThrowPathAndTheReturnPath()
+    {
+        var meter = new SessionBudgetMeter(new SessionBudget { MaxCallCount = 1 });
+        var loader = new InMemoryToolLoader();
+        loader.Register(new ToolManifest { Name = "read", Description = "read", DangerTier = DangerTier.Safe, Reversibility = Reversibility.Reversible });
+        loader.Register(new ToolManifest
+        {
+            Name = "edit", Description = "edit", DangerTier = DangerTier.Destructive, Reversibility = Reversibility.Reversible,
+            RequiresObservationToken = new ObservationRequirement { ArgName = "token", ResourcePathArg = "path" },
+        });
+        var dispatcher = new ToolDispatcher(loader, new InMemoryTokenStore(), new PolicyEngine(), Caller, budget: meter);
+        dispatcher.RegisterHandler("read", (_, _) => Task.FromResult(new ToolResult(true, "ok", null, PolicyDecision.Allowed)));
+        dispatcher.RegisterHandler("edit", (_, _) => Task.FromResult(new ToolResult(true, "edited", null, PolicyDecision.Allowed)));
+
+        // No token argument at all: the dispatcher throws.
+        await Should.ThrowAsync<MissingObservationTokenException>(() => dispatcher.InvokeAsync("edit", NoArgs, Caller));
+        meter.Calls.ShouldBe(0);
+
+        // A token that does not exist: the dispatcher returns a failure.
+        var unknown = new Dictionary<string, JsonElement> { ["token"] = JsonSerializer.SerializeToElement("no-such-token"), ["path"] = JsonSerializer.SerializeToElement("/target") };
+        (await dispatcher.InvokeAsync("edit", unknown, Caller)).Success.ShouldBeFalse();
+        meter.Calls.ShouldBe(0);
+        meter.Refused.ShouldBe(0);
+
+        // The one call the budget allows is still there.
+        (await dispatcher.InvokeAsync("read", NoArgs, Caller)).Success.ShouldBeTrue();
+        meter.Calls.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task ABlockedCall_DoesNotUseUpTheBudget()
     {
         var meter = new SessionBudgetMeter(new SessionBudget { MaxCallCount = 1 });
@@ -136,6 +166,22 @@ public sealed class SubAgentRunnerBudgetTests
         second.Success.ShouldBeFalse();
         second.Outcome.ShouldContain("budget");
         chat.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task RunThatTookTheLastCallSlot_ContinuesToItsLaterTurns()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var meter = new SessionBudgetMeter(new SessionBudget { MaxCallCount = 1 });
+        var chat = new FakeChatClient().EnqueueText("working").EnqueueText("DONE: finished on turn two");
+        var runner = new SubAgentRunner(chat, ".", "s1", maxTurns: 5, budget: meter);
+
+        var result = await runner.RunAsync(Task1(), ct);
+
+        result.Success.ShouldBeTrue();
+        result.Outcome.ShouldBe("finished on turn two");
+        chat.RecordedCalls.Count.ShouldBe(2);
+        meter.Calls.ShouldBe(1);
     }
 
     [Fact]

@@ -43,7 +43,8 @@ public sealed class SubAgentRunner
         var filesChanged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var warnings = new List<string>();
 
-        // A run counts as one call; its turns add their tokens, and a spent budget ends the run between turns.
+        // A run counts as one call; its turns add their tokens, and a spent token, byte or duration limit ends the
+        // run between turns. The call count never does: a run that got its slot may finish.
         if (_budget is not null && !_budget.TryReserveCall())
             return BudgetStop(task, filesChanged, warnings);
 
@@ -59,7 +60,7 @@ public sealed class SubAgentRunner
         {
             for (int turn = 1; turn <= _maxTurns; turn++)
             {
-                if (turn > 1 && _budget is { IsExhausted: true })
+                if (turn > 1 && _budget is { IsExhaustedExceptCalls: true })
                     return BudgetStop(task, filesChanged, warnings);
 
                 var userText = turn == 1

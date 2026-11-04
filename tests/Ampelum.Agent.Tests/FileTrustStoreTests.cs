@@ -191,6 +191,36 @@ public sealed class FileTrustStorePersistenceTests : IDisposable
     }
 
     [Theory]
+    [InlineData("99")]
+    [InlineData("-1")]
+    [InlineData("2")]
+    [InlineData("Superuser")]
+    [InlineData("provisional")]
+    [InlineData("")]
+    public async Task LevelInTheFileThatIsNotADefinedName_ThrowsInvalidDataExceptionNamingTheFile(string level)
+    {
+        await new FileTrustStore(_dir).SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+        var file = Directory.GetFiles(_dir).Single();
+        File.WriteAllText(file, $$"""{ "agentType": "agent", "domain": "mail", "level": "{{level}}" }""");
+
+        var ex = await Should.ThrowAsync<InvalidDataException>(() => new FileTrustStore(_dir).GetTrustLevelAsync("agent", "mail", Ct));
+
+        ex.Message.ShouldContain(Path.GetFileName(file));
+    }
+
+    [Fact]
+    public async Task FileWithoutALevel_ThrowsInvalidDataExceptionNamingTheFile()
+    {
+        await new FileTrustStore(_dir).SetTrustLevelAsync("agent", "mail", TrustLevel.Trusted, "grant", Ct);
+        var file = Directory.GetFiles(_dir).Single();
+        File.WriteAllText(file, """{ "agentType": "agent", "domain": "mail" }""");
+
+        var ex = await Should.ThrowAsync<InvalidDataException>(() => new FileTrustStore(_dir).GetTrustLevelAsync("agent", "mail", Ct));
+
+        ex.Message.ShouldContain(Path.GetFileName(file));
+    }
+
+    [Theory]
     [InlineData("../escape", "a/b")]
     [InlineData("agent:with*odd?chars", "do main")]
     public async Task NamesThatAreNotFileNames_StayInsideTheTrustFolder(string agentType, string domain)

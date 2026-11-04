@@ -26,11 +26,16 @@ public sealed class SkillRegistry : ISkillRegistry
         {
             var json = await File.ReadAllTextAsync(file, ct).ConfigureAwait(false);
             using var doc = JsonDocument.Parse(json);
-            if (doc.RootElement.ValueKind == JsonValueKind.Array)
-                loaded.AddRange(doc.RootElement.Deserialize<SkillManifest[]>(JsonOptions) ?? []);
-            else
-                loaded.Add(doc.RootElement.Deserialize<SkillManifest>(JsonOptions)
-                    ?? throw new JsonException($"'{file}' does not hold a skill."));
+            var found = doc.RootElement.ValueKind == JsonValueKind.Array
+                ? doc.RootElement.Deserialize<SkillManifest?[]>(JsonOptions) ?? []
+                : [doc.RootElement.Deserialize<SkillManifest>(JsonOptions)];
+            foreach (var skill in found)
+            {
+                // The required members only reject a missing property, so null and empty values are checked here.
+                if (skill is null || string.IsNullOrWhiteSpace(skill.Name) || string.IsNullOrWhiteSpace(skill.Version))
+                    throw new JsonException($"'{file}' holds a skill without a name or a version.");
+                loaded.Add(skill);
+            }
         }
 
         foreach (var skill in loaded)

@@ -163,6 +163,72 @@ public sealed class DurableAgentRuntimeTests : IDisposable
         }
     }
 
+    sealed class FailingOnceStore(IStateStore inner) : IStateStore
+    {
+        public bool FailNextSave { get; set; }
+
+        public Task SaveAsync(PhaseCheckpoint checkpoint, CancellationToken ct = default)
+        {
+            if (!FailNextSave) return inner.SaveAsync(checkpoint, ct);
+            FailNextSave = false;
+            throw new IOException("disk full");
+        }
+
+        public Task<PhaseCheckpoint?> LoadAsync(string workflowId, CancellationToken ct = default) => inner.LoadAsync(workflowId, ct);
+        public Task<PhaseCheckpoint?> LoadAsync(string workflowId, string? workspaceId, CancellationToken ct = default) => inner.LoadAsync(workflowId, workspaceId, ct);
+        public Task<PhaseCheckpoint?> LoadByIdAsync(string checkpointId, CancellationToken ct = default) => inner.LoadByIdAsync(checkpointId, ct);
+        public Task<IReadOnlyList<PhaseCheckpoint>> ListAsync(string workflowId, CancellationToken ct = default) => inner.ListAsync(workflowId, ct);
+        public Task PurgeAsync(string workflowId, CancellationToken ct = default) => inner.PurgeAsync(workflowId, ct);
+    }
+
+    [Fact]
+    public async Task Resume_WhenTheStoreFailsOnce_ThrowsAndARetryOnTheSameInstanceSucceeds()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var store = new FailingOnceStore(_stateStore);
+        var runtime = new DurableAgentRuntime(store, _eventStore);
+        var runId = await runtime.StartAsync(
+            new DurableIntent("proj-6", DurableWorkflowKind.CodeTask, "update the parser"),
+            DurableRunOptions.Default("ws-6"),
+            ct);
+        await runtime.PauseAsync(runId, "approval", ct);
+        var token = (await runtime.GetSnapshotAsync(runId, ct))!.PendingInterrupt!.ResumeToken;
+        var input = new DurableResumeInput(token, "approved", "execute");
+
+        store.FailNextSave = true;
+        await Should.ThrowAsync<IOException>(() => runtime.ResumeAsync(runId, input, ct));
+        (await runtime.GetSnapshotAsync(runId, ct))!.State.ShouldBe(WorkflowState.Suspended);
+
+        await runtime.ResumeAsync(runId, input, ct);
+
+        var resumed = await runtime.GetSnapshotAsync(runId, ct);
+        resumed!.State.ShouldBe(WorkflowState.Running);
+        resumed.PendingInterrupt.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Pause_WhenTheStoreFailsOnce_ThrowsAndARetryOnTheSameInstanceSucceeds()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var store = new FailingOnceStore(_stateStore);
+        var runtime = new DurableAgentRuntime(store, _eventStore);
+        var runId = await runtime.StartAsync(
+            new DurableIntent("proj-7", DurableWorkflowKind.CodeTask, "update the parser"),
+            DurableRunOptions.Default("ws-7"),
+            ct);
+
+        store.FailNextSave = true;
+        await Should.ThrowAsync<IOException>(() => runtime.PauseAsync(runId, "approval", ct));
+        (await runtime.GetSnapshotAsync(runId, ct))!.State.ShouldBe(WorkflowState.Running);
+
+        await runtime.PauseAsync(runId, "approval", ct);
+
+        var paused = await runtime.GetSnapshotAsync(runId, ct);
+        paused!.State.ShouldBe(WorkflowState.Suspended);
+        await runtime.ResumeAsync(runId, new DurableResumeInput(paused.PendingInterrupt!.ResumeToken, "ok", "execute"), ct);
+        (await runtime.GetSnapshotAsync(runId, ct))!.State.ShouldBe(WorkflowState.Running);
+    }
+
     public void Dispose()
     {
         try

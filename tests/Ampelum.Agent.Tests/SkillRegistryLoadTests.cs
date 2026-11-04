@@ -63,6 +63,25 @@ public sealed class SkillRegistryLoadTests : IDisposable
             () => new SkillRegistry().LoadAsync(Path.Combine(_dir, "nope"), Ct));
     }
 
+    [Theory]
+    [InlineData("""[{"name":null,"version":"2"}]""")]
+    [InlineData("""[null]""")]
+    [InlineData("""[{"name":"","version":"2"}]""")]
+    [InlineData("""[{"name":"x","version":null}]""")]
+    [InlineData("""[{"name":"x","version":"  "}]""")]
+    [InlineData("""null""")]
+    public async Task LoadAsync_ManifestWithoutANameOrVersion_ThrowsJsonExceptionNamingTheFile_AndRegistersNothing(string badContent)
+    {
+        Write("a.json", """{ "name": "valid-before-the-bad-file", "version": "1.0.0" }""");
+        Write("b.json", badContent);
+        var registry = new SkillRegistry();
+
+        var ex = await Should.ThrowAsync<System.Text.Json.JsonException>(() => registry.LoadAsync(_dir, Ct));
+
+        ex.Message.ShouldContain("b.json");
+        registry.GetAll().ShouldBeEmpty();
+    }
+
     [Fact]
     public async Task LoadAsync_FileThatIsNotASkill_ThrowsAndRegistersNothingFromIt()
     {
