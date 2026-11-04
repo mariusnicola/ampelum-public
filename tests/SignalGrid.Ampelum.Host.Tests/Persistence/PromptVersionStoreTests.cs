@@ -12,6 +12,40 @@ public sealed class PromptVersionStoreTests
         new(TestData.Factory(fix.Options));
 
     [Fact]
+    public async Task ReplaceAll_ReplacesEveryRowWithTheGivenOnes_AndKeepsTheirStatus()
+    {
+        using var fix = new TempStorageFixture();
+        var sut = MakeSut(fix);
+        var ts = DateTimeOffset.UtcNow;
+        await sut.InsertChallengerAsync(new PromptVersionRow("v-gone", "modA", "challenger", ts, null, "/p0", null), TestContext.Current.CancellationToken);
+
+        await sut.ReplaceAllAsync(
+            [new PromptVersionRow("v1", "modA", "active", ts, null, "/p1", "n"), new PromptVersionRow("v2", "modB", "retired", ts, "v1", "/p2", null)],
+            TestContext.Current.CancellationToken);
+
+        (await sut.TryGetByIdAsync("v-gone", TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await sut.GetActiveAsync("modA", TestContext.Current.CancellationToken))!.VersionId.ShouldBe("v1");
+        (await sut.TryGetByIdAsync("v2", TestContext.Current.CancellationToken))!.Status.ShouldBe("retired");
+    }
+
+    [Fact]
+    public async Task ReplaceAll_WhenOneRowFails_LeavesTheRowsThatWereThere()
+    {
+        using var fix = new TempStorageFixture();
+        var sut = MakeSut(fix);
+        var ts = DateTimeOffset.UtcNow;
+        await sut.InsertChallengerAsync(new PromptVersionRow("v-before", "modA", "challenger", ts, null, "/p0", null), TestContext.Current.CancellationToken);
+
+        // The second row repeats the first one's version id.
+        await Should.ThrowAsync<Microsoft.Data.Sqlite.SqliteException>(async () => await sut.ReplaceAllAsync(
+            [new PromptVersionRow("dup", "modA", "challenger", ts, null, "/p1", null), new PromptVersionRow("dup", "modB", "challenger", ts, null, "/p2", null)],
+            TestContext.Current.CancellationToken));
+
+        (await sut.TryGetByIdAsync("v-before", TestContext.Current.CancellationToken))!.VersionId.ShouldBe("v-before");
+        (await sut.TryGetByIdAsync("dup", TestContext.Current.CancellationToken)).ShouldBeNull();
+    }
+
+    [Fact]
     public async Task ListModules_Empty_ReturnsEmptyList()
     {
         using var fix = new TempStorageFixture();

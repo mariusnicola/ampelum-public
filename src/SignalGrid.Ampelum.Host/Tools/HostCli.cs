@@ -20,21 +20,27 @@ internal static class HostCli
         // Program passes the command name first; the options follow it.
         var options = args[0] == "rebuild-index" ? args[1..] : args;
         string? configPath = null;
-        var configAt = Array.FindIndex(options, a => a is "--config" or "-c");
-        if (configAt >= 0)
+        for (var i = 0; i < options.Length; i += 2)
         {
-            if (configAt + 1 >= options.Length)
+            // The only option is --config <path>; anything else, such as --config=<path>, is refused rather than ignored.
+            if (options[i] is not ("--config" or "-c"))
+            {
+                Console.Error.WriteLine($"Rebuild failed: unknown argument '{options[i]}'. Use --config <path>.");
+                return 1;
+            }
+            if (i + 1 >= options.Length)
             {
                 Console.Error.WriteLine("Rebuild failed: --config needs a path.");
                 return 1;
             }
-            // A relative path means the working directory.
-            configPath = Path.GetFullPath(options[configAt + 1]);
-            if (!File.Exists(configPath))
+            // A relative path means the working directory; when --config is given twice the first one is used.
+            var candidate = Path.GetFullPath(options[i + 1]);
+            if (!File.Exists(candidate))
             {
-                Console.Error.WriteLine($"Rebuild failed: config file '{configPath}' was not found.");
+                Console.Error.WriteLine($"Rebuild failed: config file '{candidate}' was not found.");
                 return 1;
             }
+            configPath ??= candidate;
         }
 
         await HandleRebuildIndex(configPath, ct);

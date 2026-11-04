@@ -70,8 +70,89 @@ public sealed class PromptsEndpointTests : IAsyncLifetime
         var row = (await store.TryGetByIdAsync(versionId, ct))!;
         using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(row.FilePath, ct));
         doc.RootElement.GetProperty("instructionOverrides").GetProperty("default").GetString().ShouldBe("Be brief.");
-        File.Exists(row.FilePath + ".tmp").ShouldBeFalse();
+        Directory.GetFiles(Path.GetDirectoryName(row.FilePath)!, "*.tmp").ShouldBeEmpty();
         return doc.RootElement.GetProperty("_meta").Clone();
+    }
+
+    const string FilesNotUpdatedHeader = "X-Ampelum-Prompt-Files-Not-Updated";
+
+    async Task<string> FilePathAsync(string versionId, CancellationToken ct) =>
+        (await _factory.Services.GetRequiredService<SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore>()
+            .TryGetByIdAsync(versionId, ct))!.FilePath;
+
+    async Task<HttpResponseMessage> PromoteRawAsync(string versionId, CancellationToken ct) =>
+        await _factory.HttpClient.PostAsJsonAsync("/prompts/Fake/promote", new PromoteRequest(versionId),
+            AmpelumHostContractsJsonContext.Default.PromoteRequest, cancellationToken: ct);
+
+    [Theory]
+    [InlineData("not json")]
+    [InlineData(null)]
+    public async Task POST_prompts_promote_WhenThePreviousActivesFileIsUnreadableOrGone_StillPromotes_AndSaysWhichFileWasNotUpdated(string? content)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var first = await CreateFakeVersionAsync(null, null, ct);
+        var second = await CreateFakeVersionAsync(first, null, ct);
+        await PromoteFakeAsync(first, ct);
+        var firstFile = await FilePathAsync(first, ct);
+        if (content is null) File.Delete(firstFile); else await File.WriteAllTextAsync(firstFile, content, ct);
+
+        using var response = await PromoteRawAsync(second, ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.PromoteResponse, ct);
+        body!.ActiveVersionId.ShouldBe(second);
+        body.PreviousActiveVersionId.ShouldBe(first);
+        response.Headers.GetValues(FilesNotUpdatedHeader).ShouldBe([first]);
+        (await ReadMetaAsync(second, ct)).GetProperty("status").GetString().ShouldBe("active");
+        var store = _factory.Services.GetRequiredService<SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore>();
+        (await store.GetActiveAsync("Fake", ct))!.VersionId.ShouldBe(second);
+        (await store.TryGetByIdAsync(first, ct))!.Status.ShouldBe("retired");
+    }
+
+    [Fact]
+    public async Task POST_prompts_promote_WhenTheTargetsFileIsUnreadable_AnswersAnErrorBody_AndPromotesNothing()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var id = await CreateFakeVersionAsync(null, null, ct);
+        await File.WriteAllTextAsync(await FilePathAsync(id, ct), "not json", ct);
+
+        using var response = await PromoteRawAsync(id, ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.BadRequest);
+        response.Headers.Contains("X-Ampelum-Trace-Id").ShouldBeTrue();
+        var error = await response.Content.ReadFromJsonAsync(AmpelumHostContractsJsonContext.Default.ErrorResponse, ct);
+        error!.Message.ShouldStartWith("Failed to update prompt file");
+        var store = _factory.Services.GetRequiredService<SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore>();
+        (await store.TryGetByIdAsync(id, ct))!.Status.ShouldBe("challenger");
+        (await store.GetActiveAsync("Fake", ct)).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task POST_prompts_promote_WhenTheTargetsFileIsGone_StillPromotes_AndSaysWhichFileWasNotUpdated()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var id = await CreateFakeVersionAsync(null, null, ct);
+        File.Delete(await FilePathAsync(id, ct));
+
+        using var response = await PromoteRawAsync(id, ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+        response.Headers.GetValues(FilesNotUpdatedHeader).ShouldBe([id]);
+    }
+
+    [Fact]
+    public async Task POST_prompts_promote_WritesThroughAUniqueTempName_SoAHeldTempFileDoesNotBlockIt()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var id = await CreateFakeVersionAsync(null, null, ct);
+        // Another writer holds the temp name the old code always used.
+        using var held = new FileStream(await FilePathAsync(id, ct) + ".tmp", FileMode.Create, FileAccess.Write, FileShare.None);
+
+        using var response = await PromoteRawAsync(id, ct);
+
+        response.StatusCode.ShouldBe(System.Net.HttpStatusCode.OK);
+        using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(await FilePathAsync(id, ct), ct));
+        doc.RootElement.GetProperty("_meta").GetProperty("status").GetString().ShouldBe("active");
     }
 
     [Fact]
@@ -105,6 +186,24 @@ public sealed class PromptsEndpointTests : IAsyncLifetime
         await PromoteFakeAsync(second, ct);
         (await ReadMetaAsync(first, ct)).GetProperty("status").GetString().ShouldBe("retired");
         (await ReadMetaAsync(second, ct)).GetProperty("status").GetString().ShouldBe("active");
+    }
+
+    [Fact]
+    public async Task POST_prompts_promote_WritesPromotedAtIntoTheTargetsMeta_AndKeepsItWhenTheVersionIsRetired()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var first = await CreateFakeVersionAsync(null, null, ct);
+        var second = await CreateFakeVersionAsync(first, null, ct);
+        (await ReadMetaAsync(first, ct)).TryGetProperty("promotedAt", out _).ShouldBeFalse();
+
+        await PromoteFakeAsync(first, ct);
+        var firstPromoted = (await ReadMetaAsync(first, ct)).GetProperty("promotedAt").GetDateTimeOffset();
+        firstPromoted.ShouldBeGreaterThan(DateTimeOffset.UtcNow.AddMinutes(-5));
+        (await ReadMetaAsync(second, ct)).TryGetProperty("promotedAt", out _).ShouldBeFalse();
+
+        await PromoteFakeAsync(second, ct);
+        (await ReadMetaAsync(first, ct)).GetProperty("promotedAt").GetDateTimeOffset().ShouldBe(firstPromoted);
+        (await ReadMetaAsync(second, ct)).GetProperty("promotedAt").GetDateTimeOffset().ShouldBeGreaterThanOrEqualTo(firstPromoted);
     }
 
     [Fact]

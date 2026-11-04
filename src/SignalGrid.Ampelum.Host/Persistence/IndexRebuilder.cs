@@ -56,11 +56,14 @@ public sealed class IndexRebuilder : IIndexRebuilder
         {
             var sw = Stopwatch.StartNew();
             var auditCount = await RebuildAuditIndexAsync(ct);
-            var promptCount = await RebuildPromptVersionsAsync(ct);
+            var (promptCount, promptFilesSkipped) = await RebuildPromptVersionsAsync(ct);
             await _optimizerStore.DeleteAllAsync(ct);
             var moduleCount = await RebuildModuleSnapshotAsync(ct);
             sw.Stop();
-            return new RebuildSummary(auditCount, promptCount, 0, moduleCount, sw.Elapsed);
+            return new RebuildSummary(auditCount, promptCount, 0, moduleCount, sw.Elapsed)
+            {
+                PromptFilesSkipped = promptFilesSkipped,
+            };
         }
         finally
         {
@@ -94,30 +97,46 @@ public sealed class IndexRebuilder : IIndexRebuilder
         return count;
     }
 
-    async ValueTask<int> RebuildPromptVersionsAsync(CancellationToken ct)
+    sealed record PromptFile(PromptVersionRow Row, DateTimeOffset ActiveSince, string RelativePath);
+
+    async ValueTask<(int Indexed, IReadOnlyList<string> Skipped)> RebuildPromptVersionsAsync(CancellationToken ct)
     {
-        await _promptStore.DeleteAllAsync(ct);
+        // Everything is worked out before the table is touched, and the table is then replaced in one transaction.
         var promptDir = _options.Storage.PromptDir;
-        if (!Directory.Exists(promptDir)) return 0;
-
-        var files = Directory.GetFiles(promptDir, "*.json", SearchOption.AllDirectories);
+        var files = Directory.Exists(promptDir)
+            ? Directory.GetFiles(promptDir, "*.json", SearchOption.AllDirectories)
+            : [];
         Array.Sort(files, StringComparer.Ordinal);
-        var rows = files.Select(f => RowFromFile(promptDir, f)).ToList();
+        var entries = files.Select(f => ReadFile(promptDir, f)).ToList();
 
-        // A module has one active version. When files disagree, the newest claim stays active, the rest are retired.
-        var keepActive = rows
-            .Where(r => r.Status == PromptStatus.Active)
-            .GroupBy(r => r.ModuleName)
-            .Select(g => g.MaxBy(r => r.CreatedAt)!.VersionId)
-            .ToHashSet();
-        foreach (var row in rows)
+        // Version ids are unique in the index. Of the files sharing one, the newest by creation date is kept; on a tie
+        // the first by path (the entries are in path order and MaxBy takes the first of equals). The others are reported.
+        var kept = new List<PromptFile>();
+        var skipped = new List<string>();
+        foreach (var group in entries.GroupBy(e => e.Row.VersionId))
         {
-            var unique = row.Status == PromptStatus.Active && !keepActive.Contains(row.VersionId)
-                ? row with { Status = PromptStatus.Retired }
-                : row;
-            await _promptStore.InsertChallengerAsync(unique, ct);
+            var winner = group.MaxBy(e => e.Row.CreatedAt)!;
+            kept.Add(winner);
+            skipped.AddRange(group.Where(e => e != winner).Select(e => e.RelativePath));
         }
-        return rows.Count;
+        kept.Sort((a, b) => string.CompareOrdinal(a.RelativePath, b.RelativePath));
+        skipped.Sort(StringComparer.Ordinal);
+
+        // A module has one active version. When files disagree, the one promoted last stays active (a file without
+        // "promotedAt" counts from its creation date), the rest are retired.
+        var keepActive = kept
+            .Where(e => e.Row.Status == PromptStatus.Active)
+            .GroupBy(e => e.Row.ModuleName)
+            .Select(g => g.MaxBy(e => e.ActiveSince)!.Row.VersionId)
+            .ToHashSet();
+        var rows = kept
+            .Select(e => e.Row.Status == PromptStatus.Active && !keepActive.Contains(e.Row.VersionId)
+                ? e.Row with { Status = PromptStatus.Retired }
+                : e.Row)
+            .ToList();
+
+        await _promptStore.ReplaceAllAsync(rows, ct);
+        return (rows.Count, skipped);
     }
 
     /// <summary>
@@ -125,14 +144,16 @@ public sealed class IndexRebuilder : IIndexRebuilder
     /// POST /prompts/{module} writes {PromptDir}/{module}/{versionId}.json, so without "_meta" the module is the first
     /// folder under the prompt folder and a file directly in the prompt folder has no module to name.
     /// </summary>
-    static PromptVersionRow RowFromFile(string promptDir, string filePath)
+    static PromptFile ReadFile(string promptDir, string filePath)
     {
-        var parts = Path.GetRelativePath(promptDir, filePath).Split(Path.DirectorySeparatorChar, 2);
+        var relativePath = Path.GetRelativePath(promptDir, filePath);
+        var parts = relativePath.Split(Path.DirectorySeparatorChar, 2);
         var versionId = Path.GetFileNameWithoutExtension(filePath);
         var moduleName = parts.Length == 2 ? parts[0] : "unknown";
         var status = PromptStatus.Challenger;
         var createdAt = new DateTimeOffset(File.GetLastWriteTimeUtc(filePath), TimeSpan.Zero);
         string? parentVersionId = null, note = null;
+        DateTimeOffset? promotedAt = null;
 
         try
         {
@@ -144,16 +165,20 @@ public sealed class IndexRebuilder : IIndexRebuilder
                 moduleName = Text(meta, "moduleName") ?? moduleName;
                 if (Text(meta, "status") is { } s && PromptStatus.All.Contains(s)) status = s;
                 if (Text(meta, "createdAt") is { } c && DateTimeOffset.TryParse(c, out var parsed)) createdAt = parsed;
+                if (Text(meta, "promotedAt") is { } p && DateTimeOffset.TryParse(p, out var promoted)) promotedAt = promoted;
                 parentVersionId = Text(meta, "parentVersionId");
                 note = Text(meta, "note");
             }
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
-            // A file that is not JSON still gets its row from its place on disk.
+            // A file that cannot be read as JSON still gets its row from its place on disk.
         }
 
-        return new PromptVersionRow(versionId, moduleName, status, createdAt, parentVersionId, filePath, note);
+        return new PromptFile(
+            new PromptVersionRow(versionId, moduleName, status, createdAt, parentVersionId, filePath, note),
+            promotedAt ?? createdAt,
+            relativePath);
     }
 
     static string? Text(JsonElement meta, string name) =>

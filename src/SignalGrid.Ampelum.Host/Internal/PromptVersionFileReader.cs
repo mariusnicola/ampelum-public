@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using SignalGrid.Ampelum.Host.Contracts;
 using SignalGrid.Ampelum.Host.Persistence;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -36,11 +37,29 @@ internal static class PromptVersionFileReader
     public static async ValueTask WriteAsync(
         string path, PromptVersionFileShape shape, CancellationToken ct)
     {
-        var tmp = path + ".tmp";
-        await using (var fs = File.Open(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
-            await JsonSerializer.SerializeAsync(fs, shape,
-                AmpelumHostJsonContext.Default.PromptVersionFileShape, ct);
-        File.Move(tmp, path, overwrite: true);
+        var tmp = TempName(path);
+        try
+        {
+            await using (var fs = File.Open(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                await JsonSerializer.SerializeAsync(fs, shape,
+                    AmpelumHostJsonContext.Default.PromptVersionFileShape, ct);
+            File.Move(tmp, path, overwrite: true);
+        }
+        catch
+        {
+            DeleteQuietly(tmp);
+            throw;
+        }
+    }
+
+    // A name of its own per write, so two writers of one file never share a temp file.
+    static string TempName(string path) => path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+
+    static void DeleteQuietly(string path)
+    {
+        try { File.Delete(path); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     /// <summary>The "_meta" block for a version: the same fields the optimizer writes.</summary>
@@ -57,21 +76,38 @@ internal static class PromptVersionFileReader
     /// <summary>Writes the file by temp file and move, so a reader never sees half a file.</summary>
     public static async ValueTask WriteNodeAsync(string path, JsonObject node, CancellationToken ct)
     {
-        var tmp = path + ".tmp";
-        await File.WriteAllTextAsync(tmp, node.ToJsonString(), ct);
-        File.Move(tmp, path, overwrite: true);
+        var tmp = TempName(path);
+        try
+        {
+            await File.WriteAllTextAsync(tmp, node.ToJsonString(), ct);
+            File.Move(tmp, path, overwrite: true);
+        }
+        catch
+        {
+            DeleteQuietly(tmp);
+            throw;
+        }
     }
 
     /// <summary>
     /// Records the version's status in its file's "_meta" block and leaves the rest of the file as it is.
-    /// A file that is gone is skipped.
+    /// Returns false, writing nothing, when the file is gone; throws when it cannot be read as a JSON object.
+    /// <paramref name="promotedAt"/> is written as "promotedAt" when given; a retired version keeps the one it had, and
+    /// a challenger has none.
     /// </summary>
-    public static async ValueTask WriteStatusAsync(PromptVersionRow row, string status, CancellationToken ct)
+    public static async ValueTask<bool> WriteStatusAsync(
+        PromptVersionRow row, string status, CancellationToken ct, DateTimeOffset? promotedAt = null)
     {
-        if (!File.Exists(row.FilePath)) return;
+        if (!File.Exists(row.FilePath)) return false;
         var node = JsonNode.Parse(await File.ReadAllTextAsync(row.FilePath, ct))!.AsObject();
-        node["_meta"] = MetaNode(row, status);
+        var meta = MetaNode(row, status);
+        if (promotedAt is { } at)
+            meta["promotedAt"] = JsonValue.Create(at);
+        else if (status == PromptStatus.Retired && (node["_meta"] as JsonObject)?["promotedAt"] is { } earlier)
+            meta["promotedAt"] = earlier.DeepClone();
+        node["_meta"] = meta;
         await WriteNodeAsync(row.FilePath, node, ct);
+        return true;
     }
 
     /// <summary>

@@ -29,6 +29,12 @@ public interface IPromptVersionStore
 
     /// <summary>Deletes all rows (used by IndexRebuilder).</summary>
     ValueTask DeleteAllAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Replaces every row with the given ones, each with the status it carries, in one transaction: when a row
+    /// fails, the rows that were there stay.
+    /// </summary>
+    ValueTask ReplaceAllAsync(IReadOnlyList<PromptVersionRow> rows, CancellationToken ct);
 }
 
 /// <summary>A row in the prompt versions read-side index.</summary>

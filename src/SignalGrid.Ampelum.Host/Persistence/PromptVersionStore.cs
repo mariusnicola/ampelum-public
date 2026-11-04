@@ -73,7 +73,14 @@ public sealed class PromptVersionStore : IPromptVersionStore
     {
         ArgumentNullException.ThrowIfNull(row);
         using var conn = _factory.Open();
+        Insert(conn, null, row);
+        return ValueTask.CompletedTask;
+    }
+
+    static void Insert(SqliteConnection conn, SqliteTransaction? tx, PromptVersionRow row)
+    {
         using var cmd = conn.CreateCommand();
+        cmd.Transaction = tx;
         cmd.CommandText = """
             INSERT INTO prompt_versions(version_id, module_name, status, created_at, parent_version_id, file_path, note)
             VALUES(@vid, @mod, @status, @cat, @pvid, @fp, @note);
@@ -86,7 +93,6 @@ public sealed class PromptVersionStore : IPromptVersionStore
         cmd.Parameters.AddWithValue("@fp", row.FilePath);
         cmd.Parameters.AddWithValue("@note", (object?)row.Note ?? DBNull.Value);
         cmd.ExecuteNonQuery();
-        return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc/>
@@ -150,6 +156,25 @@ public sealed class PromptVersionStore : IPromptVersionStore
         using var cmd = conn.CreateCommand();
         cmd.CommandText = "DELETE FROM prompt_versions;";
         cmd.ExecuteNonQuery();
+        return ValueTask.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public ValueTask ReplaceAllAsync(IReadOnlyList<PromptVersionRow> rows, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        using var conn = _factory.Open();
+        // Disposing the transaction without a commit rolls it back, so a failing row leaves the old rows.
+        using var tx = conn.BeginTransaction();
+        using (var delete = conn.CreateCommand())
+        {
+            delete.Transaction = tx;
+            delete.CommandText = "DELETE FROM prompt_versions;";
+            delete.ExecuteNonQuery();
+        }
+        foreach (var row in rows)
+            Insert(conn, tx, row);
+        tx.Commit();
         return ValueTask.CompletedTask;
     }
 

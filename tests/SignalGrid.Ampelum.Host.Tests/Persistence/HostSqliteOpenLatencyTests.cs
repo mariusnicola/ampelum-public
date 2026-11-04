@@ -35,6 +35,25 @@ public sealed class HostSqliteOpenLatencyTests
         await open;
     }
 
+    [Fact]
+    public void Open_AfterTheDatabaseFileWasDeleted_CreatesTheTablesAgain()
+    {
+        using var fix = new TempStorageFixture();
+        var factory = TestData.Factory(fix.Options);
+        using (factory.Open()) { }
+        // Let go of the file, then delete it with its journal files, as an operator would.
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        foreach (var suffix in new[] { "", "-wal", "-shm" })
+            if (File.Exists(fix.SqlitePath + suffix)) File.Delete(fix.SqlitePath + suffix);
+
+        using var conn = factory.Open();
+
+        File.Exists(fix.SqlitePath).ShouldBeTrue();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "SELECT COUNT(*) FROM prompt_versions;";
+        Convert.ToInt64(cmd.ExecuteScalar()).ShouldBe(0L);
+    }
+
     [Theory]
     [InlineData(10, 50, true)]
     [InlineData(40, 50, true)]

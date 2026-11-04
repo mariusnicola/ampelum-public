@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SignalGrid.Ampelum.Host.Contracts;
 using SignalGrid.Ampelum.Host.ErrorHandling;
@@ -199,6 +200,7 @@ internal static class PromptsEndpoint
         HttpRequest request,
         IModuleRegistry registry,
         IPromptVersionStore store,
+        ILoggerFactory loggerFactory,
         CancellationToken ct)
     {
         var traceId = TraceIdResolver.Resolve();
@@ -250,6 +252,21 @@ internal static class PromptsEndpoint
                 $"Version '{req.VersionId}' is not a challenger (status: {versionRow.Status}).",
                 traceId);
 
+        // The target's file is written first: when it cannot be, nothing is promoted and index and file still agree.
+        var notUpdated = new List<string>();
+        try
+        {
+            if (!await PromptVersionFileReader.WriteStatusAsync(versionRow, PromptStatus.Active, ct, DateTimeOffset.UtcNow))
+                notUpdated.Add(versionRow.VersionId);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return ApiErrors.BadRequest(
+                ErrorCodes.BadRequest,
+                $"Failed to update prompt file: {ex.Message}",
+                traceId);
+        }
+
         PromoteResult result;
         try
         {
@@ -257,21 +274,48 @@ internal static class PromptsEndpoint
         }
         catch (PromoteConflictException ex)
         {
+            await PutBackAsync(versionRow);
             return ApiErrors.Conflict(
                 ErrorCodes.PromoteConflict,
                 ex.Message,
                 traceId);
         }
+        catch
+        {
+            await PutBackAsync(versionRow);
+            throw;
+        }
 
-        // The index is promoted first; the files follow so rebuild-index sees the same statuses.
-        await PromptVersionFileReader.WriteStatusAsync(versionRow, PromptStatus.Active, ct);
+        // The previous active's file only records that it was retired; when it cannot be updated the promotion stands
+        // and the response names the version whose file was not.
         if (result.PreviousActiveVersionId is not null
             && await store.TryGetByIdAsync(result.PreviousActiveVersionId, ct) is { } previous)
-            await PromptVersionFileReader.WriteStatusAsync(previous, PromptStatus.Retired, ct);
+        {
+            try
+            {
+                if (!await PromptVersionFileReader.WriteStatusAsync(previous, PromptStatus.Retired, ct))
+                    notUpdated.Add(previous.VersionId);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                loggerFactory.CreateLogger("SignalGrid.Ampelum.Host.Prompts").LogWarning(
+                    ex, "Prompt file {Path} of version {VersionId} could not be marked retired.", previous.FilePath, previous.VersionId);
+                notUpdated.Add(previous.VersionId);
+            }
+        }
 
         var response = new PromoteResponse(moduleName, result.NewActiveVersionId, result.PreviousActiveVersionId);
         request.HttpContext.Response.Headers.Append("X-Ampelum-Trace-Id", traceId);
+        foreach (var versionId in notUpdated)
+            request.HttpContext.Response.Headers.Append("X-Ampelum-Prompt-Files-Not-Updated", versionId);
         return Results.Json(response, AmpelumHostJsonContext.Default.PromoteResponse);
+    }
+
+    // Best effort: the version was not promoted, so its file goes back to saying challenger.
+    static async Task PutBackAsync(PromptVersionRow row)
+    {
+        try { await PromptVersionFileReader.WriteStatusAsync(row, PromptStatus.Challenger, CancellationToken.None); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException) { }
     }
 
     static PromptVersion RowToVersion(PromptVersionRow row)

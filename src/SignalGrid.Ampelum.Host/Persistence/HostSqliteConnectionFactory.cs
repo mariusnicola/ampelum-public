@@ -10,6 +10,7 @@ namespace SignalGrid.Ampelum.Host.Persistence;
 public sealed class HostSqliteConnectionFactory : IHostSqliteConnectionFactory
 {
     readonly string _connectionString;
+    readonly string _path;
     readonly object _schemaGate = new();
     bool _schemaReady;
 
@@ -20,12 +21,21 @@ public sealed class HostSqliteConnectionFactory : IHostSqliteConnectionFactory
         var path = options.Value.Storage.SqlitePath;
         var dir = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+        _path = path;
         _connectionString = $"Data Source={path};Mode=ReadWriteCreate;Cache=Shared;";
     }
 
     /// <inheritdoc/>
     public SqliteConnection Open()
     {
+        if (!File.Exists(_path))
+        {
+            // The database was deleted (or never made): this open creates it empty, so its tables are made again, and
+            // pooled connections to the old file are let go.
+            using (var stale = new SqliteConnection(_connectionString))
+                SqliteConnection.ClearPool(stale);
+            Volatile.Write(ref _schemaReady, false);
+        }
         var conn = new SqliteConnection(_connectionString);
         conn.Open();
         HostSqliteSchema.ApplyConnectionSettings(conn);

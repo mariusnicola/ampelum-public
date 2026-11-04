@@ -172,6 +172,72 @@ public sealed class IndexRebuilderTests
     }
 
     [Fact]
+    public async Task Rebuild_TwoFilesClaimingActive_KeepsTheNewestPromotionActive_NotTheNewestCreation()
+    {
+        using var fix = new TempStorageFixture();
+        // v-old was created first but promoted last.
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "v-old.json"),
+            """{"versionId":"v-old","moduleName":"modA","status":"active","createdAt":"2026-01-01T00:00:00+00:00","promotedAt":"2026-03-01T00:00:00+00:00","parentVersionId":null,"note":null}""");
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "v-new.json"),
+            """{"versionId":"v-new","moduleName":"modA","status":"active","createdAt":"2026-02-01T00:00:00+00:00","promotedAt":"2026-02-15T00:00:00+00:00","parentVersionId":null,"note":null}""");
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.GetActiveAsync("modA", TestContext.Current.CancellationToken))!.VersionId.ShouldBe("v-old");
+        (await store.TryGetByIdAsync("v-new", TestContext.Current.CancellationToken))!.Status.ShouldBe("retired");
+    }
+
+    [Fact]
+    public async Task Rebuild_TwoFilesClaimingActive_OneWithoutPromotedAt_ComparesItsCreatedAtInstead()
+    {
+        using var fix = new TempStorageFixture();
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "v-a.json"),
+            """{"versionId":"v-a","moduleName":"modA","status":"active","createdAt":"2026-04-01T00:00:00+00:00","parentVersionId":null,"note":null}""");
+        WritePromptFileWithMeta(fix, Path.Combine("modA", "v-b.json"),
+            """{"versionId":"v-b","moduleName":"modA","status":"active","createdAt":"2026-01-01T00:00:00+00:00","promotedAt":"2026-03-01T00:00:00+00:00","parentVersionId":null,"note":null}""");
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.GetActiveAsync("modA", TestContext.Current.CancellationToken))!.VersionId.ShouldBe("v-a");
+    }
+
+    [Fact]
+    public async Task Rebuild_TwoFilesWithTheSameVersionId_KeepsTheNewestAndReportsTheOther_InsteadOfFailing()
+    {
+        using var fix = new TempStorageFixture();
+        WritePromptFile(fix, Path.Combine("Other", "dup.json"), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        WritePromptFile(fix, Path.Combine("Answer", "dup.json"), new DateTime(2026, 1, 3, 3, 4, 5, DateTimeKind.Utc));
+        var sut = MakeSut(fix);
+
+        var summary = await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        summary.PromptVersionsIndexed.ShouldBe(1);
+        summary.PromptFilesSkipped.ShouldBe([Path.Combine("Other", "dup.json")]);
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.TryGetByIdAsync("dup", TestContext.Current.CancellationToken))!.ModuleName.ShouldBe("Answer");
+    }
+
+    [Fact]
+    public async Task Rebuild_TwoFilesWithTheSameVersionIdAndTime_KeepsTheFirstByPath()
+    {
+        using var fix = new TempStorageFixture();
+        var when = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        WritePromptFile(fix, Path.Combine("Other", "dup.json"), when);
+        WritePromptFile(fix, Path.Combine("Answer", "dup.json"), when);
+        var sut = MakeSut(fix);
+
+        var summary = await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        summary.PromptFilesSkipped.ShouldBe([Path.Combine("Other", "dup.json")]);
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.TryGetByIdAsync("dup", TestContext.Current.CancellationToken))!.ModuleName.ShouldBe("Answer");
+    }
+
+    [Fact]
     public async Task Rebuild_PromptVersions_CarryTheirFilesWriteTime_SoTheyKeepTheirOrder()
     {
         using var fix = new TempStorageFixture();

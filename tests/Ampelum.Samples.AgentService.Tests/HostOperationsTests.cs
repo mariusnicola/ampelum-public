@@ -80,8 +80,14 @@ public sealed class HostOperationsTests
         var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
 
         var file = Directory.GetFiles(Path.Combine(service.StorageDir, "prompts"), "*.json", SearchOption.AllDirectories).Single();
-        (await File.ReadAllTextAsync(file, Ct)).ShouldContain(
-            "\"inputs\":{\"Question\":\"Where is my parcel?\"},\"outputs\":{\"Answer\":\"It is on its way.\"}");
+        using (var stored = JsonDocument.Parse(await File.ReadAllTextAsync(file, Ct)))
+        {
+            var stored0 = stored.RootElement.GetProperty("demoAssignments").GetProperty("default")[0];
+            // Property names are compared as written, so Pascal case names fail here.
+            stored0.EnumerateObject().Select(p => p.Name).ShouldBe(["inputs", "outputs"]);
+            stored0.GetProperty("inputs").GetProperty("Question").GetString().ShouldBe("Where is my parcel?");
+            stored0.GetProperty("outputs").GetProperty("Answer").GetString().ShouldBe("It is on its way.");
+        }
         var listed = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().DemoAssignments["default"].Single();
         listed.Inputs["Question"].GetString().ShouldBe("Where is my parcel?");
         listed.Outputs["Answer"].GetString().ShouldBe("It is on its way.");
@@ -483,6 +489,24 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
+    public async Task DeletedDatabaseFile_IsCreatedAgainByTheNextCall_WhileReadyzKeepsAnswering200()
+    {
+        await using var service = await StartAsync();
+        await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        foreach (var suffix in new[] { "", "-wal", "-shm" })
+        {
+            var file = Path.Combine(service.StorageDir, "host.db" + suffix);
+            if (File.Exists(file)) File.Delete(file);
+        }
+
+        // The index is gone with the file; the call must still be answered, with nothing listed.
+        (await service.Client.ListPromptModulesAsync(Ct)).ModuleNames.ShouldBeEmpty();
+        (await service.Client.ReadyAsync(Ct)).Status.ShouldBe(HttpStatusCode.OK);
+        File.Exists(Path.Combine(service.StorageDir, "host.db")).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Admin_RebuildIndex_ReportsWhatItIndexed()
     {
         await using var service = await StartAsync();
@@ -547,6 +571,29 @@ public sealed class HostOperationsTests
         var frames = await service.Client.StreamAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
         service.SentText(0).ShouldContain(Sentinel);
         frames.Single(f => f.Event == "final").Data.GetProperty("promptVersionId").GetString().ShouldBe(version.VersionId);
+    }
+
+    [Fact]
+    public async Task RebuildIndex_WithTwoPromptFilesOfTheSameVersionId_Answers200_KeepsTheNewestAndNamesTheOther()
+    {
+        await using var service = await StartAsync();
+        var kept = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
+        var prompts = Path.Combine(service.StorageDir, "prompts");
+        // A second file under another module folder carries the same version id and is older.
+        var copy = Path.Combine(prompts, "Other", kept.VersionId + ".json");
+        Directory.CreateDirectory(Path.GetDirectoryName(copy)!);
+        // No _meta, so the copy's module comes from its folder and its date from its write time.
+        await File.WriteAllTextAsync(copy, """{"demoAssignments":{},"instructionOverrides":{"default":"Other."}}""", Ct);
+        File.SetLastWriteTimeUtc(copy, new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, kept.VersionId, Ct);
+
+        var summary = await service.Client.RebuildIndexAsync(Ct);
+
+        summary.PromptVersionsIndexed.ShouldBe(1);
+        summary.PromptFilesSkipped.ShouldBe([Path.Combine("Other", kept.VersionId + ".json")]);
+        var listed = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.ShouldHaveSingleItem();
+        listed.VersionId.ShouldBe(kept.VersionId);
+        listed.Status.ShouldBe(PromptStatus.Active);
     }
 
     [Fact]

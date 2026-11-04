@@ -248,3 +248,7 @@
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IReadinessState
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IReadinessState.IsReady.get -> bool
 [AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.IReadinessState.SetReady(bool value) -> void
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.IPromptVersionStore.ReplaceAllAsync(System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow!>! rows, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.PromptVersionStore.ReplaceAllAsync(System.Collections.Generic.IReadOnlyList<SignalGrid.Ampelum.Host.Persistence.PromptVersionRow!>! rows, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.PromptFilesSkipped.get -> System.Collections.Generic.IReadOnlyList<string!>!
+[AMPELUM_V09_PREVIEW]SignalGrid.Ampelum.Host.Persistence.RebuildSummary.PromptFilesSkipped.init -> void

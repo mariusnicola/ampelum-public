@@ -127,6 +127,27 @@ public sealed class CliProcessTests : IDisposable
         File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeFalse();
     }
 
+    [Theory]
+    [InlineData("--config=custom.json")]
+    [InlineData("-c=custom.json")]
+    [InlineData("--confg")]
+    public async Task HostRebuildIndex_WithAnArgumentItDoesNotKnow_NamesItAndExitsNonZero(string argument)
+    {
+        var workingDirectory = await WorkingDirectoryWithAuditAsync("host-cli-unknown-" + argument.Length, calls: 1);
+        await HostRebuildCli.WriteConfigAsync(
+            Path.Combine(workingDirectory, "custom.json"),
+            Path.Combine(workingDirectory, "custom.db"), Path.Combine(workingDirectory, "data", "audit.jsonl"),
+            Path.Combine(workingDirectory, "prompts"), Ct);
+
+        var (exit, text) = await HostRebuildCli.RunAsync(workingDirectory, [argument], Ct);
+
+        exit.ShouldNotBe(0);
+        text.ShouldContain($"Rebuild failed: unknown argument '{argument}'. Use --config <path>.");
+        // Nothing was indexed, neither into the file the argument named nor into the default location.
+        File.Exists(Path.Combine(workingDirectory, "custom.db")).ShouldBeFalse();
+        File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeFalse();
+    }
+
     [Fact]
     public async Task HostRebuildIndex_WithConfigAndNoPath_SaysSoAndExitsNonZero()
     {
