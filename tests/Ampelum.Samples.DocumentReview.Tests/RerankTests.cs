@@ -32,6 +32,21 @@ public sealed class RerankTests
         ranked[1].Text.ShouldContain("Liability for subcontractors");
     }
 
+    [Theory]
+    [InlineData("Cohere")]
+    [InlineData("Voyage")]
+    public async Task Rerank_AServiceNamingAPageThatDoesNotExist_FailsWithAClearError(string vendor)
+    {
+        await using var rig = Rig.Create();
+        rig.Rerank.IndexShift = 100;
+        var files = await rig.ReadableAsync(TestContext.Current.CancellationToken);
+
+        var ex = await Should.ThrowAsync<InvalidDataException>(() =>
+            rig.Desk.RerankAsync(Enum.Parse<RerankerKind>(vendor), FakeData.RerankerKey, FakeData.RerankerModel, files, SupplierDocuments.Question, TestContext.Current.CancellationToken));
+
+        ex.Message.ShouldContain($"{files.Sum(f => f.Pages.Count)} candidates");
+    }
+
     [Fact]
     public async Task Rerank_WrongKey_Fails()
     {

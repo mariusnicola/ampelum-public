@@ -42,9 +42,18 @@ public sealed class VoyageReranker(HttpClient http, VoyageRerankerOptions option
         resp.EnsureSuccessStatusCode();
         var body = await resp.Content.ReadFromJsonAsync<VoyageResponse>(JsonOpts, ct).ConfigureAwait(false);
 
-        var results = new List<RetrievedDocument>(body!.Data.Count);
+        if (body?.Data is null)
+        {
+            throw new InvalidDataException("The Voyage rerank response has no 'data' list.");
+        }
+
+        var results = new List<RetrievedDocument>(body.Data.Count);
         foreach (var r in body.Data.Take(topK))
         {
+            if (r.Index < 0 || r.Index >= candidates.Count)
+            {
+                throw new InvalidDataException($"The Voyage rerank response names index {r.Index}, but there are {candidates.Count} candidates.");
+            }
             results.Add(candidates[r.Index] with { Score = r.RelevanceScore });
         }
         return results;

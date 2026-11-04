@@ -42,6 +42,41 @@ public sealed class VoyageRerankerTests
         stub.LastBody.ShouldNotBeNull().ShouldContain("\"caller-model\"");
     }
 
+    [Theory]
+    [InlineData("""{"data":[{"index":7,"relevance_score":0.9}]}""")]
+    [InlineData("""{"data":[{"index":-1,"relevance_score":0.9}]}""")]
+    [InlineData("""{"data":[{"index":2,"relevance_score":0.9}]}""")]
+    public async Task Rerank_AnIndexOutsideTheCandidates_ThrowsInvalidData_NamingIndexAndCount(string json)
+    {
+        var sut = new VoyageReranker(new HttpClient(new StubHandler(json)), new VoyageRerankerOptions { ApiKey = "k", Model = "m" });
+
+        var ex = await Should.ThrowAsync<InvalidDataException>(() => sut.RerankAsync("q", Docs("a", "b"), 1, TestContext.Current.CancellationToken));
+
+        ex.Message.ShouldContain("2 candidates");
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("{}")]
+    [InlineData("""{"data":null}""")]
+    public async Task Rerank_ABodyWithoutData_ThrowsInvalidData(string json)
+    {
+        var sut = new VoyageReranker(new HttpClient(new StubHandler(json)), new VoyageRerankerOptions { ApiKey = "k", Model = "m" });
+
+        await Should.ThrowAsync<InvalidDataException>(() => sut.RerankAsync("q", Docs("a"), 1, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Rerank_AnIndexBeyondTopK_IsNotChecked_BecauseItIsNotUsed()
+    {
+        var json = """{"data":[{"index":0,"relevance_score":0.9},{"index":9,"relevance_score":0.1}]}""";
+        var sut = new VoyageReranker(new HttpClient(new StubHandler(json)), new VoyageRerankerOptions { ApiKey = "k", Model = "m" });
+
+        var r = await sut.RerankAsync("q", Docs("a", "b"), 1, TestContext.Current.CancellationToken);
+
+        r.Select(d => d.Id).ShouldBe(["a"]);
+    }
+
     [Fact]
     public async Task Rerank_HttpError_Throws()
     {

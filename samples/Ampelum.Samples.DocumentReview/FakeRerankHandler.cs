@@ -18,6 +18,9 @@ internal sealed class FakeRerankHandler(string expectedKey) : HttpMessageHandler
 
     public IReadOnlyList<RerankCall> Calls => _calls;
 
+    /// <summary>Added to every result index, so a nonzero value makes the service name pages that do not exist.</summary>
+    public int IndexShift { get; set; }
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var path = request.RequestUri!.AbsolutePath;
@@ -39,7 +42,7 @@ internal sealed class FakeRerankHandler(string expectedKey) : HttpMessageHandler
 
         var terms = query.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries).Where(t => t != "and").ToArray();
         var ranked = documents
-            .Select((text, index) => new { index, relevance_score = terms.Count(t => text.Contains(t, StringComparison.OrdinalIgnoreCase)) / (double)terms.Length })
+            .Select((text, index) => new { index = index + IndexShift, relevance_score = terms.Count(t => text.Contains(t, StringComparison.OrdinalIgnoreCase)) / (double)terms.Length })
             .OrderByDescending(r => r.relevance_score)
             .ThenBy(r => r.index)
             .Take(limit)

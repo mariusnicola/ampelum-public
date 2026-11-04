@@ -176,25 +176,25 @@ public sealed class LibraryDefectTests
     }
 
     [Fact]
-    public async Task Rerankers_ThrowRawExceptionsOnAnIndexOutsideTheCandidates()
+    public async Task Rerankers_ThrowInvalidDataOnAnIndexOutsideTheCandidates()
     {
         var docs = new List<RetrievedDocument> { new("a", "text", 0, new Dictionary<string, object?>()) };
         var cohere = new CohereReranker(new HttpClient(new StubHandler("""{"results":[{"index":7,"relevance_score":0.9}]}""")), new CohereRerankerOptions { ApiKey = "k", Model = "m" });
         var voyage = new VoyageReranker(new HttpClient(new StubHandler("""{"data":[{"index":7,"relevance_score":0.9}]}""")), new VoyageRerankerOptions { ApiKey = "k", Model = "m" });
 
-        await Should.ThrowAsync<ArgumentOutOfRangeException>(() => cohere.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
-        await Should.ThrowAsync<ArgumentOutOfRangeException>(() => voyage.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
+        await Should.ThrowAsync<InvalidDataException>(() => cohere.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
+        await Should.ThrowAsync<InvalidDataException>(() => voyage.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
     }
 
     [Fact]
-    public async Task Rerankers_ThrowNullReferenceOnAnEmptyJsonBody()
+    public async Task Rerankers_ThrowInvalidDataOnAnEmptyJsonBody()
     {
         var docs = new List<RetrievedDocument> { new("a", "text", 0, new Dictionary<string, object?>()) };
         var cohere = new CohereReranker(new HttpClient(new StubHandler("null")), new CohereRerankerOptions { ApiKey = "k", Model = "m" });
         var voyage = new VoyageReranker(new HttpClient(new StubHandler("null")), new VoyageRerankerOptions { ApiKey = "k", Model = "m" });
 
-        await Should.ThrowAsync<NullReferenceException>(() => cohere.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
-        await Should.ThrowAsync<NullReferenceException>(() => voyage.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
+        await Should.ThrowAsync<InvalidDataException>(() => cohere.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
+        await Should.ThrowAsync<InvalidDataException>(() => voyage.RerankAsync("q", docs, 1, TestContext.Current.CancellationToken));
     }
 
     [Fact]

@@ -42,9 +42,18 @@ public sealed class CohereReranker(HttpClient http, CohereRerankerOptions option
         resp.EnsureSuccessStatusCode();
         var body = await resp.Content.ReadFromJsonAsync<CohereResponse>(JsonOpts, ct).ConfigureAwait(false);
 
-        var results = new List<RetrievedDocument>(body!.Results.Count);
+        if (body?.Results is null)
+        {
+            throw new InvalidDataException("The Cohere rerank response has no 'results' list.");
+        }
+
+        var results = new List<RetrievedDocument>(body.Results.Count);
         foreach (var r in body.Results.Take(topK))
         {
+            if (r.Index < 0 || r.Index >= candidates.Count)
+            {
+                throw new InvalidDataException($"The Cohere rerank response names index {r.Index}, but there are {candidates.Count} candidates.");
+            }
             results.Add(candidates[r.Index] with { Score = r.RelevanceScore });
         }
         return results;

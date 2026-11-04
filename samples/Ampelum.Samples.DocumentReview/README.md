@@ -90,8 +90,7 @@ Each of these is pinned by a test in `LibraryDefectTests.cs` unless it says it w
 
 **Rerankers** (`CohereReranker.cs` and `VoyageReranker.cs`, `src/Ampelum/Retrieval/Hybrid/`):
 
-- An `index` outside the candidate list throws a raw `ArgumentOutOfRangeException` (line 48 in both). Pinned.
-- An empty JSON body (`null`) throws `NullReferenceException` (line 45 in both). Pinned.
+- A result `index` below 0 or past the candidate list throws `InvalidDataException` naming the index and the number of candidates. A response body that is `null` or has no `results` (Cohere) or `data` (Voyage) list throws `InvalidDataException` too. Only the results inside `topK` are checked. Pinned (`Rerankers_ThrowInvalidDataOnAnIndexOutsideTheCandidates`, `Rerankers_ThrowInvalidDataOnAnEmptyJsonBody`); the sample does not catch it, so a bad answer stops the run with that message (`RerankTests.Rerank_AServiceNamingAPageThatDoesNotExist_FailsWithAClearError`).
 
 **`OpenAIBatchSubmitter`** (`src/Ampelum/Batch/OpenAIBatchSubmitter.cs`):
 
