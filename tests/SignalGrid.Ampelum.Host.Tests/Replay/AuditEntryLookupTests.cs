@@ -13,7 +13,7 @@ public sealed class AuditEntryLookupTests
     private static AuditEntryLookup MakeSut(IAuditSink sink, IAuditIndex index) =>
         new(sink, index);
 
-    private static AuditEntry MakeEntry(long sequence, string traceId) =>
+    private static AuditEntry MakeEntry(long sequence, string traceId, Dictionary<string, object?>? inputs = null) =>
         new()
         {
             Sequence = sequence,
@@ -22,7 +22,7 @@ public sealed class AuditEntryLookupTests
             ModuleName = "test-module",
             ModelId = "test-model",
             EventType = "forward.completed",
-            Inputs = new Dictionary<string, object?>(),
+            Inputs = inputs ?? new Dictionary<string, object?>(),
             Outputs = new Dictionary<string, object?>(),
             PromptTokens = 0,
             CompletionTokens = 0,
@@ -98,19 +98,70 @@ public sealed class AuditEntryLookupTests
     }
 
     [Fact]
-    public async Task IndexMiss_TryGetByTraceIdAsync_ReturnsNull()
+    public async Task IndexMiss_TryGetByTraceIdAsync_FindsTheEntryInTheSink()
     {
         using var fix = new TempStorageFixture();
         var sink = new InMemoryAuditSink();
         var index = new AuditIndex(TestData.Factory(fix.Options));
         var sut = MakeSut(sink, index);
 
-        // Write an entry to the sink but NOT to the index
-        var entry = MakeEntry(0, "tr-789");
+        // Written to the sink but NOT to the index
+        await sink.AppendAsync(MakeEntry(0, "tr-other"), TestContext.Current.CancellationToken);
+        await sink.AppendAsync(MakeEntry(1, "tr-789"), TestContext.Current.CancellationToken);
+
+        var result = await sut.TryGetByTraceIdAsync("tr-789", TestContext.Current.CancellationToken);
+
+        result.ShouldNotBeNull();
+        result.Sequence.ShouldBe(1L);
+        result.TraceId.ShouldBe("tr-789");
+        (await index.CountAsync(TestContext.Current.CancellationToken)).ShouldBe(0L);
+    }
+
+    [Fact]
+    public async Task IndexMiss_TryGetByTraceIdAsync_UsesTheTraceIdTheHostRecordedInTheInputs()
+    {
+        using var fix = new TempStorageFixture();
+        var sink = new InMemoryAuditSink();
+        var sut = MakeSut(sink, new AuditIndex(TestData.Factory(fix.Options)));
+        var entry = MakeEntry(0, "", new Dictionary<string, object?> { ["_host.trace_id"] = "tr-from-inputs" });
         await sink.AppendAsync(entry, TestContext.Current.CancellationToken);
 
-        // Lookup should fail (no index row)
-        var result = await sut.TryGetByTraceIdAsync("tr-789", TestContext.Current.CancellationToken);
+        var result = await sut.TryGetByTraceIdAsync("tr-from-inputs", TestContext.Current.CancellationToken);
+
+        result.ShouldNotBeNull();
+        result.Sequence.ShouldBe(0L);
+    }
+
+    [Fact]
+    public async Task UnknownId_TryGetByTraceIdAsync_ReturnsNull_ThoughtTheSinkHoldsOtherEntries()
+    {
+        using var fix = new TempStorageFixture();
+        var sink = new InMemoryAuditSink();
+        var index = new AuditIndex(TestData.Factory(fix.Options));
+        var sut = MakeSut(sink, index);
+        await sink.AppendAsync(MakeEntry(0, "tr-known"), TestContext.Current.CancellationToken);
+        await index.UpsertAsync(new AuditIndexRow("tr-known", 0, DateTimeOffset.UtcNow, "test-module", "forward.completed"),
+            TestContext.Current.CancellationToken);
+
+        var result = await sut.TryGetByTraceIdAsync("tr-unknown", TestContext.Current.CancellationToken);
+
+        result.ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task StaleIndexRow_TryGetByTraceIdAsync_ReturnsNull_AndDoesNotSearchTheSink()
+    {
+        using var fix = new TempStorageFixture();
+        var sink = new InMemoryAuditSink();
+        var index = new AuditIndex(TestData.Factory(fix.Options));
+        var sut = MakeSut(sink, index);
+        // The index points at sequence 7, which the sink does not hold; the entry itself is at sequence 0.
+        await sink.AppendAsync(MakeEntry(0, "tr-stale"), TestContext.Current.CancellationToken);
+        await index.UpsertAsync(new AuditIndexRow("tr-stale", 7, DateTimeOffset.UtcNow, "test-module", "forward.completed"),
+            TestContext.Current.CancellationToken);
+
+        var result = await sut.TryGetByTraceIdAsync("tr-stale", TestContext.Current.CancellationToken);
+
         result.ShouldBeNull();
     }
 

@@ -6,7 +6,7 @@ using ErrorResponse = SignalGrid.Ampelum.Host.Contracts.ErrorResponse;
 using SignalGrid.Ampelum.Host.ErrorHandling;
 using ErrorCodes = SignalGrid.Ampelum.Host.ErrorHandling.ErrorCodes;
 using SignalGrid.Ampelum.Host.Internal;
-using SignalGrid.Ampelum.Host.Persistence;
+using SignalGrid.Ampelum.Host.Replay;
 using SignalGrid.Ampelum.Host.Tracing;
 
 namespace SignalGrid.Ampelum.Host.Endpoints;
@@ -100,8 +100,7 @@ internal static class AuditEndpoint
 
     static async Task<IResult> GetAuditByTraceIdAsync(
         string traceId,
-        IAuditIndex auditIndex,
-        IAuditSink sink,
+        IAuditEntryLookup lookup,
         CancellationToken ct = default)
     {
         var traceIdResolved = TraceIdResolver.Resolve();
@@ -113,59 +112,31 @@ internal static class AuditEndpoint
                 "traceId must be 32 lowercase hex characters.",
                 traceIdResolved);
 
-        // The index only knows entries a rebuild has seen; an entry it lacks is looked for in the sink itself.
-        var row = await auditIndex.TryGetByTraceIdAsync(traceId, ct);
-
-        // Find entry by sequence (indexed) or by trace id (not indexed) in sink
-        AuditEntryDto? dto = null;
-        await foreach (var entry in sink.EnumerateAsync(ct))
-        {
-            if (row is not null ? entry.Sequence == row.Sequence : ResolveTraceId(entry) == traceId)
-            {
-                var resolvedTraceId = ResolveTraceId(entry);
-                dto = new AuditEntryDto(
-                    Sequence: entry.Sequence,
-                    Timestamp: entry.Timestamp,
-                    TraceId: resolvedTraceId,
-                    ModuleName: entry.ModuleName,
-                    EventType: entry.EventType,
-                    ModelId: entry.ModelId,
-                    Inputs: JsonElementUnboxer.Box(entry.Inputs),
-                    Outputs: JsonElementUnboxer.Box(entry.Outputs),
-                    PromptTokens: entry.PromptTokens,
-                    CompletionTokens: entry.CompletionTokens,
-                    EntryHashHex: Convert.ToHexString(entry.EntryHash).ToLowerInvariant(),
-                    PrevHashHex: Convert.ToHexString(entry.PrevHash).ToLowerInvariant(),
-                    SchemaVersion: entry.SchemaVersion);
-                break;
-            }
-        }
-
-        if (dto is null)
+        var entry = await lookup.TryGetByTraceIdAsync(traceId, ct);
+        if (entry is null)
             return ApiErrors.NotFound(
                 ErrorCodes.TraceNotFound,
                 $"Audit entry '{traceId}' not found.",
                 traceIdResolved);
 
+        var dto = new AuditEntryDto(
+            Sequence: entry.Sequence,
+            Timestamp: entry.Timestamp,
+            TraceId: ResolveTraceId(entry),
+            ModuleName: entry.ModuleName,
+            EventType: entry.EventType,
+            ModelId: entry.ModelId,
+            Inputs: JsonElementUnboxer.Box(entry.Inputs),
+            Outputs: JsonElementUnboxer.Box(entry.Outputs),
+            PromptTokens: entry.PromptTokens,
+            CompletionTokens: entry.CompletionTokens,
+            EntryHashHex: Convert.ToHexString(entry.EntryHash).ToLowerInvariant(),
+            PrevHashHex: Convert.ToHexString(entry.PrevHash).ToLowerInvariant(),
+            SchemaVersion: entry.SchemaVersion);
         return Results.Json(dto, AmpelumHostJsonContext.Default.AuditEntryDto);
     }
 
-    static string ResolveTraceId(AuditEntry entry)
-    {
-        // If entry has a non-empty TraceId, use it
-        if (!string.IsNullOrEmpty(entry.TraceId))
-            return entry.TraceId;
-
-        // Try to get from inputs
-        if (entry.Inputs.TryGetValue("_host.trace_id", out var tidObj))
-        {
-            if (tidObj is string tidStr && !string.IsNullOrEmpty(tidStr))
-                return tidStr;
-        }
-
-        // Fallback to sequence-based identifier
-        return $"sequence-{entry.Sequence}";
-    }
+    static string ResolveTraceId(AuditEntry entry) => AuditEntryLookup.ResolveTraceId(entry);
 
     static bool IsLowercaseHex(string s)
     {

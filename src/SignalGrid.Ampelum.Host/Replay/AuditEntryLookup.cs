@@ -8,7 +8,10 @@ namespace SignalGrid.Ampelum.Host.Replay;
 [Experimental("AMPELUM_V09_PREVIEW")]
 public interface IAuditEntryLookup
 {
-    /// <summary>Looks up an audit entry by trace ID using the index; returns null if not found.</summary>
+    /// <summary>
+    /// Looks up an audit entry by trace ID: through the index when it has a row, otherwise by reading the sink.
+    /// Returns null if not found.
+    /// </summary>
     ValueTask<AuditEntry?> TryGetByTraceIdAsync(string traceId, CancellationToken ct);
 
     /// <summary>Looks up an audit entry by sequence number; returns null if not found.</summary>
@@ -38,8 +41,25 @@ public sealed class AuditEntryLookup : IAuditEntryLookup
     public async ValueTask<AuditEntry?> TryGetByTraceIdAsync(string traceId, CancellationToken ct)
     {
         var row = await _index.TryGetByTraceIdAsync(traceId, ct);
-        if (row is null) return null;
-        return await TryGetBySequenceAsync(row.Sequence, ct);
+        if (row is not null) return await TryGetBySequenceAsync(row.Sequence, ct);
+
+        // The index only knows entries a rebuild has seen; an entry it lacks is looked for in the sink itself.
+        await foreach (var entry in _sink.EnumerateAsync(ct))
+            if (ResolveTraceId(entry) == traceId) return entry;
+        return null;
+    }
+
+    /// <summary>The trace id of an entry: its own, else the one the Host recorded in its inputs, else its sequence.</summary>
+    internal static string ResolveTraceId(AuditEntry entry)
+    {
+        if (!string.IsNullOrEmpty(entry.TraceId))
+            return entry.TraceId;
+
+        if (entry.Inputs.TryGetValue("_host.trace_id", out var tidObj)
+            && tidObj is string tidStr && !string.IsNullOrEmpty(tidStr))
+            return tidStr;
+
+        return $"sequence-{entry.Sequence}";
     }
 
     /// <inheritdoc/>

@@ -418,6 +418,20 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
+    public async Task Replay_ServesTheRecordedAnswer_WithoutARebuild()
+    {
+        await using var service = await StartAsync();
+        service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
+        var original = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+
+        var replayed = await service.Client.ReplayAsync(original.TraceId, Ct);
+
+        replayed.Outputs["Answer"].GetString().ShouldBe("Delivery takes 3 to 5 business days.");
+        replayed.TraceId.ShouldBe(original.TraceId);
+        service.Model.RecordedCalls.Count.ShouldBe(1);
+    }
+
+    [Fact]
     public async Task Replay_OfAnUnknownTrace_Is404()
     {
         await using var service = await StartAsync();
