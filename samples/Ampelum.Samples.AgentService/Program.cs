@@ -99,19 +99,20 @@ try
     var callsBeforePrompted = serviceModel?.RecordedCalls.Count;
     var prompted = await client.ForwardAsync(AgentServiceHost.ModuleName, Question);
     // Only the scripted model can be asked what it was sent.
-    var instructionSent = serviceModel is null
-        || serviceModel.RecordedCalls[callsBeforePrompted!.Value].Messages.Any(m => (m.Text ?? "").Contains(Instruction));
+    // The version's demonstration is the earlier answer, which the model is otherwise never sent.
+    bool Sent(int call) => serviceModel!.RecordedCalls[call].Messages.Any(m => (m.Text ?? "").Contains(Instruction))
+        && serviceModel.RecordedCalls[call].Messages.Any(m => (m.Text ?? "").Contains(answerText));
+    var instructionSent = serviceModel is null || Sent(callsBeforePrompted!.Value);
     // A streamed call uses the promoted version the same way.
     var streamedPrompted = await client.StreamAsync(AgentServiceHost.ModuleName, Question);
     var streamVersion = streamedPrompted.Single(f => f.Event == "final").Data.GetProperty("promptVersionId").GetString();
-    var streamInstructionSent = serviceModel is null
-        || serviceModel.RecordedCalls[callsBeforePrompted!.Value + 1].Messages.Any(m => (m.Text ?? "").Contains(Instruction));
+    var streamInstructionSent = serviceModel is null || Sent(callsBeforePrompted!.Value + 1);
     var promptsOk = promoted.ActiveVersionId == challenger.VersionId && active.VersionId == challenger.VersionId
         && active.Status == PromptStatus.Active && prompted.PromptVersionId == challenger.VersionId && instructionSent
         && streamVersion == challenger.VersionId && streamInstructionSent;
     Console.WriteLine($"Prompts: {challenger.VersionId} promoted, active = {active.VersionId}, status {active.Status}, "
         + $"forward used {prompted.PromptVersionId}, stream used {streamVersion}"
-        + (serviceModel is null ? "" : $", instruction sent = {instructionSent} and {streamInstructionSent}"));
+        + (serviceModel is null ? "" : $", instruction and demonstration sent = {instructionSent} and {streamInstructionSent}"));
 
     // Optimize is plumbing: the Host scores every run 1.0, so it collects the module's own answers and tunes nothing.
     var run = await client.StartOptimizeAsync(AgentServiceHost.ModuleName, new OptimizeRequest(

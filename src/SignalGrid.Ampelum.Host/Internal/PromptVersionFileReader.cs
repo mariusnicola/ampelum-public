@@ -41,6 +41,21 @@ internal static class PromptVersionFileReader
         File.Move(tmp, path, overwrite: true);
     }
 
+    /// <summary>
+    /// The fields of a demonstration's "inputs" or "outputs" object, read under the camel case name or the Pascal case
+    /// name an earlier Host wrote. Empty when the example has neither.
+    /// </summary>
+    public static Dictionary<string, JsonElement> Fields(JsonElement example, string camelCaseName)
+    {
+        var fields = new Dictionary<string, JsonElement>();
+        var pascalCaseName = char.ToUpperInvariant(camelCaseName[0]) + camelCaseName[1..];
+        if ((example.TryGetProperty(camelCaseName, out var found) || example.TryGetProperty(pascalCaseName, out found))
+            && found.ValueKind == JsonValueKind.Object)
+            foreach (var p in found.EnumerateObject())
+                fields[p.Name] = p.Value.Clone();
+        return fields;
+    }
+
     public static async ValueTask<PromptVersionFileShape> ReadAsync(
         string path, CancellationToken ct,
         ILogger? logger = null)
@@ -73,15 +88,7 @@ internal static class PromptVersionFileReader
                 var list = new List<DemoExampleShape>();
                 foreach (var item in prop.Value.EnumerateArray())
                 {
-                    var inputs = new Dictionary<string, JsonElement>();
-                    if (item.TryGetProperty("inputs", out var inp))
-                        foreach (var p in inp.EnumerateObject())
-                            inputs[p.Name] = p.Value.Clone();
-                    var outputs = new Dictionary<string, JsonElement>();
-                    if (item.TryGetProperty("outputs", out var out_))
-                        foreach (var p in out_.EnumerateObject())
-                            outputs[p.Name] = p.Value.Clone();
-                    list.Add(new DemoExampleShape(inputs, outputs));
+                    list.Add(new DemoExampleShape(Fields(item, "inputs"), Fields(item, "outputs")));
                 }
                 demos[prop.Name] = list;
             }

@@ -161,7 +161,12 @@ internal static class PromptsEndpoint
                 demoAssignments = req.DemoAssignments,
                 instructionOverrides = req.InstructionOverrides,
             };
-            var json = JsonSerializer.Serialize(promptContent, new JsonSerializerOptions { WriteIndented = false });
+            // Camel case, the names every reader of a prompt file expects (PromptVersionFileShape, RowToVersion).
+            var json = JsonSerializer.Serialize(promptContent, new JsonSerializerOptions
+            {
+                WriteIndented = false,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            });
             await File.WriteAllTextAsync(filePath, json, ct);
         }
         catch (Exception ex)
@@ -282,9 +287,8 @@ internal static class PromptsEndpoint
                         var examples = new List<DemoExample>();
                         foreach (var item in prop.Value.EnumerateArray())
                         {
-                            var example = JsonSerializer.Deserialize<DemoExample>(item, AmpelumHostJsonContext.Default.DemoExample);
-                            if (example is not null)
-                                examples.Add(example);
+                            examples.Add(new DemoExample(
+                                PromptVersionFileReader.Fields(item, "inputs"), PromptVersionFileReader.Fields(item, "outputs")));
                         }
                         demoAssignments[prop.Name] = examples;
                     }

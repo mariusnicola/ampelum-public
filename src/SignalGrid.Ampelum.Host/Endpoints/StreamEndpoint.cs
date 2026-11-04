@@ -168,12 +168,12 @@ internal static class StreamEndpoint
             return;
         }
 
-        string? instruction = null;
+        VersionContent? content = null;
         if (version is not null)
         {
             try
             {
-                instruction = await PromptVersionSelector.InstructionAsync(version, ct);
+                content = await PromptVersionSelector.LoadAsync(version, ct);
             }
             catch (Exception ex)
             {
@@ -198,7 +198,7 @@ internal static class StreamEndpoint
             var run = typeof(StreamEndpoint)
                 .GetMethod(nameof(RunStreamAsync), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
                 .MakeGenericMethod(sigType);
-            await (Task)run.Invoke(null, new object?[] { slot.Current, typedSig!, sseWriter, traceId, instruction, version?.VersionId, ct })!;
+            await (Task)run.Invoke(null, new object?[] { slot.Current, typedSig!, sseWriter, traceId, content, version?.VersionId, ct })!;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -237,11 +237,11 @@ internal static class StreamEndpoint
         TSig inputs,
         SseWriter sseWriter,
         string traceId,
-        string? instruction,
+        VersionContent? content,
         string? versionId,
         CancellationToken ct) where TSig : ISignature
     {
-        var predict = instruction is null ? adapter.Inner : PromptVersionSelector.Apply(adapter.Inner, instruction);
+        var predict = content is null ? adapter.Inner : PromptVersionSelector.Apply(adapter.Inner, content);
         int eventId = 0;
         var outputNames = SignatureMetadataCache.For<TSig>().Outputs.Select(o => o.Name).ToHashSet(StringComparer.Ordinal);
         TraceRecord? finalTrace = null;

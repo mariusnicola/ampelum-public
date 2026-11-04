@@ -73,20 +73,127 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
-    public async Task KnownLimit_PromptDemoExamplesAreStoredButReadBackWithoutTheirFields()
+    public async Task PromptDemoExamples_AreStoredWithCamelCaseNames_AndReadBackWithTheirInputsAndOutputs()
     {
         await using var service = await StartAsync();
 
         var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
 
-        // The file holds the example: it is written with the serializer's default (Pascal case) names.
         var file = Directory.GetFiles(Path.Combine(service.StorageDir, "prompts"), "*.json", SearchOption.AllDirectories).Single();
-        (await File.ReadAllTextAsync(file, Ct)).ShouldContain("Where is my parcel?");
-        // The read side expects camel case, so the example comes back with no inputs and no outputs.
-        var demo = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().DemoAssignments["default"].Single();
-        demo.Inputs.ShouldBeNull();
-        demo.Outputs.ShouldBeNull();
+        (await File.ReadAllTextAsync(file, Ct)).ShouldContain(
+            "\"inputs\":{\"Question\":\"Where is my parcel?\"},\"outputs\":{\"Answer\":\"It is on its way.\"}");
+        var listed = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().DemoAssignments["default"].Single();
+        listed.Inputs["Question"].GetString().ShouldBe("Where is my parcel?");
+        listed.Outputs["Answer"].GetString().ShouldBe("It is on its way.");
+        version.DemoAssignments["default"].Single().Inputs["Question"].GetString().ShouldBe("Where is my parcel?");
         version.InstructionOverrides["default"].ShouldBe("Be brief.");
+    }
+
+    static CreatePromptVersionRequest WithDemo(string demoQuestion, string demoAnswer, IReadOnlyDictionary<string, string> instructions) =>
+        new(
+            new Dictionary<string, IReadOnlyList<DemoExample>>
+            {
+                ["default"] =
+                [
+                    new DemoExample(
+                        new Dictionary<string, JsonElement> { ["Question"] = JsonSerializer.SerializeToElement(demoQuestion) },
+                        new Dictionary<string, JsonElement> { ["Answer"] = JsonSerializer.SerializeToElement(demoAnswer) }),
+                ],
+            },
+            instructions);
+
+    [Fact]
+    public async Task Forward_SendsThePromotedVersionsDemonstrations_AndItsInstruction()
+    {
+        await using var service = await StartAsync();
+        const string DemoQuestion = "DEMO-QUESTION-0b62";
+        const string DemoAnswer = "DEMO-ANSWER-91ef";
+        const string Instruction = "SENTINEL-WITH-DEMO-c3a8";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName,
+            WithDemo(DemoQuestion, DemoAnswer, new Dictionary<string, string> { ["default"] = Instruction }), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        service.EnqueueAnswer("answer");
+
+        await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "q", Ct);
+
+        var sent = service.SentText(0);
+        sent.ShouldContain(DemoQuestion);
+        sent.ShouldContain(DemoAnswer);
+        sent.ShouldContain(Instruction);
+    }
+
+    [Fact]
+    public async Task Forward_AVersionFileWrittenWithPascalCaseDemonstrations_SendsItsInstructionAndItsDemonstration()
+    {
+        await using var service = await StartAsync();
+        const string DemoQuestion = "OLD-FORMAT-DEMO-QUESTION-2c58";
+        const string DemoAnswer = "OLD-FORMAT-DEMO-ANSWER-6f13";
+        const string Instruction = "SENTINEL-OLD-FORMAT-e07b";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName,
+            WithDemo(DemoQuestion, DemoAnswer, new Dictionary<string, string> { ["default"] = Instruction }), Ct);
+        // The names an earlier Host wrote: the demonstration's fields were Pascal case.
+        var file = Directory.GetFiles(Path.Combine(service.StorageDir, "prompts"), "*.json", SearchOption.AllDirectories).Single();
+        await File.WriteAllTextAsync(file,
+            (await File.ReadAllTextAsync(file, Ct)).Replace("\"inputs\"", "\"Inputs\"").Replace("\"outputs\"", "\"Outputs\""), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        service.EnqueueAnswer("answer");
+
+        var listed = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().DemoAssignments["default"].Single();
+        await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "q", Ct);
+
+        listed.Inputs["Question"].GetString().ShouldBe(DemoQuestion);
+        listed.Outputs["Answer"].GetString().ShouldBe(DemoAnswer);
+        service.SentText(0).ShouldContain(Instruction);
+        service.SentText(0).ShouldContain(DemoQuestion);
+        service.SentText(0).ShouldContain(DemoAnswer);
+    }
+
+    [Fact]
+    public async Task Forward_AnExampleWithNeitherInputsNorOutputs_IsLeftOut_AndTheOthersAreSent()
+    {
+        await using var service = await StartAsync();
+        const string DemoQuestion = "KEPT-DEMO-QUESTION-b9d4";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName,
+            WithDemo(DemoQuestion, "kept demo answer", new Dictionary<string, string>()), Ct);
+        var file = Directory.GetFiles(Path.Combine(service.StorageDir, "prompts"), "*.json", SearchOption.AllDirectories).Single();
+        var text = await File.ReadAllTextAsync(file, Ct);
+        await File.WriteAllTextAsync(file, text.Replace("\"default\":[", "\"default\":[{},"), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        service.EnqueueAnswer("answer");
+
+        await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "q", Ct);
+
+        service.SentText(0).ShouldContain(DemoQuestion);
+    }
+
+    [Fact]
+    public async Task Forward_SendsAVersionsDemonstrations_EvenWhenItHasNoInstruction()
+    {
+        await using var service = await StartAsync();
+        const string DemoQuestion = "DEMO-ONLY-QUESTION-5d17";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName,
+            WithDemo(DemoQuestion, "demo only answer", new Dictionary<string, string>()), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        service.EnqueueAnswer("answer");
+
+        await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "q", Ct);
+
+        service.SentText(0).ShouldContain(DemoQuestion);
+    }
+
+    [Fact]
+    public async Task Stream_SendsThePromotedVersionsDemonstrations()
+    {
+        await using var service = await StartAsync();
+        const string DemoQuestion = "STREAM-DEMO-QUESTION-7a40";
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName,
+            WithDemo(DemoQuestion, "stream demo answer", new Dictionary<string, string> { ["default"] = "Be brief." }), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+        service.EnqueueStreamingAnswer("answer");
+
+        await service.Client.StreamAsync(AgentServiceHost.ModuleName, "q", Ct);
+
+        service.SentText(0).ShouldContain(DemoQuestion);
     }
 
     [Fact]

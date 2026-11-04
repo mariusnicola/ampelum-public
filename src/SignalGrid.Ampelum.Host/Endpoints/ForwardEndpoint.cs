@@ -129,8 +129,8 @@ internal static class ForwardEndpoint
         try
         {
             object inner = ((dynamic)slot.Current).Inner;
-            if (version is not null && await PromptVersionSelector.InstructionAsync(version, ct) is { } instruction)
-                inner = PromptVersionSelector.Apply((dynamic)inner, instruction);
+            if (version is not null && await PromptVersionSelector.LoadAsync(version, ct) is { } content)
+                inner = PromptVersionSelector.Apply((dynamic)inner, content);
             dynamic predict = inner;
             var prediction = await predict.ForwardAsync((dynamic)typedSig, null, ct);
 
