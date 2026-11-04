@@ -24,7 +24,8 @@ internal static class HostCli
 
     private static async Task HandleRebuildIndex(string? configPath, CancellationToken ct)
     {
-        configPath ??= "appsettings.json";
+        // AddJsonFile resolves a relative path next to the program; the check below and the user mean the working directory.
+        configPath = Path.GetFullPath(configPath ?? "appsettings.json");
 
         try
         {

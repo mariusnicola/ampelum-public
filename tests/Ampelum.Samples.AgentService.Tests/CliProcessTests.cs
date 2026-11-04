@@ -99,7 +99,7 @@ public sealed class CliProcessTests : IDisposable
     }
 
     [Fact]
-    public async Task KnownLimit_HostRebuildIndex_FailsWhenTheWorkingDirectoryHoldsAnAppSettingsFile()
+    public async Task HostRebuildIndex_ReadsTheAppSettingsFileInTheWorkingDirectory()
     {
         var workingDirectory = await WorkingDirectoryWithAuditAsync("host-cli-settings", calls: 1);
         await HostRebuildCli.WriteConfigAsync(
@@ -109,10 +109,11 @@ public sealed class CliProcessTests : IDisposable
 
         var (exit, text) = await HostRebuildCli.RunAsync(workingDirectory, [], Ct);
 
-        // The file is found in the working directory, then looked for again next to the program, where it is not.
-        exit.ShouldNotBe(0);
-        text.ShouldContain("was not found and is not optional");
-        File.Exists(Path.Combine(workingDirectory, "own.db")).ShouldBeFalse();
+        // The settings name own.db, so the index lands there and not in the default ./data/host.db.
+        exit.ShouldBe(0, text);
+        text.ShouldContain("Rebuild complete: 1 audit entries");
+        File.Exists(Path.Combine(workingDirectory, "own.db")).ShouldBeTrue();
+        File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeFalse();
     }
 
     [Fact]
