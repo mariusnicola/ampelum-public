@@ -50,7 +50,7 @@ public sealed class KnownLimitTests
             [], "", null, TimeSpan.Zero, null, new Dictionary<string, object?>());
 
     [Fact]
-    public async Task KnownLimit_Loop_counts_predicate_checks_as_iterations()
+    public async Task Loop_iterations_count_body_runs_not_predicate_checks()
     {
         var body = new Counter();
         var loop = new Loop<TightenSig>(new StopOnCheck(stopAt: 3), body, maxIterations: 10);
@@ -58,17 +58,19 @@ public sealed class KnownLimitTests
         var result = (await loop.ForwardAsync(Start(), Ct)).Value;
 
         body.Runs.ShouldBe(2);
-        result.Iterations.ShouldBe(3);
+        result.Iterations.ShouldBe(2);
     }
 
     [Fact]
-    public async Task KnownLimit_Loop_labels_a_stop_on_the_last_allowed_check_as_max_iterations()
+    public async Task Loop_keeps_the_predicates_reason_when_it_stops_on_the_check_after_the_last_allowed_run()
     {
-        var loop = new Loop<TightenSig>(new StopOnCheck(stopAt: 3), new Counter(), maxIterations: 3);
+        var body = new Counter();
+        var loop = new Loop<TightenSig>(new StopOnCheck(stopAt: 3), body, maxIterations: 2);
 
         var result = (await loop.ForwardAsync(Start(), Ct)).Value;
 
-        result.Reason.ShouldBe("max_iterations");
+        body.Runs.ShouldBe(2);
+        result.Reason.ShouldBe("predicate said stop");
     }
 
     [Fact]

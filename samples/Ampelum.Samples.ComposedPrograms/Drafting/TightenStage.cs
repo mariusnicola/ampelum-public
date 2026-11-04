@@ -85,9 +85,7 @@ public sealed class TightenStage
             history.Add(next);
             return next;
         });
-        // Loop counts every predicate check as an iteration and reports a stop on the last allowed check
-        // as max_iterations. Two above the pass limit keeps the stop rule from being mislabeled.
-        var loop = new Loop<TightenSig>(predicate, body, _options.TightenPasses + 2);
+        var loop = new Loop<TightenSig>(predicate, body, _options.TightenPasses);
         var prediction = await loop.ForwardAsync(start, ct).ConfigureAwait(false);
         return (prediction.Value, history.BodyRuns);
     }

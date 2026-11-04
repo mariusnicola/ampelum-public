@@ -72,6 +72,9 @@ public sealed class TightenTests
 
         runs.ShouldBe(3);
         result.FinalState.Words.ShouldBe(30);
+        // The limit rule, not the loop bound, ended it: the reason is the rule's own text.
+        result.Reason.ShouldBe("stopped after 3 body runs");
+        result.Iterations.ShouldBe(3);
     }
 
     [Fact]

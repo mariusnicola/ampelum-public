@@ -100,9 +100,38 @@ public sealed class LoopTests
 
         var result = await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
 
-        result.Value.Iterations.ShouldBe(3);
+        result.Value.Iterations.ShouldBe(2);
         result.Value.FinalState.Answer.ShouldBe("2");
         result.Value.Reason.ShouldBe("countdown");
+    }
+
+    [Fact]
+    public async Task AStopOnTheCheckAfterTheLastAllowedRun_KeepsThePredicatesReason()
+    {
+        var body = new TrackedBody();
+        var loop = new Loop<TestSig>(new CountdownPredicate(3), body, maxIterations: 2);
+
+        var result = await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
+
+        body.CallCount.ShouldBe(2);
+        result.Value.Iterations.ShouldBe(2);
+        result.Value.Reason.ShouldBe("countdown");
+        result.Trace.Metadata[SignalGrid.Ampelum.Composition.TraceKeys.LoopConverged].ShouldBe(true);
+        result.Trace.Metadata[SignalGrid.Ampelum.Composition.TraceKeys.LoopIterations].ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task APredicateThatNeverStops_RunsTheBodyMaxIterationsTimes_AndReportsMaxIterations()
+    {
+        var body = new TrackedBody();
+        var loop = new Loop<TestSig>(new AlwaysContinue(), body, maxIterations: 3);
+
+        var result = await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
+
+        body.CallCount.ShouldBe(3);
+        result.Value.Iterations.ShouldBe(3);
+        result.Value.Reason.ShouldBe("max_iterations");
+        result.Trace.Metadata[SignalGrid.Ampelum.Composition.TraceKeys.LoopConverged].ShouldBe(false);
     }
 
     [Fact]
@@ -142,7 +171,7 @@ public sealed class LoopTests
 
         var result = await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
 
-        result.Value.Iterations.ShouldBe(3);
+        result.Value.Iterations.ShouldBe(2);
         result.Value.FinalState.Answer.ShouldBe("2");
         body.CallCount.ShouldBe(2);
     }
@@ -155,7 +184,7 @@ public sealed class LoopTests
 
         var result = await loop.ForwardAsync(new TestSig { Question = "q" }, TestContext.Current.CancellationToken);
 
-        result.Value.Iterations.ShouldBe(1);
+        result.Value.Iterations.ShouldBe(0);
         result.Value.Reason.ShouldBe("break_immediate");
         body.CallCount.ShouldBe(0);
     }

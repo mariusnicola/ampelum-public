@@ -60,7 +60,7 @@ trace file and the metric names.
 
 These are fixed in code, not options:
 
-- the loop bound of two above the pass limit (`TightenStage`, a workaround for a library defect, see below);
+- the loop bound, equal to the pass limit (`TightenStage`);
 - the number of paraphrases (3) and sub questions (2) in `StyleRetrieval`, and the rewrite and router prompts;
 - the panel roster and roles (`ReviewPanel`) and which notes are fact checked (breaking ones);
 - the signatures and their instructions, the judge instructions and the set of registered metrics;
@@ -112,7 +112,7 @@ asserts both.
 |---|---|
 | Sequence | `Drafting/NoteDrafter.cs:52` |
 | ConditionalBranch | `Drafting/NoteDrafter.cs:80` |
-| Loop | `Drafting/TightenStage.cs:90` |
+| Loop | `Drafting/TightenStage.cs:88` |
 | Loop predicates, CompositeAll, CompositeAny, LoopPredicateRegistry | `Drafting/TightenStage.cs:33` to `:37`, `:72` |
 | ErrorHandler | `Drafting/DraftingModules.cs:43` |
 | WithConfig | `Drafting/DraftingModules.cs:42` |
@@ -160,11 +160,10 @@ prompt tuning sample and the traced pipeline sample.
 
 ## Known limits of the library
 
-Each is pinned by a test named `KnownLimit_...` in `tests/Ampelum.Samples.ComposedPrograms.Tests/KnownLimitTests.cs`.
-The test asserts the flawed behaviour, so it fails once the library is fixed and the workaround can go.
+No test pins a flaw any more. `tests/Ampelum.Samples.ComposedPrograms.Tests/KnownLimitTests.cs` holds the tests that
+show the fixed behaviour (a `Loop` counts body runs as iterations and keeps the predicate's own stop reason, even on
+the check after the last allowed run). What is left:
 
-- `Loop` counts every predicate check as an iteration, and labels a stop on the last allowed check as
-  `max_iterations`. The sample sets the loop bound two above the pass limit and counts body runs itself.
 - A reloaded index hands a string, a bool and null back as plain values, and a number, array or object as a
   `JsonElement` (so a save after a reload writes the same bytes, whatever the number type was). A store side
   equality filter matches a reloaded document (`A_reloaded_index_still_matches_a_store_side_metadata_filter`);

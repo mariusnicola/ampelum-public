@@ -5,7 +5,8 @@ namespace SignalGrid.Ampelum.Orchestration;
 /// <summary>
 /// Iterative execution primitive: repeatedly evaluates a predicate module and, while the predicate
 /// returns <c>ShouldContinue=true</c>, executes the body module with the current state. Stops when
-/// the predicate returns <c>ShouldContinue=false</c>, or <c>maxIterations</c> is reached.
+/// the predicate returns <c>ShouldContinue=false</c>, or the body has run <c>maxIterations</c> times and the
+/// predicate still says continue (reason <c>max_iterations</c>).
 /// </summary>
 /// <typeparam name="TSig">The signature type shaped by the loop body.</typeparam>
 [Experimental("AMPELUM_V09_PREVIEW")]
@@ -22,7 +23,7 @@ public sealed class Loop<TSig> : IModule<TSig, LoopResult<TSig>>
     /// </summary>
     /// <param name="predicate">Module that decides whether the loop should continue.</param>
     /// <param name="body">Module that computes the next state from the current state.</param>
-    /// <param name="maxIterations">Hard upper bound on iterations (default 100).</param>
+    /// <param name="maxIterations">Hard upper bound on body runs (default 100).</param>
     public Loop(
         IModule<TSig, LoopPredicateResult<TSig>> predicate,
         IModule<TSig, TSig> body,
@@ -44,12 +45,12 @@ public sealed class Loop<TSig> : IModule<TSig, LoopResult<TSig>>
         var childTraces = new List<TraceRecord>();
         var stopReason = "max_iterations";
 
-        while (iteration < _maxIterations)
+        while (true)
         {
             ct.ThrowIfCancellationRequested();
-            iteration++;
 
-            // Evaluate predicate
+            // The predicate is asked before every body run and once after the last allowed one, so a stop
+            // on that last check keeps its own reason; only a predicate that still says continue is cut off.
             var predResult = await _predicate.ForwardAsync(state, ct);
             childTraces.Add(predResult.Trace);
 
@@ -59,13 +60,18 @@ public sealed class Loop<TSig> : IModule<TSig, LoopResult<TSig>>
                 break;
             }
 
-            // Execute body
+            if (iteration >= _maxIterations)
+            {
+                break;
+            }
+
             var bodyResult = await _body.ForwardAsync(state, ct);
             childTraces.Add(bodyResult.Trace);
             state = bodyResult.Value;
+            iteration++;
         }
 
-        var reason = iteration >= _maxIterations ? "max_iterations" : stopReason;
+        var reason = stopReason;
 
         var output = new LoopResult<TSig>(state, iteration, reason);
 
