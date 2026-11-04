@@ -10,6 +10,8 @@ namespace SignalGrid.Ampelum.Host.Persistence;
 public sealed class HostSqliteConnectionFactory : IHostSqliteConnectionFactory
 {
     readonly string _connectionString;
+    readonly object _schemaGate = new();
+    bool _schemaReady;
 
     /// <summary>Initializes the factory from host options.</summary>
     public HostSqliteConnectionFactory(IOptions<AmpelumHostOptions> options)
@@ -26,7 +28,16 @@ public sealed class HostSqliteConnectionFactory : IHostSqliteConnectionFactory
     {
         var conn = new SqliteConnection(_connectionString);
         conn.Open();
-        HostSqliteSchema.EnsureCreated(conn);
+        HostSqliteSchema.ApplyConnectionSettings(conn);
+        // The schema writes to the database, so only the first open does it; a later open that also wrote would
+        // wait on any writer that is busy, and the readiness probe times an open.
+        if (!Volatile.Read(ref _schemaReady))
+            lock (_schemaGate)
+                if (!_schemaReady)
+                {
+                    HostSqliteSchema.EnsureCreated(conn);
+                    _schemaReady = true;
+                }
         return conn;
     }
 

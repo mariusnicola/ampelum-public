@@ -209,22 +209,6 @@ public sealed class AgentServiceClient(HttpClient http)
         return (response.StatusCode, await response.Content.ReadAsStringAsync(ct));
     }
 
-    /// <summary>
-    /// Polls the readiness probe until it answers 200 or the attempts run out, and returns the last answer.
-    /// A probe is meant to be polled: the Host reports unready while its first SQLite open exceeds the
-    /// probe's latency budget, which can happen on a cold start.
-    /// </summary>
-    public async Task<(HttpStatusCode Status, string Body)> WaitUntilReadyAsync(int attempts, TimeSpan pause, CancellationToken ct = default)
-    {
-        var last = await ReadyAsync(ct);
-        for (var i = 1; i < attempts && last.Status != HttpStatusCode.OK; i++)
-        {
-            await Task.Delay(pause, ct);
-            last = await ReadyAsync(ct);
-        }
-        return last;
-    }
-
     static async Task<AgentServiceException> FailureAsync(HttpResponseMessage response, CancellationToken ct)
     {
         ErrorResponse? error = null;

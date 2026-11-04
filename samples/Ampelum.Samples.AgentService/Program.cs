@@ -138,16 +138,16 @@ try
     Console.WriteLine($"OpenAPI: {routes} routes described");
     await app.StopAsync();
 
-    // The Host's own command line reads the appsettings.json in its working directory and indexes the audit file that names.
+    // The Host's own command line reads the settings file named by --config (relative to its working directory) and indexes the audit file that names.
     var hostCliDir = Path.Combine(workDir, "host-cli");
     Directory.CreateDirectory(Path.Combine(hostCliDir, "data"));
     await using (var source = new FileStream(Path.Combine(workDir, "audit.jsonl"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
     await using (var target = File.Create(Path.Combine(hostCliDir, "data", "audit.jsonl")))
         await source.CopyToAsync(target);
     await HostRebuildCli.WriteConfigAsync(
-        Path.Combine(hostCliDir, "appsettings.json"), Path.Combine(hostCliDir, "index.db"),
+        Path.Combine(hostCliDir, "host.json"), Path.Combine(hostCliDir, "index.db"),
         Path.Combine(hostCliDir, "data", "audit.jsonl"), Path.Combine(hostCliDir, "data", "prompts"));
-    var hostCli = await HostRebuildCli.RunAsync(hostCliDir, []);
+    var hostCli = await HostRebuildCli.RunAsync(hostCliDir, ["--config", "host.json"]);
     Console.WriteLine($"Host CLI: exit {hostCli.ExitCode}, {hostCli.Output.Trim()}");
 
     // 2. A ReAct agent whose tool comes from an MCP tool source.

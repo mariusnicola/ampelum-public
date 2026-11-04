@@ -58,11 +58,19 @@ internal static class HostSqliteSchema
         ) WITHOUT ROWID;
         """;
 
+    /// <summary>The settings every connection needs; none of them writes to the database.</summary>
+    internal static void ApplyConnectionSettings(SqliteConnection conn)
+    {
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;";
+        cmd.ExecuteNonQuery();
+    }
+
+    /// <summary>Sets the journal mode and creates the tables and the schema version; it writes, so it runs once per database.</summary>
     internal static void EnsureCreated(SqliteConnection conn)
     {
         using var cmd = conn.CreateCommand();
-        // Set pragmas
-        cmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;";
+        cmd.CommandText = "PRAGMA journal_mode=WAL;";
         cmd.ExecuteNonQuery();
 
         // Check/set user_version
