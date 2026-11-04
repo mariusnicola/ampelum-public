@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using SignalGrid.Ampelum.Agent;
 
@@ -15,14 +14,15 @@ public sealed class TriageSkills
     /// <summary>The registry, so a workspace can carry the same skills.</summary>
     public ISkillRegistry Registry => _registry;
 
-    /// <summary>Registers the skills listed in skills.json. SkillRegistry.LoadAsync is a placeholder, so the file is read here.</summary>
-    public TriageSkills()
+    /// <summary>Loads the skills of the project's <c>skills</c> folder with <see cref="SkillRegistry.LoadAsync"/>.</summary>
+    public TriageSkills(string projectRoot)
     {
-        var skills = JsonSerializer.Deserialize<SkillManifest[]>(Embedded.ReadText("skills.json"), new JsonSerializerOptions(JsonSerializerDefaults.Web))
-            ?? throw new InvalidOperationException("skills.json is empty.");
-        foreach (var skill in skills)
-            _registry.Register(skill);
+        // A constructor cannot await; the load reads a few small files and no context is captured.
+        _registry.LoadAsync(Path.Combine(projectRoot, FolderName)).GetAwaiter().GetResult();
     }
+
+    /// <summary>Folder in the project root that holds the skill files.</summary>
+    public const string FolderName = "skills";
 
     /// <summary>How the skill was found, for the report.</summary>
     public enum Route { ExactTags, Model, AnyTag, None }

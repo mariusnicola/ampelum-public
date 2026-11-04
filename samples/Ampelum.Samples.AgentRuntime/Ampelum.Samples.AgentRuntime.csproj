@@ -8,7 +8,6 @@
     <!-- The demo folder is data for the run, not code for this project. -->
     <Compile Remove="DemoProject\**" />
     <EmbeddedResource Include="DemoProject\**" LogicalName="DemoProject/%(RecursiveDir)%(Filename)%(Extension)" />
-    <EmbeddedResource Include="skills.json" LogicalName="skills.json" />
     <EmbeddedResource Include="brief-template.txt" LogicalName="brief-template.txt" />
     
     <EmbeddedResource Include="Fake\*.json;Fake\*.yml" LogicalName="fake/%(Filename)%(Extension)" />

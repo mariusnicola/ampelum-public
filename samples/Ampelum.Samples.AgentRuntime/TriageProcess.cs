@@ -33,7 +33,7 @@ public sealed class TriageProcess : IAsyncDisposable
         Router = tiers.CreateRouter(Policy);
         Budget = new ModelBudget(Policy.ToBudget());
 
-        Skills = new TriageSkills();
+        Skills = new TriageSkills(root);
         _registry = new JsonFileProjectRegistry(Path.Combine(stateDirectory, "portfolio.json"));
         Workspace = TriageWorkspace.Open(_registry, root, Skills);
         Readable = TriageWorkspace.ReadableScope(Workspace, Policy);

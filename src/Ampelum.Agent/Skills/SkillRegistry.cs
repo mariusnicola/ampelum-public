@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 
 namespace SignalGrid.Ampelum.Agent;
 
@@ -8,11 +9,32 @@ public sealed class SkillRegistry : ISkillRegistry
 {
     private readonly ConcurrentDictionary<string, SkillManifest> _skills = new();
 
-    /// <inheritdoc />
-    public Task LoadAsync(string skillsDirectory, CancellationToken ct = default)
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    /// <summary>Registers the skills of every <c>*.json</c> file directly in <paramref name="skillsDirectory"/>, in file
+    /// name order. A file holds one <see cref="SkillManifest"/> object or an array of them; a later skill of the same name
+    /// replaces an earlier one. All files are read before any skill is registered, so a file that is not valid leaves
+    /// the registry as it was. Throws <see cref="DirectoryNotFoundException"/> when the directory does not exist.</summary>
+    public async Task LoadAsync(string skillsDirectory, CancellationToken ct = default)
     {
-        // Placeholder — dynamic loading from YAML/JSON files
-        return Task.CompletedTask;
+        ArgumentNullException.ThrowIfNull(skillsDirectory);
+        if (!Directory.Exists(skillsDirectory))
+            throw new DirectoryNotFoundException($"Skills directory '{skillsDirectory}' does not exist.");
+
+        var loaded = new List<SkillManifest>();
+        foreach (var file in Directory.GetFiles(skillsDirectory, "*.json").OrderBy(f => f, StringComparer.Ordinal))
+        {
+            var json = await File.ReadAllTextAsync(file, ct).ConfigureAwait(false);
+            using var doc = JsonDocument.Parse(json);
+            if (doc.RootElement.ValueKind == JsonValueKind.Array)
+                loaded.AddRange(doc.RootElement.Deserialize<SkillManifest[]>(JsonOptions) ?? []);
+            else
+                loaded.Add(doc.RootElement.Deserialize<SkillManifest>(JsonOptions)
+                    ?? throw new JsonException($"'{file}' does not hold a skill."));
+        }
+
+        foreach (var skill in loaded)
+            Register(skill);
     }
 
     /// <inheritdoc />

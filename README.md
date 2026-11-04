@@ -247,7 +247,7 @@ Workflows
 - `Wait` steps have no pause of their own; they run like any other step through your handler. `Approval` steps pause the execution (`AwaitingConfirmation`) until `DecideAsync` approves or rejects them, and a `RequireConfirmation` policy decision in `WorkflowToolStepHandler` pauses the step the same way. `WorkflowToolStepHandler` fails any step that is not a `Tool` step (`src/Ampelum.Agent/Orchestration/WorkflowToolStepHandler.cs`, line 61).
 - After a rejection the checkpoint is `Failed` at once, but the `execution.failed` audit line is appended in a separate write; a crash between the two loses only that audit line.
 - `SessionBudget` is enforced only where a `SessionBudgetMeter` is passed in: `ToolDispatcher` (one call per tool run that reaches its handler, plus the bytes of its output) and `SubAgentRunner` (one call per run, plus the tokens of each turn, checked between turns). Nothing else counts against it, and `IsWarning` is not used.
-- `SkillRegistry.LoadAsync` does nothing.
+- `SkillRegistry.LoadAsync` reads only `*.json` files directly in the folder (not YAML, not `SKILL.md`, not subfolders), as one skill object or an array per file.
 - `JsonFileProjectRegistry` stores label, root and escalation policy only; the blast radius and allowed tools are derived again on load.
 - The code indexer's `ExtractCalls` covers only Method or Function symbols, and its method pattern misses plain return types, so in practice the index holds type declarations and imports.
 - `ISynthesisInfrastructure` has no implementation in the library.

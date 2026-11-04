@@ -124,6 +124,6 @@ public sealed class PlanningTests : IDisposable
         var result = paused.First.Results.Results.First();
 
         result.EvidenceUsed.ShouldBe(["src/Notifier.cs", "src/OrderService.cs", "src/Pricing.cs"]);
-        result.EvidenceWithheld.ShouldBe([".ampelum-conventions.yaml", "backlog.md", "roadmap.md", "triage-policy.json"]);
+        result.EvidenceWithheld.ShouldBe([".ampelum-conventions.yaml", "backlog.md", "roadmap.md", "skills/skills.json", "triage-policy.json"]);
     }
 }

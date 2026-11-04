@@ -22,7 +22,7 @@ public sealed class ProjectKnowledgeTests : IDisposable
     public void Workspace_IsStoredWithItsMetadata_AndGetsItsScopesBackAfterAReload()
     {
         var file = Path.Combine(_workspace.State, "portfolio.json");
-        var skills = new TriageSkills();
+        var skills = new TriageSkills(_workspace.Root);
         var first = TriageWorkspace.Open(new JsonFileProjectRegistry(file), _workspace.Root, skills);
 
         var reloaded = TriageWorkspace.Open(new JsonFileProjectRegistry(file), _workspace.Root, skills);
@@ -40,7 +40,7 @@ public sealed class ProjectKnowledgeTests : IDisposable
     public async Task Registries_RefuseTheSameWorkspaceTwice_AndForgetOneThatIsDeregistered()
     {
         var registry = new InMemoryProjectRegistry();
-        var workspace = TriageWorkspace.Open(registry, _workspace.Root, new TriageSkills());
+        var workspace = TriageWorkspace.Open(registry, _workspace.Root, new TriageSkills(_workspace.Root));
 
         registry.IsEmpty.ShouldBeFalse();
         registry.Get(TriageWorkspace.Id).ShouldNotBeNull();

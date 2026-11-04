@@ -5,9 +5,28 @@ using Xunit;
 
 namespace Ampelum.Samples.AgentRuntime.Tests;
 
-public sealed class SkillsTests
+public sealed class SkillsTests : IDisposable
 {
-    readonly TriageSkills _skills = new();
+    readonly TempWorkspace _workspace = new();
+    readonly TriageSkills _skills;
+
+    public SkillsTests() => _skills = new TriageSkills(_workspace.Root);
+
+    public void Dispose() => _workspace.Dispose();
+
+    [Fact]
+    public async Task Skills_ComeFromTheSkillFilesOfTheProjectFolder()
+    {
+        File.WriteAllText(Path.Combine(_workspace.Root, TriageSkills.FolderName, "extra.json"),
+            """{ "name": "docs-review", "version": "1.0.0", "tags": ["docs", "review"], "systemPrompt": "You review docs." }""");
+        var skills = new TriageSkills(_workspace.Root);
+
+        var choice = await skills.ChooseAsync(Issue("docs", "review"), new FakeChatClient(), TestContext.Current.CancellationToken);
+
+        choice.Skill.ShouldNotBeNull().Name.ShouldBe("docs-review");
+        skills.Registry.GetAll().Select(s => s.Name).ShouldBe(["bug-triage", "docs-review", "llm-hygiene", "pricing-review", "release-notes"]);
+        Should.Throw<DirectoryNotFoundException>(() => new TriageSkills(Path.Combine(_workspace.Root, "no-such-project")));
+    }
 
     [Fact]
     public async Task SkillCarryingEveryLabel_IsChosenWithoutAskingTheModel()
