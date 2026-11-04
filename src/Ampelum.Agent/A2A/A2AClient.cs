@@ -33,9 +33,13 @@ internal sealed class NameOrNumberEnumConverter<T> : JsonConverter<T> where T : 
 
         if (reader.TokenType == JsonTokenType.String)
         {
-            var name = reader.GetString()!.Replace("-", "", StringComparison.Ordinal).Replace("_", "", StringComparison.Ordinal);
-            if (Enum.TryParse<T>(name, ignoreCase: true, out var value) && Enum.IsDefined(value))
-                return value;
+            // Only the enum's own names count: Enum.TryParse would also take "1", "-1" and "A,B" lists.
+            var text = reader.GetString()!.Replace("-", "", StringComparison.Ordinal).Replace("_", "", StringComparison.Ordinal);
+            foreach (var name in Enum.GetNames<T>())
+            {
+                if (string.Equals(name, text, StringComparison.OrdinalIgnoreCase))
+                    return Enum.Parse<T>(name);
+            }
         }
 
         throw new JsonException($"'{reader.GetString() ?? reader.TokenType.ToString()}' is not a {typeof(T).Name}.");
@@ -76,6 +80,13 @@ public sealed class A2AClient : IDisposable
         var cardUrl = baseUrl.TrimEnd('/') + A2AMethods.AgentCardPath;
         var response = await _http.GetAsync(cardUrl, ct);
         response.EnsureSuccessStatusCode();
+
+        // The HttpClient follows redirects, so the card may come from another origin than the one asked. The final
+        // request URI is where it was served.
+        var servedBy = response.RequestMessage?.RequestUri?.ToString() ?? cardUrl;
+        if (!SameOrigin(baseUrl, servedBy))
+            throw new InvalidOperationException($"The agent card was asked for at {cardUrl} but served by {servedBy}, which is not the same scheme, host and port.");
+
         var card = await response.Content.ReadFromJsonAsync<A2AAgentCard>(_json, ct);
 
         // The card says where tasks go. A card that names another origin than the one it came from would take every task there.

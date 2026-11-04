@@ -97,6 +97,107 @@ public sealed class A2AClientHostTests
             client.SendMessageAsync("http://127.0.0.1:1/rpc", Message(), ct: TestContext.Current.CancellationToken));
     }
 
+    [Theory]
+    [InlineData("\"Working,Completed\"")]
+    [InlineData("\"-1\"")]
+    [InlineData("\"--1\"")]
+    [InlineData("\"1\"")]
+    [InlineData("\"\"")]
+    [InlineData("\" completed\"")]
+    public async Task SendMessageAsync_AStringThatIsNotAnEnumName_Fails_ForStateAndForRole(string text)
+    {
+        using var asState = new A2AClient(new HttpClient(new StubHandler(TaskReply(text, "1"))));
+        using var asRole = new A2AClient(new HttpClient(new StubHandler(TaskReply("3", text))));
+
+        await Should.ThrowAsync<JsonException>(() =>
+            asState.SendMessageAsync("http://127.0.0.1:1/rpc", Message(), ct: TestContext.Current.CancellationToken));
+        await Should.ThrowAsync<JsonException>(() =>
+            asRole.SendMessageAsync("http://127.0.0.1:1/rpc", Message(), ct: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_ANumber_IsStillReadWhateverItIs()
+    {
+        using var client = new A2AClient(new HttpClient(new StubHandler(TaskReply("42", "7"))));
+
+        var response = await client.SendMessageAsync("http://127.0.0.1:1/rpc", Message(), ct: TestContext.Current.CancellationToken);
+
+        ((int)response.Result!.Task!.State).ShouldBe(42);
+        ((int)response.Result.Task.Messages.Single().Role).ShouldBe(7);
+    }
+
+    // Two real listeners on the loopback interface, each answering with what the test gives it.
+    sealed class LocalServer : IDisposable
+    {
+        readonly HttpListener _listener = new();
+        readonly CancellationTokenSource _stop = new();
+
+        public int Port { get; }
+
+        public string Origin => $"http://127.0.0.1:{Port}";
+
+        public LocalServer(Func<HttpListenerRequest, (int Status, string? Location, string Body)> answer)
+        {
+            var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+            probe.Start();
+            Port = ((IPEndPoint)probe.LocalEndpoint).Port;
+            probe.Stop();
+            _listener.Prefixes.Add(Origin + "/");
+            _listener.Start();
+            _ = Task.Run(async () =>
+            {
+                while (!_stop.IsCancellationRequested)
+                {
+                    HttpListenerContext context;
+                    try { context = await _listener.GetContextAsync(); }
+                    catch { return; }
+                    var (status, location, body) = answer(context.Request);
+                    context.Response.StatusCode = status;
+                    if (location is not null) context.Response.RedirectLocation = location;
+                    var bytes = Encoding.UTF8.GetBytes(body);
+                    context.Response.ContentType = "application/json";
+                    await context.Response.OutputStream.WriteAsync(bytes);
+                    context.Response.Close();
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            _stop.Cancel();
+            _listener.Close();
+        }
+    }
+
+    [Fact]
+    public async Task FetchAgentCardAsync_ACardServedByAnotherOriginAfterARedirect_IsRefused_EvenWhenItNamesTheBaseOrigin()
+    {
+        // The server that is asked redirects to a second server, whose card names the first one.
+        var askedOrigin = "";
+        using var serving = new LocalServer(_ => (200, null, Card(askedOrigin + "/rpc")));
+        using var asked = new LocalServer(_ => (302, serving.Origin + A2AMethods.AgentCardPath, ""));
+        askedOrigin = asked.Origin;
+        using var client = new A2AClient(new HttpClient(new HttpClientHandler { AllowAutoRedirect = true }));
+
+        await Should.ThrowAsync<InvalidOperationException>(() =>
+            client.FetchAgentCardAsync(asked.Origin, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task FetchAgentCardAsync_ARedirectThatStaysOnTheBaseOrigin_IsFollowed()
+    {
+        var origin = "";
+        using var server = new LocalServer(request => request.Url!.AbsolutePath == A2AMethods.AgentCardPath
+            ? (302, origin + "/moved/card", "")
+            : (200, null, Card(origin + "/rpc")));
+        origin = server.Origin;
+        using var client = new A2AClient(new HttpClient(new HttpClientHandler { AllowAutoRedirect = true }));
+
+        var card = await client.FetchAgentCardAsync(server.Origin, TestContext.Current.CancellationToken);
+
+        card!.Url.ShouldBe(server.Origin + "/rpc");
+    }
+
     [Fact]
     public async Task Dispose_LeavesAnInjectedHttpClientUsable()
     {
