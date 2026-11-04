@@ -114,6 +114,15 @@ try
         + $"forward used {prompted.PromptVersionId}, stream used {streamVersion}"
         + (serviceModel is null ? "" : $", instruction and demonstration sent = {instructionSent} and {streamInstructionSent}"));
 
+    // A rebuild reads the prompt versions back from their files, so the one stored above is still listed afterwards.
+    // The file does not record that it was promoted, so it comes back as a challenger.
+    var rebuiltPrompts = await client.RebuildIndexAsync();
+    var keptVersions = await client.ListPromptVersionsAsync(AgentServiceHost.ModuleName);
+    var rebuildKeepsPrompts = rebuiltPrompts.PromptVersionsIndexed == 1
+        && keptVersions.Versions.Select(v => v.VersionId).SequenceEqual([challenger.VersionId]);
+    Console.WriteLine($"Rebuild: {rebuiltPrompts.PromptVersionsIndexed} prompt version indexed, listed again = {rebuildKeepsPrompts}, "
+        + $"status {keptVersions.Versions.FirstOrDefault()?.Status}");
+
     // Optimize is plumbing: the Host scores every run 1.0, so it collects the module's own answers and tunes nothing.
     var run = await client.StartOptimizeAsync(AgentServiceHost.ModuleName, new OptimizeRequest(
         OptimizerTypes.BootstrapFewShot,
@@ -254,7 +263,7 @@ try
 
     var hostCliOk = hostCli.ExitCode == 0 && hostCli.Output.Contains("audit entries", StringComparison.Ordinal);
     var scaffoldOk = scaffold.ExitCode == 0 && generatedFiles == 6;
-    return verify.Ok && streamOk && healthOk && replayOk && promptsOk && optimizeOk && routes > 0
+    return verify.Ok && streamOk && healthOk && replayOk && promptsOk && rebuildKeepsPrompts && optimizeOk && routes > 0
            && hostCliOk && mcpOk && replErr.Length == 0 && cliExit == 0 && scaffoldOk && replRefused ? 0 : 1;
 }
 finally

@@ -100,15 +100,19 @@ public sealed class IndexRebuilder : IIndexRebuilder
         if (!Directory.Exists(promptDir)) return 0;
 
         var count = 0;
-        var files = Directory.GetFiles(promptDir, "*.json");
+        // POST /prompts/{module} writes {PromptDir}/{module}/{versionId}.json, so the module is the first folder
+        // under the prompt folder. A file directly in the prompt folder has no module to name.
+        var files = Directory.GetFiles(promptDir, "*.json", SearchOption.AllDirectories);
+        Array.Sort(files, StringComparer.Ordinal);
         foreach (var filePath in files)
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath);
+            var parts = Path.GetRelativePath(promptDir, filePath).Split(Path.DirectorySeparatorChar, 2);
             var row = new PromptVersionRow(
                 fileName,
-                "unknown",
+                parts.Length == 2 ? parts[0] : "unknown",
                 "challenger",
-                DateTimeOffset.UtcNow,
+                new DateTimeOffset(File.GetLastWriteTimeUtc(filePath), TimeSpan.Zero),
                 null,
                 filePath,
                 null);

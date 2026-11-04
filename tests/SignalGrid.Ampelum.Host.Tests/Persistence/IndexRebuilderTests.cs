@@ -32,6 +32,101 @@ public sealed class IndexRebuilderTests
         summary.PromptVersionsIndexed.ShouldBe(0);
     }
 
+    static string WritePromptFile(TempStorageFixture fix, string relativePath, DateTime writtenUtc)
+    {
+        var path = Path.Combine(fix.PromptDir, relativePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, """{"demoAssignments":{},"instructionOverrides":{"default":"Be brief."}}""");
+        File.SetLastWriteTimeUtc(path, writtenUtc);
+        return path;
+    }
+
+    [Fact]
+    public async Task Rebuild_PromptFilesInAModuleFolder_AreIndexedUnderThatModule()
+    {
+        using var fix = new TempStorageFixture();
+        var path = WritePromptFile(fix, Path.Combine("modA", "v-one.json"), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        var sut = MakeSut(fix);
+
+        var summary = await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        summary.PromptVersionsIndexed.ShouldBe(1);
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        var rows = await store.ListByModuleAsync("modA", TestContext.Current.CancellationToken);
+        var row = rows.ShouldHaveSingleItem();
+        row.VersionId.ShouldBe("v-one");
+        row.ModuleName.ShouldBe("modA");
+        row.FilePath.ShouldBe(path);
+        row.Status.ShouldBe("challenger");
+        (await store.ListModulesAsync(TestContext.Current.CancellationToken)).ShouldBe(["modA"]);
+    }
+
+    [Fact]
+    public async Task Rebuild_PromptFilesOfTwoModules_AreKeptApart()
+    {
+        using var fix = new TempStorageFixture();
+        var when = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        WritePromptFile(fix, Path.Combine("modA", "v-a.json"), when);
+        WritePromptFile(fix, Path.Combine("modB", "v-b.json"), when);
+        var sut = MakeSut(fix);
+
+        var summary = await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        summary.PromptVersionsIndexed.ShouldBe(2);
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.ListByModuleAsync("modA", TestContext.Current.CancellationToken)).Select(r => r.VersionId).ShouldBe(["v-a"]);
+        (await store.ListByModuleAsync("modB", TestContext.Current.CancellationToken)).Select(r => r.VersionId).ShouldBe(["v-b"]);
+    }
+
+    [Fact]
+    public async Task Rebuild_APromptFileDirectlyInThePromptDir_IsStillIndexed_UnderTheModuleUnknown()
+    {
+        using var fix = new TempStorageFixture();
+        WritePromptFile(fix, "v-top.json", new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        var sut = MakeSut(fix);
+
+        var summary = await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        summary.PromptVersionsIndexed.ShouldBe(1);
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        (await store.ListByModuleAsync("unknown", TestContext.Current.CancellationToken)).ShouldHaveSingleItem().VersionId.ShouldBe("v-top");
+    }
+
+    [Fact]
+    public async Task Rebuild_PromptVersions_CarryTheirFilesWriteTime_SoTheyKeepTheirOrder()
+    {
+        using var fix = new TempStorageFixture();
+        var older = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        var newer = older.AddHours(5);
+        // The newer file sorts first by name, so the order cannot come from the names.
+        WritePromptFile(fix, Path.Combine("modA", "v-a-newer.json"), newer);
+        WritePromptFile(fix, Path.Combine("modA", "v-b-older.json"), older);
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        var rows = await new PromptVersionStore(TestData.Factory(fix.Options)).ListByModuleAsync("modA", TestContext.Current.CancellationToken);
+        rows.Select(r => r.VersionId).ShouldBe(["v-b-older", "v-a-newer"]);
+        rows[0].CreatedAt.UtcDateTime.ShouldBe(older);
+        rows[1].CreatedAt.UtcDateTime.ShouldBe(newer);
+    }
+
+    [Fact]
+    public async Task Rebuild_ReplacesTheRowsAlreadyThere_WithTheFilesOnDisk()
+    {
+        using var fix = new TempStorageFixture();
+        var store = new PromptVersionStore(TestData.Factory(fix.Options));
+        await store.InsertChallengerAsync(
+            new PromptVersionRow("v-gone", "modA", "challenger", DateTimeOffset.UtcNow, null, "/no/such/file.json", null),
+            TestContext.Current.CancellationToken);
+        WritePromptFile(fix, Path.Combine("modA", "v-here.json"), new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        var sut = MakeSut(fix);
+
+        await sut.RebuildAsync(TestContext.Current.CancellationToken);
+
+        (await store.ListByModuleAsync("modA", TestContext.Current.CancellationToken)).Select(r => r.VersionId).ShouldBe(["v-here"]);
+    }
+
     [Fact]
     public async Task Rebuild_WithMissingAuditFile_SkipsAudit()
     {

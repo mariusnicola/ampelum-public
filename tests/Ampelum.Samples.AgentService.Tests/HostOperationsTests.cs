@@ -483,7 +483,7 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
-    public async Task KnownLimit_RebuildIndexForgetsPromptVersionsCreatedThroughTheEndpoint()
+    public async Task RebuildIndex_KeepsPromptVersionsCreatedThroughTheEndpoint()
     {
         await using var service = await StartAsync();
         var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
@@ -491,12 +491,27 @@ public sealed class HostOperationsTests
 
         var summary = await service.Client.RebuildIndexAsync(Ct);
 
-        // The rebuild empties the prompt table and refills it from the top of the prompt folder only,
-        // while the endpoint writes each file into a folder named after the module.
-        summary.PromptVersionsIndexed.ShouldBe(0);
-        (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.ShouldBeEmpty();
-        Directory.GetFiles(Path.Combine(service.StorageDir, "prompts"), $"{version.VersionId}.json", SearchOption.AllDirectories)
-            .ShouldHaveSingleItem();
+        summary.PromptVersionsIndexed.ShouldBe(1);
+        var listed = (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.ShouldHaveSingleItem();
+        listed.VersionId.ShouldBe(version.VersionId);
+        listed.ModuleName.ShouldBe(AgentServiceHost.ModuleName);
+        listed.InstructionOverrides["default"].ShouldBe("Be brief.");
+        (await service.Client.ListPromptModulesAsync(Ct)).ModuleNames.ShouldBe([AgentServiceHost.ModuleName]);
+    }
+
+    [Fact]
+    public async Task KnownLimit_RebuildIndexForgetsWhichPromptVersionWasPromoted()
+    {
+        await using var service = await StartAsync();
+        var version = await service.Client.CreatePromptVersionAsync(AgentServiceHost.ModuleName, Challenger("Be brief."), Ct);
+        await service.Client.PromoteAsync(AgentServiceHost.ModuleName, version.VersionId, Ct);
+
+        await service.Client.RebuildIndexAsync(Ct);
+
+        // The promotion is only in the index, not in the file, so the rebuilt version is a challenger again.
+        (await service.Client.ListPromptVersionsAsync(AgentServiceHost.ModuleName, Ct)).Versions.Single().Status.ShouldBe(PromptStatus.Challenger);
+        var noActive = await Should.ThrowAsync<AgentServiceException>(() => service.Client.GetActivePromptAsync(AgentServiceHost.ModuleName, Ct));
+        noActive.Status.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
