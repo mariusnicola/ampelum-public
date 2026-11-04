@@ -93,6 +93,22 @@ public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContex
 
     AmpelumContext? Optimizers.IBoundContext.BoundContext => _ctorCtx;
 
+    // The signature, with its instruction replaced by InstructionOverrides[SubmoduleName] when the context has one.
+    SignatureMetadata EffectiveMetadata(AmpelumContext resolved)
+    {
+        if (resolved.InstructionOverrides is { Count: > 0 })
+        {
+            var submoduleName = resolved.SubmoduleName;
+            if (submoduleName is not null &&
+                resolved.InstructionOverrides.TryGetValue(submoduleName, out var overrideInstr) &&
+                !string.IsNullOrWhiteSpace(overrideInstr))
+            {
+                return _meta.WithInstructions(overrideInstr);
+            }
+        }
+        return _meta;
+    }
+
     /// <summary>Run one forward pass: format â†’ LM call â†’ parse â†’ trace â†’ return.</summary>
     public async Task<Prediction<TSig>> ForwardAsync(
         TSig inputs,
@@ -149,17 +165,7 @@ public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContex
         {
             // PSQ-5 phase boundary 1: OnBefore start
             CheckDeadline(resolved, hookCtx, "before-onbefore");
-            var effectiveMetadata = _meta;
-            if (resolved.InstructionOverrides is { Count: > 0 })
-            {
-                var submoduleName = resolved.SubmoduleName;
-                if (submoduleName is not null &&
-                    resolved.InstructionOverrides.TryGetValue(submoduleName, out var overrideInstr) &&
-                    !string.IsNullOrWhiteSpace(overrideInstr))
-                {
-                    effectiveMetadata = _meta.WithInstructions(overrideInstr);
-                }
-            }
+            var effectiveMetadata = EffectiveMetadata(resolved);
 
             if (hookPipeline is not null)
             {
@@ -495,7 +501,7 @@ public sealed class Predict<TSig> : IModule<TSig, TSig>, Optimizers.IBoundContex
             hookCtx.Set(HookMetadataKeys.SignatureType, typeof(TSig).FullName);
         }
 
-        var messages = resolved.Adapter.Format(_meta, inputsDict, demos);
+        var messages = resolved.Adapter.Format(EffectiveMetadata(resolved), inputsDict, demos);
         var chatOptions = BuildOptions(resolved);
         activity?.SetTag("gen_ai.request.model", chatOptions?.ModelId);
         var streamStartTs = Stopwatch.GetTimestamp();
