@@ -1,4 +1,6 @@
 ﻿using System.Collections.Immutable;
+using System.Globalization;
+using System.Text.Json;
 
 namespace SignalGrid.Ampelum.Retrieval;
 
@@ -97,10 +99,40 @@ public sealed class InMemoryVectorStore : IVectorStore
         foreach (var kv in filters)
         {
             if (!metadata.TryGetValue(kv.Key, out var val)) return false;
-            if (!Equals(val, kv.Value)) return false;
+            if (!ValuesEqual(val, kv.Value)) return false;
         }
         return true;
     }
+
+    // Numbers match by value whatever their type (an int filter finds a stored long, a number read back from a
+    // saved index as a JsonElement matches the CLR number it was saved from). Anything else uses Equals.
+    static bool ValuesEqual(object? stored, object? wanted)
+    {
+        if (Equals(stored, wanted)) return true;
+        if (!IsNumber(stored) || !IsNumber(wanted)) return false;
+        if (TryDecimal(stored, out var a) && TryDecimal(wanted, out var b)) return a == b;
+        return ToDouble(stored) == ToDouble(wanted);
+    }
+
+    static bool IsNumber(object? v) => v is JsonElement { ValueKind: JsonValueKind.Number }
+        or sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal;
+
+    // A float or double goes through its shortest round-trip text, so 0.1 and 0.1f-saved-as-0.1 agree.
+    static bool TryDecimal(object? v, out decimal d)
+    {
+        switch (v)
+        {
+            case JsonElement e: return e.TryGetDecimal(out d);
+            case float or double:
+                return decimal.TryParse(((IFormattable)v).ToString("R", CultureInfo.InvariantCulture),
+                    NumberStyles.Float, CultureInfo.InvariantCulture, out d);
+            default:
+                d = Convert.ToDecimal(v, CultureInfo.InvariantCulture);
+                return true;
+        }
+    }
+
+    static double ToDouble(object? v) => v is JsonElement e ? e.GetDouble() : Convert.ToDouble(v, CultureInfo.InvariantCulture);
 
     static double CosineSimilarity(ReadOnlySpan<float> a, ReadOnlySpan<float> b)
     {

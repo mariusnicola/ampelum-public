@@ -74,17 +74,15 @@ public static class VectorIndexSerializer
         await mem.UpsertAsync(docs, vecs, ct).ConfigureAwait(false);
     }
 
-    // A store-side filter compares with Equals, which a JsonElement never satisfies. A string, a bool, null and a
-    // number come back as string, bool, null and int (or long, or double); an array or object stays a JsonElement.
+    // A string, a bool and null come back plain. A number, array or object stays a JsonElement: it keeps the exact
+    // number text, so a save after a load writes the same bytes (converting to int, long or double would not keep a
+    // ulong, a decimal's trailing zero or a whole double's ".0"). The store's filter compares numbers by value.
     static object? PlainValue(JsonElement value) => value.ValueKind switch
     {
         JsonValueKind.String => value.GetString(),
         JsonValueKind.True => true,
         JsonValueKind.False => false,
         JsonValueKind.Null => null,
-        JsonValueKind.Number when value.TryGetInt32(out var i) => i,
-        JsonValueKind.Number when value.TryGetInt64(out var l) => l,
-        JsonValueKind.Number => value.GetDouble(),
         _ => value.Clone(),
     };
 }

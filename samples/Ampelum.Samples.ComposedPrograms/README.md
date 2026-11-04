@@ -165,10 +165,14 @@ The test asserts the flawed behaviour, so it fails once the library is fixed and
 
 - `Loop` counts every predicate check as an iteration, and labels a stop on the last allowed check as
   `max_iterations`. The sample sets the loop bound two above the pass limit and counts body runs itself.
-- A reloaded index hands metadata back as plain values (string, bool, null, and a number as int, long or
-  double), so a store side equality filter matches it (`A_reloaded_index_still_matches_a_store_side_metadata_filter`).
-  The file does not record the original type: a long that fits in an int comes back as int, and a whole
-  number written as a double comes back as int. An array or object stays a `JsonElement`.
+- A reloaded index hands a string, a bool and null back as plain values, and a number, array or object as a
+  `JsonElement` (so a save after a reload writes the same bytes, whatever the number type was). A store side
+  equality filter matches a reloaded document (`A_reloaded_index_still_matches_a_store_side_metadata_filter`);
+  numbers match by value, so a filter written with the stored value and type finds them (`long` 5, double 5.0,
+  decimal 1.10, `ulong` max, `short` 7, and so on), and so does an `int` 5. Not matched: a `float` stored as
+  0.1f against a filter written as the double `(double)0.1f` (0.10000000149011612), because the file holds the
+  text "0.1". Metadata you read back from a reloaded index is a `JsonElement` for numbers, so read it with
+  `GetInt32()`, `GetDouble()` and so on.
 
 A bare `Predict` ignores an instruction override that `OptimizedProgram.Bind` gives it: `Bind` sets no
 submodule name for a program that is not an `IComposedModule`, and `Predict` only reads an override under its

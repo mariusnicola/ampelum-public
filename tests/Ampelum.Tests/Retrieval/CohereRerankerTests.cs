@@ -76,6 +76,18 @@ public sealed class CohereRerankerTests
         await Should.ThrowAsync<InvalidDataException>(() => sut.RerankAsync("q", Docs("a"), 1, TestContext.Current.CancellationToken));
     }
 
+    [Theory]
+    [InlineData("""{"results":[null]}""")]
+    [InlineData("""{"results":[{"relevance_score":0.9}]}""")]
+    [InlineData("""{"results":[{"index":null,"relevance_score":0.9}]}""")]
+    [InlineData("""{"results":[{"index":0,"relevance_score":0.9},{"index":0,"relevance_score":0.8}]}""")]
+    public async Task Rerank_ANullResultAMissingIndexOrARepeatedIndex_ThrowsInvalidData(string json)
+    {
+        var sut = new CohereReranker(new HttpClient(new StubHandler(json)), new CohereRerankerOptions { ApiKey = "k", Model = "m" });
+
+        await Should.ThrowAsync<InvalidDataException>(() => sut.RerankAsync("q", Docs("a", "b"), 2, TestContext.Current.CancellationToken));
+    }
+
     [Fact]
     public async Task Rerank_AnIndexBeyondTopK_IsNotChecked_BecauseItIsNotUsed()
     {

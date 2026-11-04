@@ -47,8 +47,8 @@ public static class StyleRetrieval
 
 /// <summary>
 /// Restricts a retriever to documents whose metadata matches a predicate. The check runs on the returned
-/// documents, over-fetching so enough survive it; the metadata of a restored index is plain values, so
-/// it matches the same as before the save.
+/// documents, over-fetching so enough survive it; a restored index matches a
+/// store-side equality filter the same as before the save.
 /// </summary>
 public sealed class FilteredRetriever(IRetriever inner, FilterPredicate predicate, int candidateFactor = 4) : IRetriever
 {

@@ -48,13 +48,22 @@ public sealed class CohereReranker(HttpClient http, CohereRerankerOptions option
         }
 
         var results = new List<RetrievedDocument>(body.Results.Count);
+        var seen = new HashSet<int>();
         foreach (var r in body.Results.Take(topK))
         {
-            if (r.Index < 0 || r.Index >= candidates.Count)
+            if (r?.Index is not { } index)
             {
-                throw new InvalidDataException($"The Cohere rerank response names index {r.Index}, but there are {candidates.Count} candidates.");
+                throw new InvalidDataException("The Cohere rerank response has a result with no 'index'.");
             }
-            results.Add(candidates[r.Index] with { Score = r.RelevanceScore });
+            if (index < 0 || index >= candidates.Count)
+            {
+                throw new InvalidDataException($"The Cohere rerank response names index {index}, but there are {candidates.Count} candidates.");
+            }
+            if (!seen.Add(index))
+            {
+                throw new InvalidDataException($"The Cohere rerank response names index {index} more than once.");
+            }
+            results.Add(candidates[index] with { Score = r.RelevanceScore });
         }
         return results;
     }
@@ -73,6 +82,6 @@ public sealed class CohereReranker(HttpClient http, CohereRerankerOptions option
         [property: JsonPropertyName("results")] List<CohereResultItem> Results);
 
     private sealed record CohereResultItem(
-        [property: JsonPropertyName("index")] int Index,
+        [property: JsonPropertyName("index")] int? Index,
         [property: JsonPropertyName("relevance_score")] double RelevanceScore);
 }

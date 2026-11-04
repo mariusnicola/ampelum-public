@@ -48,13 +48,22 @@ public sealed class VoyageReranker(HttpClient http, VoyageRerankerOptions option
         }
 
         var results = new List<RetrievedDocument>(body.Data.Count);
+        var seen = new HashSet<int>();
         foreach (var r in body.Data.Take(topK))
         {
-            if (r.Index < 0 || r.Index >= candidates.Count)
+            if (r?.Index is not { } index)
             {
-                throw new InvalidDataException($"The Voyage rerank response names index {r.Index}, but there are {candidates.Count} candidates.");
+                throw new InvalidDataException("The Voyage rerank response has a result with no 'index'.");
             }
-            results.Add(candidates[r.Index] with { Score = r.RelevanceScore });
+            if (index < 0 || index >= candidates.Count)
+            {
+                throw new InvalidDataException($"The Voyage rerank response names index {index}, but there are {candidates.Count} candidates.");
+            }
+            if (!seen.Add(index))
+            {
+                throw new InvalidDataException($"The Voyage rerank response names index {index} more than once.");
+            }
+            results.Add(candidates[index] with { Score = r.RelevanceScore });
         }
         return results;
     }
@@ -73,6 +82,6 @@ public sealed class VoyageReranker(HttpClient http, VoyageRerankerOptions option
         [property: JsonPropertyName("data")] List<VoyageResultItem> Data);
 
     private sealed record VoyageResultItem(
-        [property: JsonPropertyName("index")] int Index,
+        [property: JsonPropertyName("index")] int? Index,
         [property: JsonPropertyName("relevance_score")] double RelevanceScore);
 }
