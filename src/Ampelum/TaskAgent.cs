@@ -21,7 +21,31 @@ public sealed class TaskAgent : ITaskAgent
     public string Id { get; } = Guid.NewGuid().ToString("N")[..12];
 
     /// <inheritdoc/>
-    public AgentStatus Status { get; private set; } = AgentStatus.Idle;
+    public AgentStatus Status => _status;
+
+    // Completed, Error and Stopped are final: only a Running (or never started) agent leaves its state, under the lock.
+    readonly object _gate = new();
+    volatile AgentStatus _status = AgentStatus.Idle;
+
+    bool TryFinish(AgentStatus to)
+    {
+        lock (_gate)
+        {
+            if (_status is not (AgentStatus.Running or AgentStatus.Idle)) return false;
+            _status = to;
+            return true;
+        }
+    }
+
+    // Writes the closing event of the state the agent ended in, then completes the channel. When Stop got there
+    // first, the loop reports that instead of its own ending.
+    void Finish(AgentStatus to, AgentEvent ending)
+    {
+        _channel.Writer.TryWrite(TryFinish(to) || _status != AgentStatus.Stopped
+            ? ending
+            : new StatusEvent(AgentStatus.Stopped, "Stopped by user"));
+        _channel.Writer.TryComplete();
+    }
 
     /// <inheritdoc/>
     public ChannelReader<AgentEvent> Events => _channel.Reader;
@@ -37,7 +61,7 @@ public sealed class TaskAgent : ITaskAgent
     /// <inheritdoc/>
     public Task StartAsync(string taskInstruction, CancellationToken ct = default)
     {
-        Status = AgentStatus.Running;
+        _status = AgentStatus.Running;
         _channel.Writer.TryWrite(new StatusEvent(AgentStatus.Running, "Starting"));
         _loop = Task.Run(() => RunLoopAsync(taskInstruction, ct), ct);
         return Task.CompletedTask;
@@ -67,37 +91,36 @@ public sealed class TaskAgent : ITaskAgent
                 {
                     var summary = full[(doneIdx + CompletionMarker.Length)..].Trim();
                     var usage = session.LastUsage;
-                    Status = AgentStatus.Completed;
-                    _channel.Writer.TryWrite(new CompleteEvent(
+                    Finish(AgentStatus.Completed, new CompleteEvent(
                         summary, usage?.InputTokens ?? 0, usage?.OutputTokens ?? 0, usage?.EstimatedCostUsd));
-                    _channel.Writer.TryComplete();
                     return;
                 }
             }
-            Status = AgentStatus.Completed;
-            _channel.Writer.TryWrite(new CompleteEvent("Max turns reached", 0, 0, null));
-            _channel.Writer.TryComplete();
+            Finish(AgentStatus.Completed, new CompleteEvent("Max turns reached", 0, 0, null));
         }
         catch (OperationCanceledException)
         {
-            Status = AgentStatus.Stopped;
-            _channel.Writer.TryWrite(new StatusEvent(AgentStatus.Stopped, "Stopped by user"));
-            _channel.Writer.TryComplete();
+            Finish(AgentStatus.Stopped, new StatusEvent(AgentStatus.Stopped, "Stopped by user"));
         }
         catch (Exception ex)
         {
-            Status = AgentStatus.Error;
-            _channel.Writer.TryWrite(new ErrorEvent("AGENT_ERROR", ex.Message));
-            _channel.Writer.TryComplete();
+            Finish(AgentStatus.Error, new ErrorEvent("AGENT_ERROR", ex.Message));
         }
     }
 
     /// <inheritdoc/>
-    public Task StopAsync()
+    public async Task StopAsync()
     {
         _cts.Cancel();
-        Status = AgentStatus.Stopped;
-        return Task.CompletedTask;
+        TryFinish(AgentStatus.Stopped);
+        // Returns once the loop has settled, so the channel is complete and nothing more is written after it.
+        if (_loop is { } loop)
+        {
+            try { await loop.ConfigureAwait(false); }
+            catch (OperationCanceledException) { }
+        }
+        // A loop that never ran (the start token was already cancelled) has not completed the channel.
+        _channel.Writer.TryComplete();
     }
 
     /// <inheritdoc/>
