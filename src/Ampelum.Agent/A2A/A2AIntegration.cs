@@ -122,12 +122,16 @@ public sealed class DefaultAgentCardVerifier : IAgentCardVerifier
 
         // Extract JWT from bearer authentication scheme if present
         var bearerScheme = card.AuthenticationSchemes?
-            .FirstOrDefault(s => s.Scheme == "bearer");
+            .FirstOrDefault(s => string.Equals(s.Scheme, "bearer", StringComparison.OrdinalIgnoreCase));
 
         if (bearerScheme?.Credentials == null)
             return null;
 
-        return await VerifyAsync(bearerScheme.Credentials, ct);
+        // A valid token is not enough: it has to be the token of the agent the card describes.
+        var identity = await VerifyAsync(bearerScheme.Credentials, ct);
+        return identity is not null && string.Equals(identity.AgentType, card.Name, StringComparison.OrdinalIgnoreCase)
+            ? identity
+            : null;
     }
 
     /// <summary>Evaluate capability claims in the agent card against known-safe schemas.
@@ -138,12 +142,14 @@ public sealed class DefaultAgentCardVerifier : IAgentCardVerifier
 
         var warnings = new List<CapabilityWarning>();
 
-        // Check if capabilities exist and contain valid entries
-        if (card.Capabilities == null || card.Capabilities.Count == 0)
-            return warnings;
+        // The known shape is the four flags. Anything an agent puts in Custom is outside it, and the caller decides
+        // what to do with that, so each such entry is reported by its key.
+        foreach (var capability in card.Capabilities ?? [])
+        {
+            foreach (var key in capability?.Custom?.Keys ?? [])
+                warnings.Add(new CapabilityWarning(key, $"'{key}' is not a known capability (streaming, push notifications, state sync, long running tasks)"));
+        }
 
-        // For now, return no warnings if capabilities are well-formed.
-        // In practice, this would validate against schema registries, check for suspicious patterns, etc.
         return warnings;
     }
 }

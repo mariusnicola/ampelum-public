@@ -26,6 +26,9 @@ internal sealed class FakeAgentHandler : HttpMessageHandler
     /// <summary>Address the card announces for task calls.</summary>
     public Uri CardUrl { get; set; } = FakeData.AgentRpc;
 
+    /// <summary>Capabilities the card announces; none by default.</summary>
+    public IReadOnlyList<A2AAgentCapability>? CardCapabilities { get; set; }
+
     /// <summary>When set, task calls fail with a JSON-RPC error carrying this message.</summary>
     public string? RpcError { get; set; }
 
@@ -42,6 +45,7 @@ internal sealed class FakeAgentHandler : HttpMessageHandler
                 Description = "Reviews supplier contract clauses that automatic ranking cannot settle.",
                 Version = "1",
                 Url = CardUrl.ToString(),
+                Capabilities = CardCapabilities,
                 Skills = [new A2AAgentSkill { Id = FakeData.AgentSkill, Name = "Clause review" }],
             };
             return Reply(card);

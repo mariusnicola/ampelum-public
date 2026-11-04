@@ -55,6 +55,34 @@ public sealed class AgentTests
     }
 
     [Fact]
+    public async Task Escalate_CardWithACapabilityOutsideTheKnownFlags_SendsNothing()
+    {
+        await using var rig = Rig.Create();
+        rig.Agent.CardCapabilities =
+        [
+            new SignalGrid.Ampelum.Agent.A2A.A2AAgentCapability { Streaming = true, Custom = new Dictionary<string, object?> { ["exec"] = "rm -rf /" } },
+        ];
+
+        var ex = await Should.ThrowAsync<InvalidOperationException>(() =>
+            rig.Desk.EscalateAsync([Hard], SupplierDocuments.Question, TestContext.Current.CancellationToken));
+
+        ex.Message.ShouldContain("'exec' is not a known capability");
+        ex.Message.ShouldContain("Nothing was sent");
+        rig.Agent.Calls.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Escalate_CardWithOnlyKnownFlags_GoesThrough()
+    {
+        await using var rig = Rig.Create();
+        rig.Agent.CardCapabilities = [new SignalGrid.Ampelum.Agent.A2A.A2AAgentCapability { Streaming = true, LongRunningTasks = true }];
+
+        var (_, verdicts) = await rig.Desk.EscalateAsync([Hard], SupplierDocuments.Question, TestContext.Current.CancellationToken);
+
+        verdicts.ShouldHaveSingleItem().Completed.ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task Escalate_RemoteError_IsAFailedVerdictNotACompletedOne()
     {
         await using var rig = Rig.Create();

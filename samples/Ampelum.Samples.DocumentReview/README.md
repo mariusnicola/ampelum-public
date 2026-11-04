@@ -67,14 +67,14 @@ It does not prove that a real service accepts those frames or answers like the f
 
 Each of these is pinned by a test in `LibraryDefectTests.cs` unless it says it was read from the code only. A test that fails there means the library changed and the line here must go.
 
-**What the A2A card verifier does not check** (`src/Ampelum.Agent/A2A/A2AIntegration.cs`, `DefaultAgentCardVerifier`):
+**What the A2A card verifier checks and does not** (`src/Ampelum.Agent/A2A/A2AIntegration.cs`, `DefaultAgentCardVerifier`):
 
-- `VerifyCapabilities` (line 135 on) always returns an empty list. The comment at line 146 says it would validate against schemas and look for suspicious patterns "in practice"; it does neither. A card whose capabilities carry a custom entry such as an exec request or a wildcard scope gets no warning. A null list and an empty list also get none.
-- `VerifyIdentityAsync` (line 119 on) checks the signature and expiry of the token inside the card and nothing else. It does not compare the token's agent type with the card's name, nor tie the token to the card's URL. A valid token issued for a different agent is accepted on any card.
-- The scheme is matched case-sensitively as `"bearer"` (line 125). `"Bearer"` returns no identity.
+- `VerifyCapabilities` knows four capability flags (streaming, push notifications, state sync, long running tasks). Every entry an agent puts in `Custom` is outside that shape and gets one warning naming its key; a null or empty list gets none. It judges only the shape: a custom entry that is harmless gets a warning too, and a flag set to true is taken as claimed. The sample calls it on the fetched card and sends nothing when there is a warning (`ReviewDesk.EscalateAsync`).
+- `VerifyIdentityAsync` checks the signature and expiry of the token inside the card, and that the token's agent type equals the card's name (ignoring case). A valid token issued for a different agent returns no identity. It does not tie the token to the card's URL. The sample sends no token, so it does not call this method.
+- The scheme name `"bearer"` is matched without regard to case.
 - `VerifyAsync` catches every exception and returns null (line 94 to 97), so a malformed token and a bug look the same.
 - `VerifyCapabilitiesAsync` only checks that the identity's scope contains the names asked for. It says nothing about the card.
-- This sample does not call the verifier. It compares the card's URL with the configured agent URL instead, which is the one check it needed.
+- The sample also compares the card's URL with the configured agent URL, because the client does not.
 
 **A2A client** (`src/Ampelum.Agent/A2A/`):
 

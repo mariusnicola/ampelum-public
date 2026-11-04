@@ -571,7 +571,7 @@ public sealed class A2ATests
 
         var card = new A2AAgentCard
         {
-            Name = "Test Agent",
+            Name = "test-agent",
             Description = "A test agent",
             Version = "1.0.0",
             Url = "https://example.com",

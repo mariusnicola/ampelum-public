@@ -1,4 +1,6 @@
+using System.Security.Cryptography;
 using Microsoft.Extensions.AI;
+using SignalGrid.Ampelum.Agent;
 using SignalGrid.Ampelum.Agent.A2A;
 using SignalGrid.Ampelum.Batch;
 using SignalGrid.Ampelum.Retrieval;
@@ -31,6 +33,9 @@ internal sealed class ReviewDesk(ReviewSettings settings, ReviewTransport transp
     public static readonly TimeSpan PollInterval = TimeSpan.FromMinutes(5);
 
     public const int MaxPolls = 300;
+
+    // VerifyCapabilities does not use the identity provider's key, so a throwaway one is enough to build the verifier.
+    static readonly DefaultAgentCardVerifier CardVerifier = new(new DefaultAgentIdentityProvider(RandomNumberGenerator.GetBytes(32)));
 
     /// <summary>Loads each file page by page with <see cref="PdfLoader"/>.</summary>
     public async Task<IReadOnlyList<LoadedFile>> LoadAsync(IReadOnlyList<string> paths, CancellationToken cancellationToken)
@@ -88,6 +93,11 @@ internal sealed class ReviewDesk(ReviewSettings settings, ReviewTransport transp
         var rpc = new Uri(card.Url);
         if (!SameOrigin(rpc, baseUrl))
             throw new InvalidOperationException($"The agent card points at {rpc.GetLeftPart(UriPartial.Authority)}, not at the configured agent. Nothing was sent.");
+
+        // Anything outside the four capability flags stops the escalation. The sample sends no token, so the identity check is not used.
+        var warnings = CardVerifier.VerifyCapabilities(card);
+        if (warnings.Count > 0)
+            throw new InvalidOperationException($"The agent card announces capabilities this sample does not know: {string.Join("; ", warnings.Select(w => w.Warning))}. Nothing was sent.");
 
         var verdicts = new List<Verdict>();
         foreach (var clause in hardCases)

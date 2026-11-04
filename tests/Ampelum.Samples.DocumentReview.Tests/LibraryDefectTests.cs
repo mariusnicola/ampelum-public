@@ -40,7 +40,7 @@ public sealed class LibraryDefectTests
     };
 
     [Fact]
-    public void CardVerifier_ReturnsNoWarningsWhateverTheCapabilitiesSay()
+    public void CardVerifier_WarnsOfEveryCustomCapability_AndOfNothingElse()
     {
         var verifier = NewVerifier(out _);
         var hostile = new A2AAgentCapability
@@ -52,33 +52,34 @@ public sealed class LibraryDefectTests
             Custom = new Dictionary<string, object?> { ["exec"] = "rm -rf /", ["scope"] = "*", ["nested"] = new { anything = 1 } },
         };
 
-        verifier.VerifyCapabilities(CardWith([hostile, hostile])).ShouldBeEmpty();
+        verifier.VerifyCapabilities(CardWith([hostile, hostile])).Select(w => w.CapabilityName).Order()
+            .ShouldBe(["exec", "exec", "nested", "nested", "scope", "scope"]);
         verifier.VerifyCapabilities(CardWith([])).ShouldBeEmpty();
         verifier.VerifyCapabilities(CardWith(null)).ShouldBeEmpty();
     }
 
     [Fact]
-    public async Task CardVerifier_AcceptsATokenIssuedForAnotherAgent()
+    public async Task CardVerifier_RefusesATokenIssuedForAnotherAgent()
     {
         var verifier = NewVerifier(out var issuer);
         var jwt = await issuer.IssueAsync("payroll-agent", ["payments"], TimeSpan.FromHours(1), TestContext.Current.CancellationToken);
         var card = CardWith(null, [new A2AAuthenticationScheme { Scheme = "bearer", Credentials = jwt.Token }]);
 
-        var identity = await verifier.VerifyIdentityAsync(card, TestContext.Current.CancellationToken);
+        (await verifier.VerifyIdentityAsync(card, TestContext.Current.CancellationToken)).ShouldBeNull();
 
-        identity.ShouldNotBeNull();
-        identity.AgentType.ShouldBe("payroll-agent");
-        card.Name.ShouldNotBe(identity.AgentType);
+        var own = await issuer.IssueAsync(card.Name, ["review"], TimeSpan.FromHours(1), TestContext.Current.CancellationToken);
+        var ownCard = CardWith(null, [new A2AAuthenticationScheme { Scheme = "bearer", Credentials = own.Token }]);
+        (await verifier.VerifyIdentityAsync(ownCard, TestContext.Current.CancellationToken)).ShouldNotBeNull().AgentType.ShouldBe(card.Name);
     }
 
     [Fact]
-    public async Task CardVerifier_SchemeNameIsMatchedCaseSensitively()
+    public async Task CardVerifier_SchemeNameIsMatchedWithoutRegardToCase()
     {
         var verifier = NewVerifier(out var issuer);
-        var jwt = await issuer.IssueAsync("a", [], TimeSpan.FromHours(1), TestContext.Current.CancellationToken);
+        var jwt = await issuer.IssueAsync("supplier-clause-reviewer", [], TimeSpan.FromHours(1), TestContext.Current.CancellationToken);
         var card = CardWith(null, [new A2AAuthenticationScheme { Scheme = "Bearer", Credentials = jwt.Token }]);
 
-        (await verifier.VerifyIdentityAsync(card, TestContext.Current.CancellationToken)).ShouldBeNull();
+        (await verifier.VerifyIdentityAsync(card, TestContext.Current.CancellationToken)).ShouldNotBeNull();
     }
 
     [Fact]
