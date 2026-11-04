@@ -9,8 +9,8 @@ using SignalGrid.Ampelum.Retrieval.Loaders;
 
 namespace Ampelum.Samples.DocumentReview;
 
-/// <summary>A supplier file after loading. A file the loader could not open has no pages.</summary>
-internal sealed record LoadedFile(string Name, IReadOnlyList<Document> Pages)
+/// <summary>A supplier file after loading. A file the loader could not read has no pages and carries the loader's error.</summary>
+internal sealed record LoadedFile(string Name, IReadOnlyList<Document> Pages, string? Error = null)
 {
     public string Text => string.Join(' ', Pages.Select(p => p.Text.Trim()));
 }
@@ -47,9 +47,19 @@ internal sealed class ReviewDesk(ReviewSettings settings, ReviewTransport transp
             var name = Path.GetFileName(path);
             var pages = new List<Document>();
             await using var stream = File.OpenRead(path);
-            await foreach (var page in loader.LoadAsync(stream, new DocumentLoadContext { SourceUri = name }, cancellationToken))
-                pages.Add(page);
-            files.Add(new LoadedFile(name, pages));
+            string? error = null;
+            try
+            {
+                await foreach (var page in loader.LoadAsync(stream, new DocumentLoadContext { SourceUri = name }, cancellationToken))
+                    pages.Add(page);
+            }
+            catch (InvalidDataException ex)
+            {
+                // The loader says the file is unreadable; keep the reason and leave the file out of the review.
+                pages.Clear();
+                error = ex.Message;
+            }
+            files.Add(new LoadedFile(name, pages, error));
         }
         return files;
     }

@@ -15,7 +15,7 @@ The sample builds its PDFs at run time with its own small writer (`MiniPdf.cs`) 
 
 ## How a run goes
 
-1. The PDFs are loaded. A file that yields no pages is reported as needing a person.
+1. The PDFs are loaded. A file the loader cannot read is reported with the loader's error as needing a person, and a readable PDF without pages is reported as empty.
 2. The pages are reranked against the question. A clause scoring under `ReviewDesk.AutoApproveScore` is a hard case. That number is a policy constant, not tuned to any vendor's score scale.
 3. Each hard case goes to the remote agent. The sample reads the agent card first and refuses to send anything when the card names a different host than the configured agent URL. The client would post wherever the card says.
 4. The overnight summaries go out as one batch. The sample polls the status and waits `ReviewDesk.PollInterval` between polls through the `TimeProvider` it hands to `OpenAIBatchSubmitter`. Then it reads the results. A second batch holds one document the supplier withdrew; it is submitted and cancelled, and the status is read again.
@@ -86,7 +86,7 @@ Each of these is pinned by a test in `LibraryDefectTests.cs` unless it says it w
 - `A2AClient.Dispose` disposes the `HttpClient` only when the client made it itself; one passed in stays the caller's, and the sample disposes its own (`A2AClient_Dispose_LeavesTheCallersHttpClientUsable`).
 - `ListTasksAsync` puts the page token in `Id` and the status filter in `HistoryLength` (lines 177 and 178). Read from code, not used here.
 
-**`PdfLoader`** (`src/Ampelum.Retrieval/Loaders/PdfLoader.cs`): a file it cannot open, corrupt or not a PDF at all, produces no documents and no error (lines 30 to 32). An empty result cannot tell an empty PDF from a broken one. The sample treats zero pages as a problem and says so in its output.
+**`PdfLoader`** (`src/Ampelum.Retrieval/Loaders/PdfLoader.cs`): a file it cannot open, corrupt or not a PDF at all, now throws `InvalidDataException` naming the source and keeping the reader's error as the inner exception, so zero pages means a PDF without pages. The sample catches it per file, keeps the message on the `LoadedFile`, prints it, and leaves the file out of the review (`LoadTests.Load_FileThatIsNotAPdf_HasNoPagesAndCarriesTheLoadersError`).
 
 **Rerankers** (`CohereReranker.cs` and `VoyageReranker.cs`, `src/Ampelum/Retrieval/Hybrid/`):
 

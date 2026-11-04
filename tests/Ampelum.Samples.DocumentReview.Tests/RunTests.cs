@@ -19,7 +19,7 @@ public sealed class RunTests
 
         exit.ShouldBe(0);
         var text = output.ToString();
-        text.ShouldContain("damaged-scan.pdf: no pages");
+        text.ShouldContain("damaged-scan.pdf: 'damaged-scan.pdf' is not a readable PDF");
         text.ShouldContain("Accepted: supply-agreement.pdf#page=1");
         text.ShouldContain("Verdict:  subcontract-notice.pdf#page=1: completed");
         text.ShouldContain("Status:   Completed, 3 of 3 done");

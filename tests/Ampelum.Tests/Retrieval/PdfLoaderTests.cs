@@ -51,17 +51,37 @@ public sealed class PdfLoaderTests
         });
     }
 
-    [Fact]
-    public async Task LoadAsync_CorruptStream_YieldsNothing()
+    static async Task<InvalidDataException> LoadFailure(byte[] bytes, DocumentLoadContext context)
     {
-        using var ms = new MemoryStream(new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D });
-        var sut = new PdfLoader();
-        var docs = new List<Document>();
-        await foreach (var d in sut.LoadAsync(ms, new DocumentLoadContext(), TestContext.Current.CancellationToken))
+        using var ms = new MemoryStream(bytes);
+        return await Should.ThrowAsync<InvalidDataException>(async () =>
         {
-            docs.Add(d);
-        }
-        docs.ShouldBeEmpty();
+            await foreach (var _ in new PdfLoader().LoadAsync(ms, context, TestContext.Current.CancellationToken))
+            {
+            }
+        });
+    }
+
+    [Fact]
+    public async Task LoadAsync_CorruptStream_Throws_AndKeepsTheReasonAsTheInnerException()
+    {
+        var ex = await LoadFailure(new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D }, new DocumentLoadContext());
+
+        ex.InnerException.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task LoadAsync_ANonPdf_Throws_NamingTheSource()
+    {
+        var ex = await LoadFailure(System.Text.Encoding.UTF8.GetBytes("this is plain text"), new DocumentLoadContext { SourceUri = "notes.txt" });
+
+        ex.Message.ShouldContain("notes.txt");
+    }
+
+    [Fact]
+    public async Task LoadAsync_AnEmptyStream_Throws()
+    {
+        await LoadFailure([], new DocumentLoadContext());
     }
 
     [Fact]

@@ -22,13 +22,16 @@ public sealed class LoadTests
     }
 
     [Fact]
-    public async Task Load_FileThatIsNotAPdf_HasNoPages()
+    public async Task Load_FileThatIsNotAPdf_HasNoPagesAndCarriesTheLoadersError()
     {
         await using var rig = Rig.Create();
 
         var files = await rig.LoadAsync(TestContext.Current.CancellationToken);
 
-        files.Single(f => f.Name == SupplierDocuments.Damaged).Pages.ShouldBeEmpty();
+        var damaged = files.Single(f => f.Name == SupplierDocuments.Damaged);
+        damaged.Pages.ShouldBeEmpty();
+        damaged.Error.ShouldNotBeNull().ShouldContain($"'{SupplierDocuments.Damaged}' is not a readable PDF");
+        files.Where(f => f.Name != SupplierDocuments.Damaged).ShouldAllBe(f => f.Error == null);
     }
 
     [Fact]

@@ -27,9 +27,10 @@ public sealed class PdfLoader : IDocumentLoader
         {
             doc = PdfDocument.Open(source);
         }
-        catch
+        catch (Exception ex)
         {
-            yield break;
+            // Zero pages must mean a PDF without pages. A file that cannot be read is a failure the caller has to see.
+            throw new InvalidDataException($"'{context.SourceUri ?? "the stream"}' is not a readable PDF: {ex.Message}", ex);
         }
 
         try

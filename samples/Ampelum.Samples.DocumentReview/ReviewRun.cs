@@ -44,7 +44,9 @@ internal static class ReviewRun
         {
             if (file.Pages.Count == 0)
             {
-                output.WriteLine($"Load:     {file.Name}: no pages, the file is not a readable PDF and needs a person");
+                output.WriteLine(file.Error is null
+                    ? $"Load:     {file.Name}: no pages, the PDF is empty and needs a person"
+                    : $"Load:     {file.Name}: {file.Error}; it needs a person");
                 continue;
             }
             output.WriteLine($"Load:     {file.Name}: {file.Pages.Count} page(s)");

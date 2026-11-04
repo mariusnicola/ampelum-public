@@ -264,7 +264,6 @@ MCP
 A2A, loaders and batch
 
 - `A2AClient` writes the message role and task state as numbers, not as the names other agents expect, and `A2ATask` requires `CreatedAt` and `UpdatedAt`, so a response without them fails with a `JsonException`. It reads any number as a role or state, also one that is no member of the enum (`src/Ampelum.Agent/A2A/A2AClient.cs`, `A2ATask.cs`).
-- `PdfLoader` yields zero pages and no error for a corrupt file or a non-PDF (`src/Ampelum.Retrieval/Loaders/PdfLoader.cs`).
 - `OpenAIBatchSubmitter` maps the `cancelling` state to `Cancelled`, and `StreamResultsAsync` throws when the batch has no output file.
 
 Host
