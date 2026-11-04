@@ -53,8 +53,11 @@ public sealed class PiiTests
         await h.Gateway.AskAsync("My SSN is 123-45-6789 and my card is 4111 1111 1111 1111.", TestContext.Current.CancellationToken);
 
         h.AuditText().ShouldNotContain("123-45-6789");
-        h.AuditText().ShouldNotContain("4111");
+        // The full number, not a fragment: the file also holds random hex ids and hashes, which can contain "4111".
+        h.AuditText().ShouldNotContain("4111 1111 1111 1111");
+        h.AuditText().ShouldNotContain("4111111111111111");
         (await h.AuditValuesAsync()).ShouldContain("<REDACTED:SSN>");
+        (await h.AuditValuesAsync()).ShouldContain("<REDACTED:CC>");
     }
 
     [Fact]
