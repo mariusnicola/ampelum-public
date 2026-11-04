@@ -113,19 +113,14 @@ internal static class AuditEndpoint
                 "traceId must be 32 lowercase hex characters.",
                 traceIdResolved);
 
-        // Look up in index
+        // The index only knows entries a rebuild has seen; an entry it lacks is looked for in the sink itself.
         var row = await auditIndex.TryGetByTraceIdAsync(traceId, ct);
-        if (row is null)
-            return ApiErrors.NotFound(
-                ErrorCodes.TraceNotFound,
-                $"Audit entry '{traceId}' not found.",
-                traceIdResolved);
 
-        // Find entry by sequence in sink
+        // Find entry by sequence (indexed) or by trace id (not indexed) in sink
         AuditEntryDto? dto = null;
         await foreach (var entry in sink.EnumerateAsync(ct))
         {
-            if (entry.Sequence == row.Sequence)
+            if (row is not null ? entry.Sequence == row.Sequence : ResolveTraceId(entry) == traceId)
             {
                 var resolvedTraceId = ResolveTraceId(entry);
                 dto = new AuditEntryDto(

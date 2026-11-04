@@ -355,17 +355,19 @@ public sealed class HostOperationsTests
     }
 
     [Fact]
-    public async Task KnownLimit_AuditByTraceIdNeedsARebuildBecauseForwardDoesNotIndex()
+    public async Task AuditByTrace_ReturnsTheRecordedCall_WithoutARebuild()
     {
         await using var service = await StartAsync();
-        service.EnqueueAnswer("Delivery takes 3 to 5 business days.");
-        var response = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+        service.EnqueueAnswer("Delivery takes 3 to 5 business days.").EnqueueAnswer("Second answer.");
+        var first = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "How long is delivery?", Ct);
+        var second = await service.Client.ForwardAsync(AgentServiceHost.ModuleName, "second question", Ct);
 
-        var failure = await Should.ThrowAsync<AgentServiceException>(() => service.Client.GetAuditByTraceAsync(response.TraceId, Ct));
+        var entry = await service.Client.GetAuditByTraceAsync(first.TraceId, Ct);
 
-        failure.Status.ShouldBe(HttpStatusCode.NotFound);
-        failure.Error!.Code.ShouldBe(ErrorCodes.TraceNotFound);
-        (await service.Client.ListAuditAsync(Ct)).Entries.Count.ShouldBe(1);
+        entry.TraceId.ShouldBe(first.TraceId);
+        entry.Inputs["Question"].GetString().ShouldBe("How long is delivery?");
+        entry.Outputs["Answer"].GetString().ShouldBe("Delivery takes 3 to 5 business days.");
+        (await service.Client.GetAuditByTraceAsync(second.TraceId, Ct)).Outputs["Answer"].GetString().ShouldBe("Second answer.");
     }
 
     [Fact]

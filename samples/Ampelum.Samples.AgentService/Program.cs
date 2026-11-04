@@ -69,11 +69,11 @@ try
         && frames[^1].Event == "done"
         && frames.All(f => f.Event != "error");
 
-    // The Host finds an audit entry by trace id through an index that only a rebuild fills; a forward call does not.
-    var rebuilt = await client.RebuildIndexAsync();
+    // The Host finds an audit entry by trace id straight after the call; the rebuild below is for replay, which still reads the index.
     var traced = await client.GetAuditByTraceAsync(answer.TraceId);
-    Console.WriteLine($"Rebuild: {rebuilt.AuditEntriesIndexed} audit entries indexed, {rebuilt.ModulesSnapshot} modules snapshotted");
+    var rebuilt = await client.RebuildIndexAsync();
     Console.WriteLine($"Trace:   {traced.TraceId} asked \"{traced.Inputs["Question"].GetString()}\"");
+    Console.WriteLine($"Rebuild: {rebuilt.AuditEntriesIndexed} audit entries indexed, {rebuilt.ModulesSnapshot} modules snapshotted");
 
     // Replay serves the recorded answer; the model is not called again.
     // Only the scripted model can be asked how often it was called.
