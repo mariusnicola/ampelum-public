@@ -80,22 +80,63 @@ public sealed class CliProcessTests : IDisposable
     }
 
     [Fact]
-    public async Task KnownLimit_HostRebuildIndex_IgnoresThePathGivenToConfig()
+    public async Task HostRebuildIndex_ReadsTheFileGivenToConfig()
     {
         var workingDirectory = await WorkingDirectoryWithAuditAsync("host-cli-config", calls: 2);
         var elsewhere = Path.Combine(_dir, "elsewhere");
         Directory.CreateDirectory(elsewhere);
+        File.Copy(Path.Combine(workingDirectory, "data", "audit.jsonl"), Path.Combine(elsewhere, "named-audit.jsonl"));
         var config = Path.Combine(elsewhere, "host.json");
         await HostRebuildCli.WriteConfigAsync(
             config, Path.Combine(elsewhere, "named.db"), Path.Combine(elsewhere, "named-audit.jsonl"), Path.Combine(elsewhere, "prompts"), Ct);
 
         var (exit, text) = await HostRebuildCli.RunAsync(workingDirectory, ["--config", config], Ct);
 
-        // The command read ./data in its working directory and never opened the file it was pointed at.
+        // The index lands where the named file says, not in ./data of the working directory.
         exit.ShouldBe(0, text);
-        text.ShouldContain("2 audit entries");
-        File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeTrue();
-        File.Exists(Path.Combine(elsewhere, "named.db")).ShouldBeFalse();
+        text.ShouldContain("Rebuild complete: 2 audit entries");
+        File.Exists(Path.Combine(elsewhere, "named.db")).ShouldBeTrue();
+        File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task HostRebuildIndex_ReadsARelativeConfigPathFromTheWorkingDirectory()
+    {
+        var workingDirectory = await WorkingDirectoryWithAuditAsync("host-cli-config-relative", calls: 1);
+        await HostRebuildCli.WriteConfigAsync(
+            Path.Combine(workingDirectory, "custom.json"),
+            Path.Combine(workingDirectory, "custom.db"), Path.Combine(workingDirectory, "data", "audit.jsonl"),
+            Path.Combine(workingDirectory, "prompts"), Ct);
+
+        var (exit, text) = await HostRebuildCli.RunAsync(workingDirectory, ["--config", "custom.json"], Ct);
+
+        exit.ShouldBe(0, text);
+        text.ShouldContain("Rebuild complete: 1 audit entries");
+        File.Exists(Path.Combine(workingDirectory, "custom.db")).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task HostRebuildIndex_WithAConfigFileThatDoesNotExist_SaysSoAndExitsNonZero()
+    {
+        var workingDirectory = await WorkingDirectoryWithAuditAsync("host-cli-config-missing", calls: 1);
+
+        var (exit, text) = await HostRebuildCli.RunAsync(workingDirectory, ["--config", "missing.json"], Ct);
+
+        exit.ShouldNotBe(0);
+        text.ShouldContain($"Rebuild failed: config file '{Path.Combine(workingDirectory, "missing.json")}' was not found.");
+        File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeFalse();
+    }
+
+    [Fact]
+    public async Task HostRebuildIndex_WithConfigAndNoPath_SaysSoAndExitsNonZero()
+    {
+        var workingDirectory = await WorkingDirectoryWithAuditAsync("host-cli-config-nopath", calls: 1);
+
+        var (exit, text) = await HostRebuildCli.RunAsync(workingDirectory, ["--config"], Ct);
+
+        exit.ShouldNotBe(0);
+        text.ShouldContain("Rebuild failed: --config needs a path.");
+        File.Exists(Path.Combine(workingDirectory, "data", "host.db")).ShouldBeFalse();
     }
 
     [Fact]

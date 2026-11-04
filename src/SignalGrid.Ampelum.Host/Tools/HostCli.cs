@@ -17,7 +17,26 @@ internal static class HostCli
         if (args.Length == 0 || (args[0] is "--help" or "-h"))
             return 0;
 
-        var configPath = args.Length > 1 && (args[0] is "--config" or "-c") ? args[1] : "appsettings.json";
+        // Program passes the command name first; the options follow it.
+        var options = args[0] == "rebuild-index" ? args[1..] : args;
+        string? configPath = null;
+        var configAt = Array.FindIndex(options, a => a is "--config" or "-c");
+        if (configAt >= 0)
+        {
+            if (configAt + 1 >= options.Length)
+            {
+                Console.Error.WriteLine("Rebuild failed: --config needs a path.");
+                return 1;
+            }
+            // A relative path means the working directory.
+            configPath = Path.GetFullPath(options[configAt + 1]);
+            if (!File.Exists(configPath))
+            {
+                Console.Error.WriteLine($"Rebuild failed: config file '{configPath}' was not found.");
+                return 1;
+            }
+        }
+
         await HandleRebuildIndex(configPath, ct);
         return 0;
     }

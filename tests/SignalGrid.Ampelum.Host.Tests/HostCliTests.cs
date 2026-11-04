@@ -13,13 +13,15 @@ public sealed class HostCliTests
         using var tempDir = new TempDirFixture();
         var configPath = Path.Combine(tempDir.Path, "appsettings.json");
         Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+        // The command now reads this file, and a backslash path is not valid JSON.
+        var slashed = tempDir.Path.Replace('\\', '/');
         var config = $$"""
 {
   "Host": {
     "Storage": {
-      "SqlitePath": "{{tempDir.Path}}/host.db",
-      "AuditFile": "{{tempDir.Path}}/audit.jsonl",
-      "PromptDir": "{{tempDir.Path}}/prompts"
+      "SqlitePath": "{{slashed}}/host.db",
+      "AuditFile": "{{slashed}}/audit.jsonl",
+      "PromptDir": "{{slashed}}/prompts"
     }
   }
 }
